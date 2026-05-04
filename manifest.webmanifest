@@ -2,7 +2,7 @@
   "name": "Dashboard",
   "short_name": "Dashboard",
   "description": "Daily routine and market dashboard",
-  "start_url": "./dashboard.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
