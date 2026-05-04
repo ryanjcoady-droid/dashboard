@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0D0D0B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Dashboard</title>
+<script src="firebase-config.js"></script>
+<script src="sync.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#0D0D0B;color:#F5F3EF;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+
+  /* Frames stack */
+  .frame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#0D0D0B;display:block}
+  .frame.hidden{display:none}
+
+  /* Switcher */
+  .switcher{
+    position:fixed;
+    top:16px;
+    right:16px;
+    z-index:9999;
+    display:inline-flex;
+    padding:4px;
+    background:rgba(20,20,24,0.85);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px;
+    box-shadow:0 6px 24px rgba(0,0,0,0.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:.02em;
+  }
+  .switcher button{
+    appearance:none;
+    -webkit-appearance:none;
+    border:0;
+    background:transparent;
+    color:#9B978F;
+    padding:7px 13px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease;
+    font:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+  }
+  .switcher button:hover{color:#F5F3EF}
+  .switcher button.active{
+    background:rgba(255,255,255,0.08);
+    color:#F5F3EF;
+  }
+  .switcher .dot{
+    width:6px;height:6px;border-radius:999px;background:currentColor;opacity:.75;
+  }
+  .switcher button[data-target="daily"] .dot{color:#4ADE80}
+  .switcher button[data-target="market"] .dot{color:#8b5cf6}
+
+  @media(max-width:600px){
+    .switcher{top:10px;right:10px;font-size:11px}
+    .switcher button{padding:6px 10px}
+  }
+
+  /* Sync pairing UI */
+  .sync-btn{
+    position:fixed;top:16px;left:16px;z-index:9999;
+    width:34px;height:34px;border-radius:10px;
+    background:rgba(20,20,24,0.85);backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 6px 24px rgba(0,0,0,0.45);
+    color:#9B978F;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:color .15s,background .15s
+  }
+  .sync-btn:hover{color:#F5F3EF;background:rgba(28,28,32,0.9)}
+  .sync-btn[data-state="ok"]{color:#4ADE80}
+  .sync-btn[data-state="off"]{color:#9B978F}
+  .sync-btn svg{width:16px;height:16px}
+  @media(max-width:600px){.sync-btn{top:10px;left:10px;width:30px;height:30px}}
+
+  .sync-modal-bg{
+    position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;padding:20px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .sync-modal-bg.show{display:flex}
+  .sync-modal{
+    background:#161614;border:1px solid #272522;border-radius:16px;
+    padding:24px;max-width:420px;width:100%;color:#F5F3EF;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6)
+  }
+  .sync-modal h2{font-size:16px;font-weight:600;margin-bottom:6px}
+  .sync-modal .sub{font-size:12.5px;color:#9B978F;margin-bottom:18px;line-height:1.5}
+  .sync-modal .label{font-size:10px;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:#9B978F;margin:14px 0 6px}
+  .sync-code{
+    background:#0D0D0B;border:1px solid #272522;border-radius:8px;
+    padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12px;color:#F5F3EF;word-break:break-all;line-height:1.5;
+    user-select:all;cursor:text
+  }
+  .sync-row{display:flex;gap:8px;margin-top:8px}
+  .sync-input{
+    flex:1;background:#0D0D0B;border:1px solid #272522;border-radius:8px;
+    padding:10px 12px;color:#F5F3EF;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12px;outline:none
+  }
+  .sync-input:focus{border-color:#4ADE80}
+  .sync-btn-action{
+    background:#4ADE80;color:#0D0D0B;border:none;border-radius:8px;
+    padding:10px 14px;font-weight:600;font-size:12px;cursor:pointer;
+    font-family:inherit
+  }
+  .sync-btn-action:hover{background:#22C55E}
+  .sync-btn-secondary{
+    background:transparent;color:#9B978F;border:1px solid #272522;
+    border-radius:8px;padding:10px 14px;font-size:12px;cursor:pointer;
+    font-family:inherit
+  }
+  .sync-btn-secondary:hover{color:#F5F3EF;border-color:#3F3D38}
+  .sync-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+  .sync-status{font-size:11px;color:#4ADE80;min-height:14px;margin-top:8px}
+  .sync-status.err{color:#F87171}
+</style>
+</head>
+<body>
+
+<button id="sync-btn" class="sync-btn" data-state="off" title="Sync settings" aria-label="Sync settings">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.7-3"/>
+    <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.7 3"/>
+    <polyline points="21 3 21 9 15 9"/>
+    <polyline points="3 21 3 15 9 15"/>
+  </svg>
+</button>
+
+<div id="sync-modal-bg" class="sync-modal-bg" role="dialog" aria-modal="true" aria-labelledby="sync-title">
+  <div class="sync-modal">
+    <h2 id="sync-title">Sync between devices</h2>
+    <p class="sub">Your dashboard data syncs automatically when paired. Copy this code and paste it on your other device to share the same data.</p>
+
+    <div class="label">This device's code</div>
+    <div id="sync-code" class="sync-code">loading…</div>
+
+    <div class="label">Or pair to an existing code</div>
+    <div class="sync-row">
+      <input id="sync-input" class="sync-input" type="text" placeholder="Paste a code from another device" autocomplete="off" spellcheck="false">
+      <button id="sync-pair-btn" class="sync-btn-action">Pair</button>
+    </div>
+    <div id="sync-status" class="sync-status"></div>
+
+    <div class="sync-actions">
+      <button id="sync-copy-btn" class="sync-btn-secondary">Copy code</button>
+      <button id="sync-close-btn" class="sync-btn-secondary">Close</button>
+    </div>
+  </div>
+</div>
+
+<nav class="switcher" role="tablist" aria-label="Dashboard switcher">
+  <button type="button" data-target="daily" class="active" role="tab" aria-selected="true">
+    <span class="dot"></span>Daily
+  </button>
+  <button type="button" data-target="market" role="tab" aria-selected="false">
+    <span class="dot"></span>Market
+  </button>
+</nav>
+
+<iframe id="frame-daily"  class="frame"        src="daily-dashboard.html"  title="Daily Dashboard"></iframe>
+<iframe id="frame-market" class="frame hidden" src="market-dashboard.html" title="Market Dashboard"></iframe>
+
+<script>
+  const STORAGE_KEY = 'dashboard.activeTab';
+  const frames = {
+    daily:  document.getElementById('frame-daily'),
+    market: document.getElementById('frame-market'),
+  };
+  const buttons = document.querySelectorAll('.switcher button');
+
+  function show(target){
+    Object.entries(frames).forEach(([key, el])=>{
+      el.classList.toggle('hidden', key !== target);
+    });
+    buttons.forEach(b=>{
+      const active = b.dataset.target === target;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    try{ localStorage.setItem(STORAGE_KEY, target); }catch(e){}
+  }
+
+  buttons.forEach(b=>{
+    b.addEventListener('click', ()=> show(b.dataset.target));
+  });
+
+  // Restore last-used tab
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved && frames[saved]) show(saved);
+  }catch(e){}
+
+  // Keyboard shortcut: Cmd/Ctrl + 1 / 2
+  window.addEventListener('keydown', (e)=>{
+    if(!(e.metaKey || e.ctrlKey)) return;
+    if(e.key === '1'){ e.preventDefault(); show('daily'); }
+    if(e.key === '2'){ e.preventDefault(); show('market'); }
+  });
+
+  // ── Sync pairing UI ────────────────────────────────────────────
+  const syncBtn      = document.getElementById('sync-btn');
+  const syncModalBg  = document.getElementById('sync-modal-bg');
+  const syncCodeEl   = document.getElementById('sync-code');
+  const syncInput    = document.getElementById('sync-input');
+  const syncPairBtn  = document.getElementById('sync-pair-btn');
+  const syncCopyBtn  = document.getElementById('sync-copy-btn');
+  const syncCloseBtn = document.getElementById('sync-close-btn');
+  const syncStatus   = document.getElementById('sync-status');
+
+  function refreshSyncState(){
+    if(window.__sync && window.__sync.enabled){
+      syncBtn.dataset.state = 'ok';
+      syncBtn.title = 'Cloud sync active — tap to manage devices';
+      const uid = window.__sync.getUID();
+      if(uid) syncCodeEl.textContent = uid;
+    } else {
+      syncBtn.dataset.state = 'off';
+      syncBtn.title = 'Cloud sync not configured';
+      syncCodeEl.textContent = 'Sync is disabled. Add your Firebase config to firebase-config.js to enable it.';
+    }
+  }
+  // sync.js loads asynchronously; check shortly after.
+  setTimeout(refreshSyncState, 200);
+  setTimeout(refreshSyncState, 1500);
+
+  syncBtn.addEventListener('click', ()=>{
+    refreshSyncState();
+    syncModalBg.classList.add('show');
+    syncStatus.textContent = '';
+    syncStatus.classList.remove('err');
+  });
+  syncCloseBtn.addEventListener('click', ()=> syncModalBg.classList.remove('show'));
+  syncModalBg.addEventListener('click', (e)=>{
+    if(e.target === syncModalBg) syncModalBg.classList.remove('show');
+  });
+
+  syncCopyBtn.addEventListener('click', async ()=>{
+    const code = syncCodeEl.textContent;
+    try {
+      await navigator.clipboard.writeText(code);
+      syncStatus.classList.remove('err');
+      syncStatus.textContent = '✓ Copied';
+      setTimeout(()=> syncStatus.textContent = '', 1800);
+    } catch(e){
+      syncStatus.classList.add('err');
+      syncStatus.textContent = 'Could not copy. Select the code manually.';
+    }
+  });
+
+  syncPairBtn.addEventListener('click', ()=>{
+    const code = (syncInput.value || '').trim();
+    if(!code){
+      syncStatus.classList.add('err');
+      syncStatus.textContent = 'Paste a code first.';
+      return;
+    }
+    if(!window.__sync || !window.__sync.enabled){
+      syncStatus.classList.add('err');
+      syncStatus.textContent = 'Sync is not configured.';
+      return;
+    }
+    if(!confirm('Replace this device\'s data with the data from the paired code? This will reload the page.')) return;
+    window.__sync.setUID(code);
+  });
+
+  // ── Service worker registration ────────────────────────────────
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('service-worker.js').catch(err=>{
+        console.warn('SW registration failed:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
