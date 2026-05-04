@@ -13,7 +13,7 @@ const RUNTIME = `dash-runtime-${VERSION}`;
 
 const APP_SHELL = [
   './',
-  './dashboard.html',
+  './index.html',
   './daily-dashboard.html',
   './market-dashboard.html',
   './sync.js',
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (e) => {
         const copy = res.clone();
         caches.open(APP_CACHE).then((c) => c.put(req, copy));
         return res;
-      }).catch(() => caches.match(req).then((m) => m || caches.match('./dashboard.html')))
+      }).catch(() => caches.match(req).then((m) => m || caches.match('./index.html')))
     );
     return;
   }
