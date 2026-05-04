@@ -66,8 +66,19 @@
   .switcher button[data-target="market"] .dot{color:#8b5cf6}
 
   @media(max-width:600px){
-    .switcher{top:10px;right:10px;font-size:11px}
-    .switcher button{padding:6px 10px}
+    /* Compact top bar that doesn't overlap iframe content */
+    .switcher{top:8px;right:8px;font-size:11px;padding:3px}
+    .switcher button{padding:5px 9px;gap:5px}
+    .sync-btn{top:8px;left:8px;width:30px;height:30px;border-radius:8px}
+    .sync-btn svg{width:14px;height:14px}
+    /* Push the iframes down so the bar above is clear */
+    .frame{top:48px;height:calc(100% - 48px)}
+    /* Solid backdrop behind controls so content scrolling under is hidden */
+    body::before{
+      content:"";position:fixed;top:0;left:0;right:0;height:48px;
+      background:#0D0D0B;border-bottom:1px solid rgba(255,255,255,0.06);
+      z-index:9998;
+    }
   }
 
   /* Sync pairing UI */
