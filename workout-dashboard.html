@@ -30,8 +30,27 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding
 
 /* During an active workout session, hide all sidebar cards except the
    session timer so the screen is focused on the exercises. The session
-   card has the .duration-card class, everything else collapses. */
-body.session-running .sidebar > .card:not(.duration-card){display:none}
+   card has the .duration-card class, everything else collapses.
+   Use !important and a wider selector so it works regardless of layout. */
+body.session-running .sidebar > .card:not(.duration-card),
+body.session-running #volume-card,
+body.session-running #history-card{display:none !important}
+
+/* Fix for mobile auto-zoom on input focus. Browsers (Chrome/Safari) auto-
+   zoom into inputs whose font-size is below 16px. We keep visual size
+   small by relying on the input's small height + transform-free layout,
+   but force font-size to 16px on mobile so the page doesn't zoom in. */
+@media (max-width: 900px){
+  .set-input,
+  input[type="text"],
+  input[type="number"],
+  input[inputmode="decimal"],
+  input[inputmode="numeric"],
+  textarea,
+  select{
+    font-size: 16px !important;
+  }
+}
 
 .header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
 .header-left .date-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
@@ -358,6 +377,21 @@ body.session-running .sidebar > .card:not(.duration-card){display:none}
 </style>
 </head>
 <body>
+
+<script>
+// Apply session-running class as early as possible so the History/Workouts/
+// Volume/Week cards don't flash visible during a running session. Uses the
+// same localStorage key as the main script. Wrapped in try-catch since this
+// runs before sync.js attaches its overrides.
+(function(){
+  try{
+    var raw = localStorage.getItem('wt_session_timer');
+    if(!raw) return;
+    var t = JSON.parse(raw);
+    if(t && t.start && !t.end) document.body.classList.add('session-running');
+  }catch(e){}
+})();
+</script>
 
 <div class="header">
   <div class="header-left">

@@ -41,6 +41,21 @@ body{
 /* Disable double-tap-to-zoom on touch devices but keep pinch zoom intact. */
 *{touch-action:manipulation}
 
+/* Prevent mobile auto-zoom when focusing inputs. */
+@media (max-width: 900px){
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="search"],
+  input[type="url"],
+  input[inputmode="decimal"],
+  input[inputmode="numeric"],
+  textarea,
+  select{
+    font-size: 16px !important;
+  }
+}
+
 /* ========= Header ========= */
 .header{
   display:flex;
