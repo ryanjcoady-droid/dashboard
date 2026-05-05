@@ -1,5 +1,5 @@
 /* service-worker.js — offline cache for the dashboard PWA. */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const APP_CACHE = `dash-app-${VERSION}`;
 const RUNTIME = `dash-runtime-${VERSION}`;
 
@@ -8,6 +8,7 @@ const APP_SHELL = [
   './index.html',
   './daily-dashboard.html',
   './market-dashboard.html',
+  './workout-dashboard.html',
   './sync.js',
   './firebase-config.js',
   './manifest.webmanifest',
