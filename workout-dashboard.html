@@ -22,6 +22,17 @@
 html,body{height:100%;background:var(--bg)}
 body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding:28px 24px;line-height:1.5}
 
+/* Disable double-tap-to-zoom on touch devices but keep pinch zoom intact.
+   touch-action:manipulation removes the 300ms tap delay and the
+   double-tap-zoom gesture without disabling user-scalable, so accessibility
+   zoom still works if needed. */
+*{touch-action:manipulation}
+
+/* During an active workout session, hide all sidebar cards except the
+   session timer so the screen is focused on the exercises. The session
+   card has the .duration-card class, everything else collapses. */
+body.session-running .sidebar > .card:not(.duration-card){display:none}
+
 .header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
 .header-left .date-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .header-left .date-main{font-family:'Outfit',sans-serif;font-size:42px;font-weight:400;line-height:1}
@@ -1163,6 +1174,7 @@ function toggleSetDone(exId, idx){
     document.getElementById('start-workout-btn').style.display = 'none';
     document.getElementById('finish-workout-btn').style.display = 'inline-flex';
     startSessionTick();
+    setSessionRunningClass();
   }
 
   // Auto-start that exercise's rest timer when a set is marked done
@@ -1364,6 +1376,13 @@ function updateExTimerUI(exId){
 
 // ════════════ SESSION (workout duration stopwatch) ════════════
 let sessionInterval = null;
+// Toggle body class so CSS can hide non-essential sidebar cards during a
+// running workout. Idempotent — safe to call multiple times.
+function setSessionRunningClass(){
+  const running = !!(sessionTimer && sessionTimer.start && !sessionTimer.end);
+  document.body.classList.toggle('session-running', running);
+}
+
 function startWorkout(){
   if(sessionTimer && !sessionTimer.end){ showToast('Workout already running'); return; }
   sessionTimer = { start: Date.now(), end: null };
@@ -1371,6 +1390,7 @@ function startWorkout(){
   document.getElementById('start-workout-btn').style.display = 'none';
   document.getElementById('finish-workout-btn').style.display = 'inline-flex';
   startSessionTick();
+  setSessionRunningClass();
   showToast('🚀 Workout started — go!');
 }
 function finishWorkout(){
@@ -1432,6 +1452,7 @@ function finishWorkout(){
   banner.classList.add('show');
   document.getElementById('complete-sub').textContent = `${w?.name||''} · ${fmtDuration(dur)} · ${setsDone} sets`;
 
+  setSessionRunningClass();
   renderWeek();
   showToast('🏆 Workout logged!', 3000);
 }
@@ -1453,6 +1474,7 @@ function continueWorkout(){
     document.getElementById('duration-time').textContent = '0:00';
     document.getElementById('session-status').textContent = 'Not started';
     document.getElementById('duration-label').textContent = 'Press start when ready';
+    setSessionRunningClass();
     renderWorkout();
     return;
   }
@@ -1482,6 +1504,7 @@ function continueWorkout(){
   document.getElementById('finish-workout-btn').style.display = 'inline-flex';
   document.getElementById('complete-banner').classList.remove('show');
   startSessionTick();
+  setSessionRunningClass();
   showToast('▶ Session resumed');
 }
 
@@ -1502,6 +1525,7 @@ function startNewSession(){
   document.getElementById('duration-time').textContent = '0:00';
   document.getElementById('session-status').textContent = 'Not started';
   document.getElementById('duration-label').textContent = 'Press start when ready';
+  setSessionRunningClass();
   renderWorkout();
   renderVolume();
   renderHistory();
@@ -1961,6 +1985,7 @@ function init(){
       startSessionTick();
     }
   }
+  setSessionRunningClass();
 
   // Watch for the page becoming visible again after being hidden for a while
   // (e.g. phone went to sleep mid-rest). Re-run recovery if a day boundary
@@ -1980,6 +2005,7 @@ function init(){
       document.getElementById('duration-time').textContent = '0:00';
       document.getElementById('session-status').textContent = 'Not started';
       document.getElementById('duration-label').textContent = 'Press start when ready';
+      setSessionRunningClass();
       renderWorkout();
     }
   });

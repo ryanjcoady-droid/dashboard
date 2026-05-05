@@ -27,6 +27,9 @@
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 24px;line-height:1.5}
 
+/* Disable double-tap-to-zoom on touch devices but keep pinch zoom intact. */
+*{touch-action:manipulation}
+
 /* Header */
 .header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
 .date-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
