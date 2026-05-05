@@ -145,7 +145,10 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding
 .set-num{font-size:11px;font-weight:600;color:var(--muted);text-align:center}
 .set-input{background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%;text-align:center;min-width:0}
 .set-input:focus{border-color:var(--acc-bd)}
-.set-input::placeholder{color:var(--muted2)}
+.set-input::placeholder{color:var(--muted2);opacity:.85}
+/* When the placeholder is a ghost value (data-last set), style it more
+   distinctly so it reads as "your last session's number". */
+.set-input[data-last]:not([data-last=""])::placeholder{color:var(--muted);font-style:italic;opacity:.55}
 .set-input:disabled{opacity:.45;cursor:not-allowed}
 
 /* SMALLER tick — fixes the "too big tick" bug */
@@ -196,6 +199,112 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding
 .vol-stat{background:var(--card2);border-radius:9px;padding:10px 12px}
 .vol-stat-val{font-family:'Outfit',sans-serif;font-size:20px;font-weight:400;line-height:1}
 .vol-stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+/* Personal records / swim totals badge — sits under the exercise header,
+   visible whether the exercise is expanded or collapsed. */
+.ex-pr{
+  font-size:11px;color:var(--muted);
+  padding:4px 14px 8px 38px;
+  border-bottom:1px solid var(--border);
+  display:none;
+}
+.ex-item.expanded .ex-pr{display:block}
+.ex-pr .pr-row{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ex-pr .pr-label{
+  text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+  font-size:9px;color:var(--muted2);
+}
+.ex-pr .pr-val{
+  color:var(--text);font-family:'Outfit',sans-serif;font-weight:400;
+  font-size:12px;font-variant-numeric:tabular-nums;
+}
+.ex-pr .pr-sep{color:var(--muted2);margin:0 2px}
+.ex-pr .pr-when{
+  margin-left:6px;font-size:10px;color:var(--muted2);
+  font-style:italic;
+}
+.ex-pr .pr-empty{color:var(--muted2);font-size:11px;font-style:italic}
+.ex-pr .pr-new{
+  margin-left:8px;color:var(--green);font-weight:600;font-size:11px;
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  padding:2px 8px;border-radius:6px;
+  animation:pr-pulse 1.2s ease-in-out infinite;
+}
+@keyframes pr-pulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(74,222,128,0)}
+  50%{transform:scale(1.04);box-shadow:0 0 0 4px rgba(74,222,128,.12)}
+}
+
+/* Swim stroke coloured pills via the type select */
+.set-stroke-free{color:var(--acc);border-color:var(--acc-bd) !important;background:var(--acc-bg) !important}
+.set-stroke-back{color:#A78BFA;border-color:#3B2A5C !important;background:#161029 !important}
+.set-stroke-breast{color:#F472B6;border-color:#3D1828 !important;background:#190A12 !important}
+.set-stroke-fly{color:var(--amber);border-color:var(--amber-bd) !important;background:var(--amber-bg) !important}
+.set-stroke-im{color:#34D399;border-color:#0A3020 !important;background:#041510 !important}
+.set-stroke-kick{color:var(--muted);border-color:var(--border2) !important}
+.set-stroke-pull{color:var(--muted);border-color:var(--border2) !important}
+.set-stroke-drill{color:var(--muted2);border-color:var(--border2) !important;font-style:italic}
+
+/* History */
+.hist-list{display:flex;flex-direction:column;gap:6px}
+.hist-item{
+  background:var(--card2);border:1px solid var(--border2);border-radius:9px;
+  padding:9px 11px;cursor:pointer;transition:border-color .12s,background .12s;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-family:'DM Sans',sans-serif;
+}
+.hist-item:hover{border-color:var(--acc-bd);background:var(--card)}
+.hist-item-left{min-width:0;flex:1}
+.hist-item-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-item-meta{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
+.hist-item-stat{font-family:'Outfit',sans-serif;font-size:14px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.hist-empty{font-size:12px;color:var(--muted);text-align:center;padding:14px 8px;font-style:italic}
+.hist-all-btn{
+  border:none;background:none;color:var(--muted);font-size:11px;cursor:pointer;
+  padding:2px 8px;border-radius:6px;font-family:'DM Sans',sans-serif;transition:color .12s,background .12s;
+  letter-spacing:.04em;
+}
+.hist-all-btn:hover{color:var(--text);background:var(--card2)}
+
+/* Session detail modal */
+.sess-meta-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.sess-meta-pill{
+  background:var(--card2);border:1px solid var(--border2);border-radius:7px;
+  padding:5px 10px;font-size:11px;color:var(--muted);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.sess-meta-pill strong{color:var(--text);font-weight:500;font-family:'Outfit',sans-serif}
+.sess-ex{margin-bottom:14px}
+.sess-ex:last-child{margin-bottom:0}
+.sess-ex-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  padding-bottom:5px;margin-bottom:6px;border-bottom:1px solid var(--border);
+}
+.sess-ex-name{font-family:'Outfit',sans-serif;font-size:15px;font-weight:400;color:var(--text)}
+.sess-ex-meta{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.sess-set-row{
+  display:grid;grid-template-columns:32px 1fr 1fr auto;gap:8px;align-items:center;
+  padding:5px 0;font-size:13px;
+}
+.sess-set-row + .sess-set-row{border-top:1px dashed var(--border)}
+.sess-set-num{
+  font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;font-family:'DM Sans',sans-serif;
+}
+.sess-set-val{font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums}
+.sess-set-val small{color:var(--muted);font-family:'DM Sans',sans-serif;font-size:10px;margin-left:3px;letter-spacing:.04em}
+.sess-set-tag{
+  font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+  padding:2px 7px;border-radius:5px;background:var(--amber-bg);color:var(--amber);
+  border:1px solid var(--amber-bd);
+}
+.sess-no-data{font-size:12px;color:var(--muted);font-style:italic;padding:6px 0}
+.btn-danger-outline{
+  padding:9px 16px;border-radius:9px;border:1px solid var(--red-bd);background:transparent;
+  color:var(--red);font-size:13px;font-weight:500;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .12s;
+}
+.btn-danger-outline:hover{background:var(--red-bg)}
 
 /* Notes */
 .notes-area{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:vertical;min-height:72px;outline:none;transition:border-color .15s;line-height:1.5}
@@ -334,6 +443,15 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding
       </div>
     </div>
 
+    <div class="card" id="history-card" style="display:none">
+      <div class="card-head">
+        <span class="badge badge-amber">History</span>
+        <span class="card-head-meta" id="history-count"></span>
+        <button class="hist-all-btn" id="hist-all-btn" onclick="toggleHistoryAll()" style="margin-left:auto;display:none">Show all</button>
+      </div>
+      <div class="hist-list" id="hist-list"></div>
+    </div>
+
   </div>
 
   <div class="main-col">
@@ -422,6 +540,24 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding
   </div>
 </div>
 
+<!-- Session history detail modal -->
+<div class="modal-overlay" id="session-modal" onclick="handleModalClick(event,'session-modal')">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="sm-title">Session</div>
+        <div class="modal-sub" id="sm-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('session-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="sm-body"></div>
+    <div class="modal-actions">
+      <button class="btn-danger-outline" onclick="deleteSessionFromModal()" style="margin-right:auto">Delete entry</button>
+      <button class="btn-secondary" onclick="closeModal('session-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -469,11 +605,13 @@ const DEFAULT_WORKOUTS = [
     {id:'chin-up',name:'Chin-up',cat:'Compound',sets:3,reps:'AMRAP',rest:90,note:''},
     {id:'hammer-c',name:'Hammer Curl',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
   ]},
-  {id:'swim', name:'Swim', type:'Cardio', exercises:[
-    {id:'warm-lap',name:'Warm-up laps',cat:'Cardio',sets:3,reps:'4×25m',rest:60,note:'Easy pace'},
-    {id:'main-set',name:'Main set',cat:'Cardio',sets:4,reps:'100m',rest:90,note:''},
-    {id:'kick-set',name:'Kick set',cat:'Cardio',sets:2,reps:'50m',rest:60,note:'Board kick'},
-    {id:'cool-lap',name:'Cool-down laps',cat:'Cardio',sets:2,reps:'2×25m',rest:30,note:'Easy pace'},
+  {id:'swim', name:'Swim', type:'Cardio', kind:'swim', exercises:[
+    {id:'sw-warmup',name:'Warm-up',cat:'Warm-up',sets:2,reps:'100',rest:30,note:'Easy pace'},
+    {id:'sw-drill',name:'Drill set',cat:'Technique',sets:4,reps:'50',rest:20,note:'Focus on form'},
+    {id:'sw-main',name:'Main set',cat:'Main',sets:6,reps:'100',rest:30,note:'Threshold pace'},
+    {id:'sw-kick',name:'Kick set',cat:'Main',sets:4,reps:'50',rest:20,note:'Board kick'},
+    {id:'sw-pull',name:'Pull set',cat:'Main',sets:4,reps:'50',rest:20,note:'Pull buoy, focus arms'},
+    {id:'sw-cooldown',name:'Cool-down',cat:'Cool-down',sets:1,reps:'200',rest:0,note:'Easy pace'},
   ]},
   {id:'running', name:'Running', type:'Cardio', exercises:[
     {id:'warmup-walk',name:'Warm-up walk',cat:'Cardio',sets:1,reps:'5 min',rest:0,note:'Easy pace'},
@@ -565,6 +703,167 @@ function getLastSetsFor(exId){
   }
   return [];
 }
+
+// Estimated 1RM via the Epley formula: w × (1 + r/30).
+// Reasonably accurate in the 1-10 rep range, less reliable above ~12 reps.
+function estimate1RM(weight, reps){
+  const w = parseFloat(weight);
+  const r = parseInt(reps);
+  if(!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) return 0;
+  if(r === 1) return w;
+  // Cap at 12 reps for 1RM estimation; beyond that the formula falls apart.
+  const cappedReps = Math.min(r, 12);
+  return w * (1 + cappedReps/30);
+}
+
+// Compute personal records for an exercise from the full session log.
+// Returns {bestSet:{weight,reps,date}, best1RM:{weight,reps,e1rm,date}, totalSessions, lastDate}
+// "Best set" = highest weight × reps. "Best 1RM" = highest estimated 1RM.
+// Warm-up sets and unset/empty values are excluded.
+function computePR(exId, opts={}){
+  const {excludeToday = false} = opts;
+  const log = loadSessionLog();
+  let bestSet = null;
+  let best1RM = null;
+  let totalSessions = 0;
+  let lastDate = null;
+
+  for(const entry of log){
+    if(excludeToday && entry.date === TODAY) continue;
+    const sets = entry.sets?.[exId];
+    if(!sets || !sets.length) continue;
+    let countedThisSession = false;
+    for(const s of sets){
+      if(!s.done) continue;
+      if(s.type === 'warmup') continue;
+      const w = parseFloat(s.weight);
+      const r = parseInt(s.reps);
+      if(!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) continue;
+      if(!countedThisSession){ totalSessions++; countedThisSession = true; }
+      lastDate = entry.date;
+      // Best top set: prefer higher weight; tiebreak on reps.
+      if(!bestSet || w > bestSet.weight || (w === bestSet.weight && r > bestSet.reps)){
+        bestSet = {weight:w, reps:r, date:entry.date};
+      }
+      const e1rm = estimate1RM(w, r);
+      if(!best1RM || e1rm > best1RM.e1rm){
+        best1RM = {weight:w, reps:r, e1rm, date:entry.date};
+      }
+    }
+  }
+  return {bestSet, best1RM, totalSessions, lastDate};
+}
+
+// Returns the best (weight, reps) of completed sets in the CURRENT session
+// for an exercise, used to detect whether the user has just hit a new PR.
+function bestCurrentSet(exId){
+  const sets = session[exId+'_sets'] || [];
+  let best = null;
+  for(const s of sets){
+    if(!s.done || s.type === 'warmup') continue;
+    const w = parseFloat(s.weight);
+    const r = parseInt(s.reps);
+    if(!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) continue;
+    if(!best || w > best.weight || (w === best.weight && r > best.reps)){
+      best = {weight:w, reps:r};
+    }
+  }
+  return best;
+}
+
+// Format a date string YYYY-MM-DD as "5 May" or "Today" / "Yesterday".
+function fmtPRDate(dateStr){
+  if(!dateStr) return '';
+  if(dateStr === TODAY) return 'today';
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const diffDays = Math.round((today - dt) / 86400000);
+  if(diffDays === 1) return 'yesterday';
+  if(diffDays < 7) return `${diffDays}d ago`;
+  if(diffDays < 30) return `${Math.round(diffDays/7)}w ago`;
+  return `${dt.getDate()} ${MON_SHORT[dt.getMonth()]}`;
+}
+
+// Update only the PR display for one exercise (live update during a session
+// when the user finishes a set) without re-rendering the whole workout view.
+function renderPRsFor(exId){
+  const el = document.getElementById('pr-'+exId);
+  if(!el) return;
+  const w = getActiveWorkout();
+  if(!w || w.kind === 'swim') return; // PRs don't make sense for swim
+  el.innerHTML = buildPRBadgeHTML(exId);
+}
+
+function buildPRBadgeHTML(exId){
+  const pr = computePR(exId, {excludeToday: true});
+  const cur = bestCurrentSet(exId);
+  if(!pr.bestSet){
+    // No prior data — just suggest tracking
+    if(!cur) return '<span class="pr-empty">No prior records yet. Log a set to start tracking PRs.</span>';
+    // No prior, but they've done a set today — show today's best
+    return `<span class="pr-row"><span class="pr-label">First session</span><span class="pr-val">${cur.weight} kg × ${cur.reps}</span></span>`;
+  }
+  // Detect if current session has a new PR (top set beats prior best top set)
+  let beatsPR = false;
+  if(cur){
+    if(cur.weight > pr.bestSet.weight) beatsPR = true;
+    else if(cur.weight === pr.bestSet.weight && cur.reps > pr.bestSet.reps) beatsPR = true;
+  }
+  const e1rm = Math.round(pr.best1RM.e1rm * 10) / 10;
+  const when = fmtPRDate(pr.bestSet.date);
+  const trophy = beatsPR ? '<span class="pr-new">🏆 New PR!</span>' : '';
+  return `
+    <span class="pr-row">
+      <span class="pr-label">Best</span>
+      <span class="pr-val">${pr.bestSet.weight} kg × ${pr.bestSet.reps}</span>
+      <span class="pr-sep">·</span>
+      <span class="pr-label">est. 1RM</span>
+      <span class="pr-val">${e1rm} kg</span>
+      <span class="pr-when">${when}</span>
+      ${trophy}
+    </span>`;
+}
+
+// Swim equivalent: instead of strength PRs, show total distance done in
+// the current session for this exercise plus totals from the last logged
+// session as a comparator.
+function buildSwimTotalsHTML(exId){
+  const curSets = session[exId+'_sets'] || [];
+  const curDist = curSets.reduce((sum, s) => {
+    if(!s.done) return sum;
+    const d = parseFloat(s.reps);
+    return sum + (isFinite(d) && d > 0 ? d : 0);
+  }, 0);
+
+  // Last session totals
+  const last = getLastSetsFor(exId);
+  const lastDist = last.reduce((sum, s) => {
+    const d = parseFloat(s.reps);
+    return sum + (isFinite(d) && d > 0 ? d : 0);
+  }, 0);
+  const lastDate = (() => {
+    const log = loadSessionLog();
+    for(let i=log.length-1; i>=0; i--){
+      if(log[i].sets?.[exId]) return log[i].date;
+    }
+    return null;
+  })();
+
+  if(!curDist && !lastDist) return '<span class="pr-empty">No swim data yet. Log a set to start tracking distance.</span>';
+
+  let html = '<span class="pr-row">';
+  if(curDist){
+    html += `<span class="pr-label">This session</span><span class="pr-val">${curDist} m</span>`;
+  }
+  if(lastDist){
+    if(curDist) html += '<span class="pr-sep">·</span>';
+    html += `<span class="pr-label">Last</span><span class="pr-val">${lastDist} m</span>`;
+    if(lastDate) html += `<span class="pr-when">${fmtPRDate(lastDate)}</span>`;
+  }
+  html += '</span>';
+  return html;
+}
+
 function getWeeklyStreak(){
   // Count consecutive past weeks (including this one if done) with at least 1 workout
   let streak = 0;
@@ -641,6 +940,16 @@ function renderWorkout(){
   const w = getActiveWorkout();
   if(!w){ document.getElementById('exercise-list').innerHTML = '<div style="color:var(--muted);font-size:13px">No workout selected.</div>'; return; }
 
+  // Auto-tag legacy swim workouts with kind:'swim' so the new UI renders.
+  // (Workouts created before this version don't have a kind property.)
+  if(!w.kind){
+    if(w.id === 'swim' || /swim/i.test(w.name||'')) w.kind = 'swim';
+    else if(w.type === 'Cardio') w.kind = 'cardio';
+    else w.kind = 'strength';
+    saveWorkouts(workouts);
+  }
+  const workoutKind = w.kind || 'strength';
+
   document.getElementById('workout-badge').textContent = w.name;
   document.getElementById('workout-title').textContent = w.name;
   document.getElementById('workout-type-label').textContent = w.type;
@@ -651,6 +960,12 @@ function renderWorkout(){
   exs.forEach(ex=>{ const g=ex.cat||'Other'; (groups[g]=groups[g]||[]).push(ex); });
 
   const CHK = `<svg viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 3 5.5-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  // Column header labels switch for swim sessions: distance + time/pace
+  // instead of reps + kg.
+  const isSwim = workoutKind === 'swim';
+  const colReps = isSwim ? 'Distance (m)' : 'Reps';
+  const colWeight = isSwim ? 'Time (mm:ss)' : 'Kg / Time';
 
   let html = '';
   Object.entries(groups).forEach(([cat, exList])=>{
@@ -669,6 +984,11 @@ function renderWorkout(){
       // Build presets
       const presets = [30,60,90,120,180];
 
+      // PR badge for non-swim workouts; swim gets a totals badge instead
+      const prHtml = isSwim
+        ? buildSwimTotalsHTML(ex.id)
+        : buildPRBadgeHTML(ex.id);
+
       html += `<div class="ex-item${isDone?' done':''}${expanded?' expanded':''}" id="ex-${esc(ex.id)}">
         <div class="ex-header" onclick="toggleEx('${esc(ex.id)}')">
           <div class="ex-check">${CHK}</div>
@@ -680,25 +1000,53 @@ function renderWorkout(){
           <button class="ex-del-btn" onclick="event.stopPropagation();deleteExercise('${esc(ex.id)}')" title="Delete">✕</button>
           <svg class="ex-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
         </div>
+        <div class="ex-pr" id="pr-${esc(ex.id)}">${prHtml}</div>
         <div class="ex-sets">
-          <div class="sets-row-head"><span>Set</span><span>Reps</span><span>Kg / Time</span><span>Type</span><span></span></div>`;
+          <div class="sets-row-head"><span>Set</span><span>${colReps}</span><span>${colWeight}</span><span>${isSwim?'Stroke':'Type'}</span><span></span></div>`;
 
       setData.forEach((sd,i)=>{
-        const lastReps = lastSets[i]?.reps || '';
-        const lastWeight = lastSets[i]?.weight || '';
-        const repsPh = lastReps ? `last: ${lastReps}` : (ex.reps||'—');
-        const weightPh = lastWeight ? `last: ${lastWeight}` : 'kg / time';
-        const curType = sd.type || 'normal';
-        html += `<div class="set-row${sd.done?' set-done':''} type-${curType}" id="sr-${esc(ex.id)}-${i}">
+        const last = lastSets[i] || {};
+        const lastReps = (last.reps != null && last.reps !== '') ? String(last.reps) : '';
+        const lastWeight = (last.weight != null && last.weight !== '') ? String(last.weight) : '';
+        const curType = sd.type || (isSwim ? 'free' : 'normal');
+        const repsLabel = isSwim ? 'distance (m)' : (ex.reps || '—');
+        const weightLabel = isSwim ? 'mm:ss' : 'kg';
+        // Ghost values are last session's numbers, shown in muted text when input is empty.
+        // The data-last attribute lets us prefill on focus.
+        // For swim sessions, the "type" select holds the stroke instead of set type.
+        const typeSelect = isSwim
+          ? `<select class="set-input set-type-select set-stroke-${curType}" onchange="updateSet('${esc(ex.id)}',${i},'type',this.value)">
+              <option value="free"${curType==='free'?' selected':''}>Free</option>
+              <option value="back"${curType==='back'?' selected':''}>Back</option>
+              <option value="breast"${curType==='breast'?' selected':''}>Breast</option>
+              <option value="fly"${curType==='fly'?' selected':''}>Fly</option>
+              <option value="im"${curType==='im'?' selected':''}>IM</option>
+              <option value="kick"${curType==='kick'?' selected':''}>Kick</option>
+              <option value="pull"${curType==='pull'?' selected':''}>Pull</option>
+              <option value="drill"${curType==='drill'?' selected':''}>Drill</option>
+            </select>`
+          : `<select class="set-input set-type-select set-type-${curType}" onchange="updateSet('${esc(ex.id)}',${i},'type',this.value)">
+              <option value="normal"${curType==='normal'?' selected':''}>Normal</option>
+              <option value="warmup"${curType==='warmup'?' selected':''}>Warmup</option>
+              <option value="failure"${curType==='failure'?' selected':''}>Failure</option>
+              <option value="cardio"${curType==='cardio'?' selected':''}>Cardio</option>
+            </select>`;
+        const rowClass = isSwim ? '' : `type-${curType}`;
+        html += `<div class="set-row${sd.done?' set-done':''} ${rowClass}" id="sr-${esc(ex.id)}-${i}">
           <div class="set-num">${i+1}</div>
-          <input class="set-input" type="text" value="${esc(sd.reps||'')}" placeholder="${esc(repsPh)}" onchange="updateSet('${esc(ex.id)}',${i},'reps',this.value)">
-          <input class="set-input" type="text" value="${esc(sd.weight||'')}" placeholder="${esc(weightPh)}" onchange="updateSet('${esc(ex.id)}',${i},'weight',this.value)">
-          <select class="set-input set-type-select set-type-${curType}" onchange="updateSet('${esc(ex.id)}',${i},'type',this.value)">
-            <option value="normal"${curType==='normal'?' selected':''}>Normal</option>
-            <option value="warmup"${curType==='warmup'?' selected':''}>Warmup</option>
-            <option value="failure"${curType==='failure'?' selected':''}>Failure</option>
-            <option value="cardio"${curType==='cardio'?' selected':''}>Cardio</option>
-          </select>
+          <input class="set-input" type="text" inputmode="${isSwim?'numeric':'decimal'}" value="${esc(sd.reps||'')}"
+                 placeholder="${esc(lastReps || repsLabel)}"
+                 data-last="${esc(lastReps)}"
+                 data-field="reps"
+                 onfocus="ghostFocus(this)"
+                 onchange="updateSet('${esc(ex.id)}',${i},'reps',this.value)">
+          <input class="set-input" type="text" inputmode="${isSwim?'text':'decimal'}" value="${esc(sd.weight||'')}"
+                 placeholder="${esc(lastWeight || weightLabel)}"
+                 data-last="${esc(lastWeight)}"
+                 data-field="weight"
+                 onfocus="ghostFocus(this)"
+                 onchange="updateSet('${esc(ex.id)}',${i},'weight',this.value)">
+          ${typeSelect}
           <button class="set-done-btn" onclick="toggleSetDone('${esc(ex.id)}',${i})">${sd.done?CHK:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8l3 3 5-5"/></svg>'}</button>
         </div>`;
       });
@@ -758,6 +1106,20 @@ function deleteExercise(id){
   renderWorkout();
 }
 
+// Hevy-style ghost-value behaviour: when an input has a placeholder showing
+// the previous session's number, tapping it pre-fills the value so the user
+// can keep, tweak, or clear it. Only triggers if the field is empty.
+function ghostFocus(input){
+  if(input.value !== '' && input.value != null) return;
+  const last = input.dataset.last;
+  if(!last) return;
+  input.value = last;
+  // Trigger native change so updateSet runs
+  input.dispatchEvent(new Event('change', {bubbles:true}));
+  // Select all so the user can immediately overtype
+  setTimeout(()=>{ try{ input.select(); }catch(e){} }, 0);
+}
+
 function updateSet(exId, idx, field, val){
   const ex = findEx(exId); if(!ex) return;
   if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},()=>({reps:'',weight:'',type:'normal',done:false}));
@@ -765,6 +1127,8 @@ function updateSet(exId, idx, field, val){
   session[exId+'_sets'][idx][field] = val;
   saveSession(TODAY, session);
   renderVolume();
+  renderHistory();
+  renderPRsFor(exId);
   if(field==='type'){
     // re-render to update color tag
     renderWorkout();
@@ -777,6 +1141,12 @@ function toggleSetDone(exId, idx){
   if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},()=>({reps:'',weight:'',type:'normal',done:false}));
   if(!session[exId+'_sets'][idx]) session[exId+'_sets'][idx]={};
   const wasDone = session[exId+'_sets'][idx].done;
+
+  // PR detection: if we're marking a set DONE, capture the prior PR
+  // before mutating session, then check whether this set beats it.
+  let priorPR = null;
+  if(!wasDone){ priorPR = computePR(exId, {excludeToday: true}); }
+
   session[exId+'_sets'][idx].done = !wasDone;
 
   // Auto-mark exercise done if all sets done
@@ -800,10 +1170,32 @@ function toggleSetDone(exId, idx){
     startExTimer(exId);
   }
 
+  // PR check after toggling done. Only show toast if we just completed a set
+  // (not on un-toggle), and only for non-warmup sets with valid weight × reps.
+  if(!wasDone && priorPR && getActiveWorkout()?.kind !== 'swim'){
+    const sd = session[exId+'_sets'][idx];
+    if(sd.type !== 'warmup'){
+      const w = parseFloat(sd.weight), r = parseInt(sd.reps);
+      if(isFinite(w) && w > 0 && isFinite(r) && r > 0){
+        const beatsTopSet = !priorPR.bestSet
+          || w > priorPR.bestSet.weight
+          || (w === priorPR.bestSet.weight && r > priorPR.bestSet.reps);
+        const newE1RM = estimate1RM(w, r);
+        const beats1RM = !priorPR.best1RM || newE1RM > priorPR.best1RM.e1rm + 0.1;
+        if(beatsTopSet && priorPR.bestSet){
+          showToast(`🏆 New PR for ${ex.name}: ${w} kg × ${r}`, 4000);
+        } else if(beats1RM && priorPR.best1RM){
+          showToast(`📈 Estimated 1RM up to ${Math.round(newE1RM*10)/10} kg`, 3500);
+        }
+      }
+    }
+  }
+
   renderWorkout();
   // Re-show running timers
   Object.keys(exTimers).forEach(updateExTimerUI);
   renderVolume();
+  renderHistory();
 }
 
 function addSet(exId){
@@ -1003,13 +1395,20 @@ function finishWorkout(){
       setsSnapshot[exId] = session[k];
     }
   });
+  // Snapshot exercise names so log entries remain readable even if the
+  // workout's exercises are later renamed or deleted.
+  const exerciseNames = {};
+  const w = getActiveWorkout();
+  (w?.exercises||[]).forEach(ex => { exerciseNames[ex.id] = ex.name; });
   log.push({
     date: TODAY,
     workoutId: activeId,
-    workoutName: getActiveWorkout()?.name || '',
+    workoutName: w?.name || '',
+    workoutKind: w?.kind || 'strength',
     start: sessionTimer.start,
     end: sessionTimer.end,
     sets: setsSnapshot,
+    exerciseNames,
     notes: '' // notes are permanent now, not per-session
   });
   saveSessionLog(log);
@@ -1028,7 +1427,6 @@ function finishWorkout(){
 
   Object.keys(exTimers).forEach(cancelExTimer);
 
-  const w = getActiveWorkout();
   const setsDone = Object.keys(session).filter(k=>k.endsWith('_sets')).reduce((a,k)=>a+(session[k]||[]).filter(s=>s.done).length,0);
   const banner = document.getElementById('complete-banner');
   banner.classList.add('show');
@@ -1038,18 +1436,43 @@ function finishWorkout(){
   showToast('🏆 Workout logged!', 3000);
 }
 
-// Continue an already-finished session: re-open timer from where it ended
+// Continue an already-finished session: re-open timer from where it ended.
+// Edge cases handled: missing timer, stale timer (different day), and the
+// just-logged entry being modified externally between finish and continue.
 function continueWorkout(){
   if(!sessionTimer || !sessionTimer.end){ showToast('No finished session to continue'); return; }
-  // Remove the just-logged entry from session log (it'll be re-logged on next finish)
-  const log = loadSessionLog();
-  // Pop the most recent matching entry
-  for(let i=log.length-1; i>=0; i--){
-    if(log[i].date===TODAY && log[i].start===sessionTimer.start){ log.splice(i,1); break; }
+  if(timerIsStale(sessionTimer)){
+    showToast('That session was from a previous day. Start a new one.', 3500);
+    recoverStaleSession();
+    document.getElementById('start-workout-btn').style.display = 'inline-flex';
+    document.getElementById('continue-workout-btn').style.display = 'none';
+    document.getElementById('new-session-btn').style.display = 'none';
+    document.getElementById('finish-workout-btn').style.display = 'none';
+    document.getElementById('complete-banner').classList.remove('show');
+    document.getElementById('duration-time').className = 'duration-time idle';
+    document.getElementById('duration-time').textContent = '0:00';
+    document.getElementById('session-status').textContent = 'Not started';
+    document.getElementById('duration-label').textContent = 'Press start when ready';
+    renderWorkout();
+    return;
   }
-  saveSessionLog(log);
 
-  // Resume timer: bump start so duration stays continuous
+  // Remove the just-logged entry from session log (it'll be re-logged on next finish).
+  // Match by start time AND date (defensive — start times are timestamps so already
+  // unique, but the date check protects against Firestore round-trips creating a
+  // copy with a slightly different shape).
+  const log = loadSessionLog();
+  let removed = false;
+  for(let i=log.length-1; i>=0; i--){
+    if(log[i].date===TODAY && log[i].start===sessionTimer.start){
+      log.splice(i,1);
+      removed = true;
+      break;
+    }
+  }
+  if(removed) saveSessionLog(log);
+
+  // Resume timer: bump start so total elapsed duration stays continuous
   const elapsed = sessionTimer.end - sessionTimer.start;
   sessionTimer = { start: Date.now() - elapsed, end: null };
   saveSessionTimer(sessionTimer);
@@ -1081,6 +1504,7 @@ function startNewSession(){
   document.getElementById('duration-label').textContent = 'Press start when ready';
   renderWorkout();
   renderVolume();
+  renderHistory();
   renderWeek();
 }
 
@@ -1104,23 +1528,240 @@ function updateSessionUI(){
 
 // ════════════ VOLUME ════════════
 function renderVolume(){
-  let sets=0, reps=0, kg=0;
+  const w = getActiveWorkout();
+  const isSwim = (w?.kind === 'swim');
+  let sets=0, repsOrDist=0, kg=0;
   Object.keys(session).forEach(k=>{
     if(k.endsWith('_sets')){
       (session[k]||[]).forEach(s=>{
         if(!s.done) return;
         sets++;
-        const r = parseInt(s.reps)||0;
-        const w = parseFloat(s.weight)||0;
-        reps += r;
-        kg += r*w;
+        const r = parseFloat(s.reps)||0; // reps OR distance for swim
+        const wt = parseFloat(s.weight)||0;
+        repsOrDist += r;
+        if(!isSwim) kg += r*wt;
       });
     }
   });
   document.getElementById('vol-sets').textContent = sets;
-  document.getElementById('vol-reps').textContent = reps;
-  document.getElementById('vol-kg').textContent = Math.round(kg);
+  document.getElementById('vol-reps').textContent = isSwim ? Math.round(repsOrDist) : repsOrDist;
+  document.getElementById('vol-kg').textContent = isSwim ? '—' : Math.round(kg);
+  // Update labels too
+  const repsLbl = document.querySelector('#volume-card .vol-stat:nth-child(2) .vol-stat-lbl');
+  const kgLbl = document.querySelector('#volume-card .vol-stat:nth-child(3) .vol-stat-lbl');
+  if(repsLbl) repsLbl.textContent = isSwim ? 'Distance (m)' : 'Reps';
+  if(kgLbl) kgLbl.textContent = isSwim ? '' : 'Total kg';
   document.getElementById('volume-card').style.display = sets>0 ? 'block' : 'none';
+}
+
+// ════════════ HISTORY ════════════
+// Sessions are stored permanently in wt_session_log (synced to Firestore).
+// The side panel shows the last 30 days by default with a "Show all" toggle.
+let historyShowAll = false;
+
+// Find an exercise by id across ALL workouts (not just the active one).
+// This is needed because log entries can reference exercises that were
+// renamed/deleted from the workout definition since the session was logged.
+// As a third fallback, look at the exerciseNames snapshot stored on each
+// log entry (newer feature).
+function findExAnywhere(exId, fallbackEntry){
+  for(const w of workouts){
+    const ex = w.exercises?.find(e=>e.id===exId);
+    if(ex) return ex;
+  }
+  if(fallbackEntry?.exerciseNames?.[exId]){
+    return {id: exId, name: fallbackEntry.exerciseNames[exId], cat: ''};
+  }
+  return null;
+}
+
+function fmtSessionDate(dateStr){
+  // dateStr is YYYY-MM-DD
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yest = new Date(today); yest.setDate(yest.getDate()-1);
+  const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  if(sameDay(dt, today)) return 'Today';
+  if(sameDay(dt, yest)) return 'Yesterday';
+  // Within the last week — show day name
+  const diff = Math.round((today - dt) / 86400000);
+  if(diff>0 && diff<7) return DAY_NAMES[dt.getDay()];
+  return `${dt.getDate()} ${MON_SHORT[dt.getMonth()]}`;
+}
+
+function summariseSession(entry){
+  // Returns {setsDone, totalReps, totalKg, totalDistance, isSwim}
+  // For strength sessions, totalKg = sum of weight × reps; for swim, totalDistance = sum of reps (which holds metres).
+  const isSwim = (entry.workoutKind === 'swim');
+  let setsDone=0, totalReps=0, totalKg=0, totalDistance=0;
+  const sets = entry.sets || {};
+  Object.keys(sets).forEach(exId=>{
+    (sets[exId]||[]).forEach(s=>{
+      if(!s.done) return;
+      setsDone++;
+      const r = parseFloat(s.reps)||0;
+      const wt = parseFloat(s.weight)||0;
+      if(isSwim){
+        totalDistance += r;
+      } else {
+        totalReps += r;
+        totalKg += r*wt;
+      }
+    });
+  });
+  return {setsDone, totalReps, totalKg, totalDistance, isSwim};
+}
+
+function renderHistory(){
+  const log = loadSessionLog();
+  const card = document.getElementById('history-card');
+  const list = document.getElementById('hist-list');
+  const allBtn = document.getElementById('hist-all-btn');
+  const countLbl = document.getElementById('history-count');
+
+  if(!log.length){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  // Newest first. Stable sort: prefer end-time, fall back to start, then date.
+  const sorted = [...log].sort((a,b) => (b.end||b.start||0) - (a.end||a.start||0));
+
+  // Default: last 30 days. "Show all": everything stored.
+  const cutoff = Date.now() - 30*86400000;
+  const recent = sorted.filter(e => (e.end || e.start || 0) >= cutoff);
+  const visible = historyShowAll ? sorted : recent;
+  const olderCount = sorted.length - recent.length;
+
+  countLbl.textContent = historyShowAll
+    ? `${sorted.length} logged`
+    : `${visible.length} in last 30 days`;
+  allBtn.style.display = olderCount > 0 ? 'inline-block' : 'none';
+  allBtn.textContent = historyShowAll ? 'Recent only' : `Show all (${sorted.length})`;
+
+  if(!visible.length){
+    list.innerHTML = '<div class="hist-empty">No completed sessions yet</div>';
+    return;
+  }
+
+  list.innerHTML = visible.map((entry) => {
+    const idx = log.indexOf(entry); // stable index in the underlying log
+    const {setsDone, totalKg, totalDistance, isSwim} = summariseSession(entry);
+    const dur = (entry.end && entry.start) ? Math.floor((entry.end-entry.start)/1000) : 0;
+    const durStr = dur>0 ? fmtDuration(dur) : '';
+    const dateStr = fmtSessionDate(entry.date);
+    const meta = [dateStr, `${setsDone} sets`, durStr].filter(Boolean).join(' · ');
+    const stat = isSwim
+      ? (totalDistance > 0 ? `${Math.round(totalDistance)} m` : '')
+      : (totalKg > 0 ? `${Math.round(totalKg)} kg` : '');
+    return `
+      <div class="hist-item" onclick="openSessionModal(${idx})" role="button" tabindex="0">
+        <div class="hist-item-left">
+          <div class="hist-item-name">${escapeHtml(entry.workoutName || 'Workout')}</div>
+          <div class="hist-item-meta">${escapeHtml(meta)}</div>
+        </div>
+        ${stat ? `<div class="hist-item-stat">${stat}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function toggleHistoryAll(){
+  historyShowAll = !historyShowAll;
+  renderHistory();
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let activeSessionIdx = -1;
+
+function openSessionModal(idx){
+  const log = loadSessionLog();
+  const entry = log[idx];
+  if(!entry){ showToast('Session not found'); return; }
+  activeSessionIdx = idx;
+
+  document.getElementById('sm-title').textContent = entry.workoutName || 'Workout';
+
+  const {setsDone, totalReps, totalKg, totalDistance, isSwim} = summariseSession(entry);
+  const dur = (entry.end && entry.start) ? Math.floor((entry.end-entry.start)/1000) : 0;
+  const fullDate = (() => {
+    const [y,m,d] = entry.date.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    return `${DAY_NAMES[dt.getDay()]}, ${dt.getDate()} ${MON_SHORT[dt.getMonth()]} ${dt.getFullYear()}`;
+  })();
+  document.getElementById('sm-sub').textContent = fullDate;
+
+  // Body: meta pills + per-exercise set listing
+  const body = document.getElementById('sm-body');
+  let html = '<div class="sess-meta-row">';
+  if(dur>0) html += `<div class="sess-meta-pill">Duration <strong>${fmtDuration(dur)}</strong></div>`;
+  html += `<div class="sess-meta-pill">Sets <strong>${setsDone}</strong></div>`;
+  if(isSwim){
+    if(totalDistance>0) html += `<div class="sess-meta-pill">Distance <strong>${Math.round(totalDistance)} m</strong></div>`;
+  } else {
+    html += `<div class="sess-meta-pill">Reps <strong>${totalReps}</strong></div>`;
+    if(totalKg>0) html += `<div class="sess-meta-pill">Volume <strong>${Math.round(totalKg)} kg</strong></div>`;
+  }
+  html += '</div>';
+
+  const sets = entry.sets || {};
+  const exIds = Object.keys(sets);
+  if(!exIds.length){
+    html += '<div class="sess-no-data">No set data was recorded for this session.</div>';
+  } else {
+    exIds.forEach(exId => {
+      const exSets = (sets[exId]||[]).filter(s=>s.done);
+      if(!exSets.length) return;
+      const ex = findExAnywhere(exId, entry);
+      const name = ex?.name || entry.exerciseNames?.[exId] || exId;
+      const cat = ex?.cat || '';
+      const isSwimEntry = (entry.workoutKind === 'swim');
+      html += '<div class="sess-ex">';
+      html += `<div class="sess-ex-head"><div class="sess-ex-name">${escapeHtml(name)}</div>`;
+      if(cat) html += `<div class="sess-ex-meta">${escapeHtml(cat)}</div>`;
+      html += '</div>';
+      exSets.forEach((s, i) => {
+        const reps = (s.reps !== '' && s.reps != null) ? s.reps : '—';
+        const wt = (s.weight !== '' && s.weight != null && s.weight !== 0) ? s.weight : '';
+        let tag = '';
+        if(isSwimEntry && s.type){
+          const strokeName = {free:'Freestyle',back:'Back',breast:'Breast',fly:'Fly',im:'IM',kick:'Kick',pull:'Pull',drill:'Drill'}[s.type] || s.type;
+          tag = `<span class="sess-set-tag">${escapeHtml(strokeName)}</span>`;
+        } else if(s.type === 'warmup'){
+          tag = '<span class="sess-set-tag">Warm-up</span>';
+        }
+        const repsUnit = isSwimEntry ? 'm' : 'reps';
+        const wtUnit = isSwimEntry ? '' : 'kg';
+        html += '<div class="sess-set-row">';
+        html += `<div class="sess-set-num">Set ${i+1}</div>`;
+        html += `<div class="sess-set-val">${escapeHtml(String(reps))}<small>${repsUnit}</small></div>`;
+        html += `<div class="sess-set-val">${wt!==''?escapeHtml(String(wt))+(wtUnit?'<small>'+wtUnit+'</small>':''):'<span style="color:var(--muted)">—</span>'}</div>`;
+        html += `<div>${tag}</div>`;
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+  }
+  body.innerHTML = html;
+
+  document.getElementById('session-modal').classList.add('open');
+}
+
+function deleteSessionFromModal(){
+  if(activeSessionIdx < 0) return;
+  if(!confirm('Delete this session entry? This cannot be undone.')) return;
+  const log = loadSessionLog();
+  if(activeSessionIdx >= log.length){ closeModal('session-modal'); return; }
+  log.splice(activeSessionIdx, 1);
+  saveSessionLog(log);
+  closeModal('session-modal');
+  renderHistory();
+  renderWeek?.();
+  showToast('Session deleted');
 }
 
 // ════════════ ADD EXERCISE ════════════
@@ -1210,14 +1851,100 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); d
 function handleModalClick(e,id){ if(e.target===document.getElementById(id)) closeModal(id); }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); document.body.style.overflow=''; } });
 
+// ════════════ STATE RECOVERY ════════════
+// Helper: is a timer's start (or end) on a different calendar day from today?
+function timerIsStale(timer){
+  if(!timer) return false;
+  const ref = timer.end || timer.start;
+  if(!ref) return false;
+  const d = new Date(ref);
+  return fmtDate(d) !== TODAY;
+}
+
+// If there's a left-over running timer from a previous day (e.g. user opened
+// the app, marked a set, then closed without finishing), auto-finalise it as
+// a logged session for that prior day rather than letting it leak into today.
+// If a finished timer is from a previous day, just clear it: the session is
+// already logged, today should start fresh.
+function recoverStaleSession(){
+  if(!sessionTimer || !timerIsStale(sessionTimer)) return false;
+
+  if(sessionTimer.end){
+    // Already finished, just from a prior day. Clear and start clean.
+    sessionTimer = null;
+    saveSessionTimer(null);
+    return true;
+  }
+
+  // Running timer from a prior day — auto-finalise so we don't lose the data.
+  // Use the timer's date (not today) and compute end as start + elapsed (cap
+  // at 4 hours because long-running orphaned timers are almost certainly an
+  // unfinished session, not a real 12-hour workout).
+  const startDate = fmtDate(new Date(sessionTimer.start));
+  const cappedEnd = Math.min(sessionTimer.start + 4*3600*1000, Date.now());
+  const sessionForThatDay = (() => {
+    try{ return JSON.parse(localStorage.getItem(SESSION_KEY(startDate))) || {}; }
+    catch(e){ return {}; }
+  })();
+
+  // Snapshot any sets that were entered for that day
+  const setsSnapshot = {};
+  let anySets = false;
+  Object.keys(sessionForThatDay).forEach(k => {
+    if(k.endsWith('_sets')){
+      const exId = k.slice(0, -('_sets'.length));
+      const arr = sessionForThatDay[k] || [];
+      // Only log if at least one set was marked done
+      if(arr.some(s => s.done)){
+        setsSnapshot[exId] = arr;
+        anySets = true;
+      }
+    }
+  });
+
+  if(anySets){
+    // Persist as a completed session for that day
+    const log = loadSessionLog();
+    // Avoid duplicating if a finalisation entry already exists for the same start time
+    const exists = log.some(e => e.start === sessionTimer.start);
+    if(!exists){
+      log.push({
+        date: startDate,
+        workoutId: activeId,
+        workoutName: getActiveWorkout()?.name || '',
+        start: sessionTimer.start,
+        end: cappedEnd,
+        sets: setsSnapshot,
+        notes: '',
+        autoFinalised: true,
+      });
+      saveSessionLog(log);
+      const completed = loadCompletedDays();
+      if(!completed[startDate]){
+        completed[startDate] = activeId;
+        saveCompletedDays(completed);
+      }
+      showToast(`⏱ Recovered unfinished session from ${fmtPRDate(startDate)}`, 4000);
+    }
+  }
+
+  sessionTimer = null;
+  saveSessionTimer(null);
+  return true;
+}
+
 // ════════════ INIT ════════════
 function init(){
+  // Run state recovery BEFORE first render so renderWorkout sees a clean state.
+  recoverStaleSession();
+
   renderWorkoutList();
   renderWorkout();
   renderVolume();
+  renderHistory();
   renderWeek();
 
-  // Restore session timer
+  // Restore session timer (only valid if not stale, which recovery already handled)
   if(sessionTimer){
     if(sessionTimer.end){
       const dur = Math.floor((sessionTimer.end-sessionTimer.start)/1000);
@@ -1234,6 +1961,28 @@ function init(){
       startSessionTick();
     }
   }
+
+  // Watch for the page becoming visible again after being hidden for a while
+  // (e.g. phone went to sleep mid-rest). Re-run recovery if a day boundary
+  // was crossed while we were away.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible') return;
+    // If a finished session timer is suddenly stale, gently reset to today.
+    if(sessionTimer && timerIsStale(sessionTimer)){
+      recoverStaleSession();
+      // Reset UI to fresh-day state
+      document.getElementById('start-workout-btn').style.display = 'inline-flex';
+      document.getElementById('continue-workout-btn').style.display = 'none';
+      document.getElementById('new-session-btn').style.display = 'none';
+      document.getElementById('finish-workout-btn').style.display = 'none';
+      document.getElementById('complete-banner').classList.remove('show');
+      document.getElementById('duration-time').className = 'duration-time idle';
+      document.getElementById('duration-time').textContent = '0:00';
+      document.getElementById('session-status').textContent = 'Not started';
+      document.getElementById('duration-label').textContent = 'Press start when ready';
+      renderWorkout();
+    }
+  });
 }
 init();
 </script>
