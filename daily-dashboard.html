@@ -813,12 +813,12 @@ const DAYKEY = DAY_SHORT[DI];
 const IS_TRET = ['Mon','Tue','Wed','Fri','Sat'].includes(DAYKEY);
 
 const WORKOUTS = {
-  Mon:{name:'Chest', type:'Resistance training'},
-  Tue:{name:'Legs',  type:'Resistance training'},
-  Wed:{name:'Back',  type:'Resistance training'},
-  Thu:{name:'Swim',  type:'Cardio'},
-  Fri:{name:'Legs',  type:'Resistance training'},
-  Sat:{name:'Upper', type:'Resistance training'},
+  Mon:{name:'Upper + Zone 2', type:'Resistance + cardio'},
+  Tue:{name:'Legs + Zone 2',  type:'Resistance + cardio'},
+  Wed:{name:'Swim',           type:'Cardio'},
+  Thu:{name:'Push + 5km Run', type:'Resistance + cardio'},
+  Fri:{name:'Pull + Volleyball', type:'Resistance + sport'},
+  Sat:{name:'Outdoor Bike Ride', type:'Cardio'},
   Sun:{name:'Rest',  type:'Recovery day'}
 };
 
@@ -2733,6 +2733,32 @@ renderMain();
 updateOverall();
 initWeekStrip();
 loadGCal();
+
+// ─── Midnight rollover ────────────────────────────────────────
+// The page captures today's date at load time. If the user keeps the
+// app open across midnight, we want it to reload so everything
+// reflects the new day. Two layered safeguards:
+//   1. A setTimeout aimed at the next local midnight + a small buffer.
+//   2. A visibilitychange handler that catches the common case where
+//      the phone went to sleep before midnight and woke up after.
+(function setupRolloverDaily(){
+  function msUntilNextMidnight(){
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 5);
+    return next.getTime() - now.getTime();
+  }
+  function checkAndRollover(){
+    const nowKey = fmtDate(new Date());
+    if(nowKey !== TODAY){
+      // Day changed — reload to re-init all date-dependent state.
+      window.location.reload();
+    }
+  }
+  setTimeout(() => { checkAndRollover(); }, msUntilNextMidnight());
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') checkAndRollover();
+  });
+})();
 </script>
 </body>
 </html>

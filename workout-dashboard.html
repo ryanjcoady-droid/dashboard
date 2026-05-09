@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Workout Dashboard</title>
 <script src="firebase-config.js"></script>
 <script src="sync.js"></script>
@@ -65,6 +65,38 @@ body.session-running #history-card{display:none !important}
 .start-btn:hover{background:var(--acc-bd)}
 .finish-btn{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
 .finish-btn:hover{background:var(--green-bd)}
+
+/* Coloured variants for the Continue / New / Add exercise buttons.
+   Continue gets green (resume), New gets accent blue (fresh start),
+   Add exercise gets accent blue too since it's a primary action. */
+.continue-btn{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.continue-btn:hover{background:var(--green-bd);color:#fff}
+.continue-btn svg{opacity:1}
+.new-session-btn{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
+.new-session-btn:hover{background:var(--acc-bd);color:#fff}
+.new-session-btn svg{opacity:1}
+.add-ex-btn{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
+.add-ex-btn:hover{background:var(--acc-bd);color:#fff}
+.add-ex-btn svg{opacity:1}
+
+/* On mobile, scale up the primary action buttons for comfortable tapping.
+   The Start/Finish/Continue/New buttons are the lifecycle controls and
+   "Add exercise" is the most-tapped action during a session. */
+@media (max-width: 720px){
+  .start-btn, .finish-btn, .continue-btn, .new-session-btn, .add-ex-btn{
+    font-size: 14px;
+    padding: 12px 18px;
+    border-radius: 11px;
+    font-weight: 600;
+  }
+  .start-btn svg, .finish-btn svg, .continue-btn svg,
+  .new-session-btn svg, .add-ex-btn svg{
+    width: 16px;
+    height: 16px;
+  }
+  /* Wrap the action button row so they don't squash on narrow screens */
+  .header-right{flex-wrap: wrap; justify-content: flex-end}
+}
 
 .layout{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
 @media(max-width:900px){.layout{grid-template-columns:1fr}}
@@ -173,7 +205,7 @@ body.session-running #history-card{display:none !important}
 .set-row:hover{background:var(--card2)}
 .set-row.set-done{background:rgba(74,222,128,.06)}
 .set-num{font-size:11px;font-weight:600;color:var(--muted);text-align:center}
-.set-input{background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%;text-align:center;min-width:0}
+.set-input{background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%;text-align:center;min-width:0}
 .set-input:focus{border-color:var(--acc-bd)}
 .set-input::placeholder{color:var(--muted2);opacity:.85}
 /* When the placeholder is a ghost value (data-last set), style it more
@@ -373,6 +405,51 @@ body.session-running #history-card{display:none !important}
 @media(max-width:600px){
   body{padding:14px 12px 24px}
   .header-left .date-main{font-size:32px}
+
+  /* Prevent any horizontal page scroll. Anything wider than the viewport
+     is contained inside its own scroll container instead. */
+  html, body{overflow-x:hidden; max-width:100vw}
+
+  /* Tighten the set row so three 16px-font inputs + a select fit on a
+     phone viewport (~360-380px) without overflowing. */
+  .sets-row-head{grid-template-columns:24px 1fr 1fr 1fr 32px; gap:5px}
+  .set-row{grid-template-columns:24px 1fr 1fr 1fr 32px; gap:5px; padding:5px 2px}
+  .set-input{padding:6px 4px; font-size:16px}
+  .set-num{font-size:10px}
+  .set-type-select{font-size:13px !important; padding:4px 2px !important}
+  .set-done-btn{width:32px; height:32px}
+  .sets-row-head span{font-size:9px; letter-spacing:.06em}
+
+  /* Card padding: smaller on mobile. */
+  .card{padding:13px}
+  .ex-item{margin-bottom:8px}
+  .ex-header{padding:9px 11px}
+  .ex-name{font-size:14px}
+  .ex-sets-summary{font-size:11px}
+
+  /* PR row wraps onto multiple lines instead of overflowing. */
+  .ex-pr{padding:4px 11px 8px 30px; font-size:10.5px}
+  .ex-pr .pr-row{flex-wrap:wrap; gap:4px}
+  .ex-pr .pr-when{margin-left:4px}
+
+  /* History list items shrink to fit. */
+  .hist-item{padding:8px 10px}
+  .hist-item-name{font-size:12.5px}
+  .hist-item-meta{font-size:9.5px}
+  .hist-item-stat{font-size:13px}
+
+  /* Action buttons: keep them tappable but slightly less padded so all
+     three (Continue, New, Add exercise) fit in one row. */
+  .start-btn, .finish-btn, .continue-btn, .new-session-btn, .add-ex-btn{
+    font-size:13px; padding:10px 14px;
+  }
+
+  /* Allow overflow inside scrollable strips without expanding the page. */
+  .grid, .left-col, .right-col, .card,
+  .check-row, .sk-list, .sk-step{min-width:0}
+
+  /* Long descriptions/notes wrap rather than getting clipped. */
+  .ex-name, .check-note-text, .sk-name{overflow-wrap:anywhere; word-break:break-word}
 }
 </style>
 </head>
@@ -408,15 +485,15 @@ body.session-running #history-card{display:none !important}
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l3 3 7-7"/></svg>
       Finish workout
     </button>
-    <button class="ghost-btn" id="continue-workout-btn" onclick="continueWorkout()" style="display:none">
+    <button class="ghost-btn continue-btn" id="continue-workout-btn" onclick="continueWorkout()" style="display:none">
       <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
       Continue session
     </button>
-    <button class="ghost-btn" id="new-session-btn" onclick="startNewSession()" style="display:none">
+    <button class="ghost-btn new-session-btn" id="new-session-btn" onclick="startNewSession()" style="display:none">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8a5 5 0 1 1 1.5 3.5"/><path d="M3 5v3h3"/></svg>
       New session
     </button>
-    <button class="ghost-btn" onclick="openAddExercise()">
+    <button class="ghost-btn add-ex-btn" onclick="openAddExercise()">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
       Add exercise
     </button>
@@ -622,12 +699,13 @@ document.getElementById('month-yr').textContent = MON_SHORT[today.getMonth()] + 
 
 // ════════════ DEFAULT WORKOUTS ════════════
 const DEFAULT_WORKOUTS = [
-  {id:'chest', name:'Chest', type:'Resistance training', exercises:[
-    {id:'bench',name:'Barbell Bench Press',cat:'Compound',sets:3,reps:'5',rest:120,note:'Drive through legs'},
-    {id:'incline',name:'Incline DB Press',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
-    {id:'cable-fly',name:'Cable Fly',cat:'Isolation',sets:3,reps:'12-15',rest:60,note:'Control negative'},
-    {id:'tricep-pd',name:'Tricep Pushdown',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
-    {id:'lat-raise',name:'Lateral Raise',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
+  {id:'upper', name:'Upper', type:'Resistance training', exercises:[
+    {id:'ohp',name:'Overhead Press',cat:'Compound',sets:3,reps:'5',rest:120,note:''},
+    {id:'db-row',name:'DB Single-arm Row',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
+    {id:'dips',name:'Weighted Dips',cat:'Compound',sets:3,reps:'6-8',rest:90,note:''},
+    {id:'chin-up',name:'Chin-up',cat:'Compound',sets:3,reps:'AMRAP',rest:90,note:''},
+    {id:'hammer-c',name:'Hammer Curl',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
+    {id:'z2-bike-upper',name:'Zone 2 (assault bike)',cat:'Cardio',sets:1,reps:'20-30 min',rest:0,note:'~65-75% MHR, easy nasal breathing'},
   ]},
   {id:'legs', name:'Legs', type:'Resistance training', exercises:[
     {id:'squat',name:'Back Squat',cat:'Compound',sets:3,reps:'5',rest:150,note:'Brace core, chest up'},
@@ -635,20 +713,7 @@ const DEFAULT_WORKOUTS = [
     {id:'leg-press',name:'Leg Press',cat:'Compound',sets:3,reps:'10-12',rest:90,note:''},
     {id:'leg-curl',name:'Lying Leg Curl',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
     {id:'calf-r',name:'Calf Raises',cat:'Isolation',sets:4,reps:'15-20',rest:45,note:'Full ROM'},
-  ]},
-  {id:'back', name:'Back', type:'Resistance training', exercises:[
-    {id:'deadlift',name:'Conventional Deadlift',cat:'Compound',sets:3,reps:'5',rest:180,note:'Push the floor'},
-    {id:'pull-up',name:'Weighted Pull-up',cat:'Compound',sets:3,reps:'6-8',rest:120,note:''},
-    {id:'row-bb',name:'Barbell Row',cat:'Compound',sets:3,reps:'8',rest:90,note:'Elbows to hips'},
-    {id:'face-pull',name:'Face Pull',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
-    {id:'bicep-curl',name:'Barbell Curl',cat:'Isolation',sets:3,reps:'10-12',rest:60,note:''},
-  ]},
-  {id:'upper', name:'Upper', type:'Resistance training', exercises:[
-    {id:'ohp',name:'Overhead Press',cat:'Compound',sets:3,reps:'5',rest:120,note:''},
-    {id:'db-row',name:'DB Single-arm Row',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
-    {id:'dips',name:'Weighted Dips',cat:'Compound',sets:3,reps:'6-8',rest:90,note:''},
-    {id:'chin-up',name:'Chin-up',cat:'Compound',sets:3,reps:'AMRAP',rest:90,note:''},
-    {id:'hammer-c',name:'Hammer Curl',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
+    {id:'z2-bike-legs',name:'Zone 2 (assault bike)',cat:'Cardio',sets:1,reps:'20-30 min',rest:0,note:'~65-75% MHR, after legs'},
   ]},
   {id:'swim', name:'Swim', type:'Cardio', kind:'swim', exercises:[
     {id:'sw-warmup',name:'Warm-up',cat:'Warm-up',sets:2,reps:'100',rest:30,note:'Easy pace'},
@@ -658,10 +723,41 @@ const DEFAULT_WORKOUTS = [
     {id:'sw-pull',name:'Pull set',cat:'Main',sets:4,reps:'50',rest:20,note:'Pull buoy, focus arms'},
     {id:'sw-cooldown',name:'Cool-down',cat:'Cool-down',sets:1,reps:'200',rest:0,note:'Easy pace'},
   ]},
-  {id:'running', name:'Running', type:'Cardio', exercises:[
-    {id:'warmup-walk',name:'Warm-up walk',cat:'Cardio',sets:1,reps:'5 min',rest:0,note:'Easy pace'},
-    {id:'easy-run',name:'Easy run',cat:'Cardio',sets:1,reps:'30 min',rest:60,note:'Conversational pace'},
-    {id:'cool-walk',name:'Cool-down walk',cat:'Cardio',sets:1,reps:'5 min',rest:0,note:''},
+  {id:'push', name:'Push', type:'Resistance + cardio', exercises:[
+    {id:'bench',name:'Barbell Bench Press',cat:'Compound',sets:3,reps:'5',rest:120,note:'Drive through legs'},
+    {id:'incline-db',name:'Incline DB Press',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
+    {id:'ohp-push',name:'Overhead Press',cat:'Compound',sets:3,reps:'6-8',rest:90,note:''},
+    {id:'cable-fly-push',name:'Cable Fly',cat:'Isolation',sets:3,reps:'12-15',rest:60,note:'Control negative'},
+    {id:'tricep-pd-push',name:'Tricep Pushdown',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
+    {id:'lat-raise-push',name:'Lateral Raise',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
+    {id:'run-5k',name:'5km Run',cat:'Cardio',sets:1,reps:'5 km',rest:0,note:'Steady pace, post-lift'},
+  ]},
+  {id:'pull', name:'Pull', type:'Resistance + sport', exercises:[
+    {id:'deadlift',name:'Conventional Deadlift',cat:'Compound',sets:3,reps:'5',rest:180,note:'Push the floor'},
+    {id:'pull-up',name:'Weighted Pull-up',cat:'Compound',sets:3,reps:'6-8',rest:120,note:''},
+    {id:'row-bb',name:'Barbell Row',cat:'Compound',sets:3,reps:'8',rest:90,note:'Elbows to hips'},
+    {id:'lat-pd',name:'Lat Pulldown',cat:'Compound',sets:3,reps:'10-12',rest:75,note:''},
+    {id:'face-pull',name:'Face Pull',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
+    {id:'bicep-curl',name:'Barbell Curl',cat:'Isolation',sets:3,reps:'10-12',rest:60,note:''},
+    {id:'volleyball',name:'Volleyball',cat:'Sport',sets:1,reps:'session',rest:0,note:'Game / training'},
+  ]},
+  {id:'cycling', name:'Outdoor Bike Ride', type:'Cardio', exercises:[
+    {id:'bike-warmup',name:'Warm-up',cat:'Cardio',sets:1,reps:'10 min',rest:0,note:'Easy spin'},
+    {id:'bike-main',name:'Main ride',cat:'Cardio',sets:1,reps:'30-90 min',rest:0,note:'Steady aerobic effort'},
+    {id:'bike-cool',name:'Cool-down',cat:'Cardio',sets:1,reps:'5 min',rest:0,note:'Easy spin home'},
+  ]},
+  // Legacy workouts kept so older session-log entries still resolve cleanly
+  {id:'chest', name:'Chest', type:'Resistance training', exercises:[
+    {id:'bench',name:'Barbell Bench Press',cat:'Compound',sets:3,reps:'5',rest:120,note:''},
+    {id:'incline',name:'Incline DB Press',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
+    {id:'cable-fly',name:'Cable Fly',cat:'Isolation',sets:3,reps:'12-15',rest:60,note:''},
+    {id:'tricep-pd',name:'Tricep Pushdown',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
+    {id:'lat-raise',name:'Lateral Raise',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
+  ]},
+  {id:'back', name:'Back', type:'Resistance training', exercises:[
+    {id:'deadlift-back',name:'Conventional Deadlift',cat:'Compound',sets:3,reps:'5',rest:180,note:''},
+    {id:'pull-up-back',name:'Weighted Pull-up',cat:'Compound',sets:3,reps:'6-8',rest:120,note:''},
+    {id:'row-bb-back',name:'Barbell Row',cat:'Compound',sets:3,reps:'8',rest:90,note:''},
   ]},
 ];
 
@@ -679,6 +775,35 @@ function loadWorkouts(){
   catch(e){ return DEFAULT_WORKOUTS; }
 }
 function saveWorkouts(w){ localStorage.setItem(WORKOUTS_KEY, JSON.stringify(w)); }
+
+// Seed-once migration: append any new default workouts that the user
+// doesn't already have, without touching their existing customisations.
+// Bump SEED_VERSION when DEFAULT_WORKOUTS gains new entries.
+const SEED_VERSION_KEY = 'wt_seed_version';
+const SEED_VERSION = 'v3-pull-push-cycling';
+function maybeSeedWorkouts(){
+  if(localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) return;
+  try{
+    const stored = localStorage.getItem(WORKOUTS_KEY);
+    if(!stored){
+      // No local workouts at all — defaults will load on first run.
+      localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
+      return;
+    }
+    const existing = JSON.parse(stored) || [];
+    const existingIds = new Set(existing.map(w => w.id));
+    let changed = false;
+    DEFAULT_WORKOUTS.forEach(def => {
+      if(!existingIds.has(def.id)){
+        existing.push(def);
+        changed = true;
+      }
+    });
+    if(changed) saveWorkouts(existing);
+    localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
+  }catch(e){ /* ignore — non-fatal */ }
+}
+maybeSeedWorkouts();
 function loadSession(d){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY(d)))||{}; }catch(e){ return {}; } }
 function saveSession(d,s){ localStorage.setItem(SESSION_KEY(d), JSON.stringify(s)); }
 function loadCompletedDays(){ try{ return JSON.parse(localStorage.getItem(COMPLETED_DAYS_KEY))||{}; }catch(e){ return {}; } }
@@ -1429,7 +1554,6 @@ function startWorkout(){
 }
 function finishWorkout(){
   if(!sessionTimer){ showToast('No active workout'); return; }
-  if(!confirm('Finish this workout? You can continue or start a new one afterwards.')) return;
   sessionTimer.end = Date.now();
   saveSessionTimer(sessionTimer);
   if(sessionInterval) clearInterval(sessionInterval);
@@ -1544,7 +1668,6 @@ function continueWorkout(){
 
 function startNewSession(){
   // Clear current session-in-progress state but keep prior logged sessions intact
-  if(!confirm('Start a fresh session? This clears the current set progress (already-finished workouts stay logged).')) return;
   session = {};
   saveSession(TODAY, session);
   sessionTimer = null;
@@ -2026,6 +2149,12 @@ function init(){
   // was crossed while we were away.
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'visible') return;
+    // Midnight rollover: if the calendar day changed while we were hidden,
+    // reload so TODAY and everything dependent on it re-initialises.
+    if(fmtDate(new Date()) !== TODAY){
+      window.location.reload();
+      return;
+    }
     // If a finished session timer is suddenly stale, gently reset to today.
     if(sessionTimer && timerIsStale(sessionTimer)){
       recoverStaleSession();
@@ -2043,6 +2172,23 @@ function init(){
       renderWorkout();
     }
   });
+
+  // Active rollover: schedule a check at the next local midnight.
+  // Reloads the page if a session isn't actively running (so we don't
+  // disrupt mid-workout). If a session IS running at midnight, we let
+  // it continue and the rollover will happen on next visibilitychange
+  // or when the user finishes.
+  (function scheduleRollover(){
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 5);
+    setTimeout(() => {
+      if(fmtDate(new Date()) !== TODAY){
+        if(!sessionTimer || sessionTimer.end){
+          window.location.reload();
+        }
+      }
+    }, next.getTime() - now.getTime());
+  })();
 }
 init();
 </script>
