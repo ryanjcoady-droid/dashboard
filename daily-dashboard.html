@@ -25,7 +25,7 @@
   --custom-c:#FDBA74;    --custom-bg:#1A0C00;   --custom-bd:#3D2000;
   --recur-c:#86EFAC;   --recur-bg:#071A0F;  --recur-bd:#134D22;
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 24px;line-height:1.5}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 24px;line-height:1.5;zoom:0.8}
 
 /* Disable double-tap-to-zoom on touch devices but keep pinch zoom intact. */
 *{touch-action:manipulation}
@@ -185,7 +185,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* Touch-device input sizing — fires on physical phones/tablets even when
    the user has "Request desktop site" enabled. The pointer/hover query
    detects hardware regardless of viewport mode. Bumps inputs to a font
-   size large enough that Chrome's auto-zoom-on-focus doesn't trigger. */
+   size large enough that Chrome's auto-zoom-on-focus doesn't trigger.
+   Note: 22px is intentional rather than 18px because the body has
+   zoom:0.8 applied above, so 22px renders at ~17.6px effective — just
+   above Chrome's 16px auto-zoom threshold. */
 @media (pointer: coarse) and (hover: none) {
   input[type="text"],
   input[type="number"],
@@ -196,10 +199,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   input[inputmode="numeric"],
   textarea,
   select{
-    font-size: 18px !important;
+    font-size: 22px !important;
   }
   .we-field input{
-    font-size: 18px;
+    font-size: 22px;
     padding: 12px 14px;
   }
 }
