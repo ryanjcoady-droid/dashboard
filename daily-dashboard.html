@@ -134,6 +134,75 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* Workout */
 .workout-name{font-family:'Outfit',sans-serif;font-size:30px;font-weight:400;line-height:1.1;margin-bottom:7px}
+
+/* Workout edit pencil button — sits in the top-right of the workout card head */
+.workout-edit-btn{
+  margin-left:auto;
+  width:28px;height:28px;border:1px solid var(--border);border-radius:7px;
+  background:transparent;color:var(--muted);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .12s;padding:0;
+}
+.workout-edit-btn:hover{color:var(--text);border-color:var(--border2);background:var(--card2)}
+.workout-edit-btn svg{width:13px;height:13px}
+
+/* Workout edit modal */
+.we-row{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.we-day-pill{
+  flex:1;text-align:center;padding:8px 4px;border-radius:8px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all .12s;
+}
+.we-day-pill:hover{color:var(--text);border-color:var(--border2)}
+.we-day-pill.active{
+  background:var(--workout-bg);border-color:var(--workout-bd);color:var(--workout-c);
+}
+.we-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.we-field label{
+  display:block;font-size:10px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+}
+.we-field input{
+  width:100%;background:var(--card2);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);
+  font-family:'DM Sans',sans-serif;outline:none;transition:border-color .12s;
+}
+.we-field input:focus{border-color:var(--workout-bd)}
+.we-actions{display:flex;gap:8px;justify-content:flex-end}
+.we-actions .we-reset{margin-right:auto;color:var(--muted);background:transparent;border:1px solid var(--border)}
+.we-actions .we-reset:hover{color:var(--text);border-color:var(--border2)}
+.we-btn{
+  padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;
+  border:1px solid var(--border);background:var(--card2);color:var(--text);
+}
+.we-btn:hover{background:var(--card)}
+.we-btn.primary{background:var(--workout-bg);border-color:var(--workout-bd);color:var(--workout-c)}
+.we-btn.primary:hover{background:var(--workout-bd);color:#fff}
+.we-help{font-size:11px;color:var(--muted2);margin-top:-6px;margin-bottom:10px;line-height:1.4}
+
+/* Touch-device input sizing — fires on physical phones/tablets even when
+   the user has "Request desktop site" enabled. The pointer/hover query
+   detects hardware regardless of viewport mode. Bumps inputs to a font
+   size large enough that Chrome's auto-zoom-on-focus doesn't trigger. */
+@media (pointer: coarse) and (hover: none) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="search"],
+  input[type="url"],
+  input[inputmode="decimal"],
+  input[inputmode="numeric"],
+  textarea,
+  select{
+    font-size: 18px !important;
+  }
+  .we-field input{
+    font-size: 18px;
+    padding: 12px 14px;
+  }
+}
 .workout-badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;background:var(--workout-bg);color:var(--workout-c);border:1px solid var(--workout-bd)}
 
 /* Checklist */
@@ -690,6 +759,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="main"></div>
 </div>
 
+<!-- Workout schedule editor — edits the weekly recurring workout names -->
+<div class="modal-overlay" id="we-overlay" onclick="closeWorkoutEdit()"></div>
+<div class="modal-panel" id="we-panel" style="max-width:440px">
+  <div class="modal-header" style="margin-bottom:6px">
+    <div>
+      <div class="modal-date-label">WEEKLY WORKOUT SCHEDULE</div>
+      <div class="modal-date-main" style="font-size:22px">Edit workout for selected day</div>
+    </div>
+    <button class="modal-close" onclick="closeWorkoutEdit()">&#10005;</button>
+  </div>
+  <div class="modal-body" style="padding-top:10px">
+    <div class="we-help">Pick a day and rename its workout. Changes save permanently and sync across your devices.</div>
+    <div class="we-row" id="we-day-row"></div>
+    <div class="we-fields">
+      <div class="we-field">
+        <label>Workout name</label>
+        <input type="text" id="we-name" placeholder="e.g. Upper + Zone 2" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="we-field">
+        <label>Type / description</label>
+        <input type="text" id="we-type" placeholder="e.g. Resistance + cardio" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="we-actions">
+      <button class="we-btn we-reset" onclick="resetWorkoutOverride()" title="Restore the default name for this day">Reset to default</button>
+      <button class="we-btn" onclick="closeWorkoutEdit()">Cancel</button>
+      <button class="we-btn primary" onclick="saveWorkoutEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="recur-overlay" id="recur-overlay" onclick="closeRecurMgr()"></div>
 <div class="recur-panel" id="recur-panel">
   <div class="recur-panel-head">
@@ -821,6 +921,30 @@ const WORKOUTS = {
   Sat:{name:'Outdoor Bike Ride', type:'Cardio'},
   Sun:{name:'Rest',  type:'Recovery day'}
 };
+
+// Workout schedule overrides — let the user permanently rename the
+// recurring weekly workout for each day. Stored as
+// { Mon:{name,type}, Tue:{name,type}, ... } so each day can be
+// edited independently without touching the others.
+const WORKOUT_OVERRIDES_KEY = 'workout_schedule_overrides';
+function getWorkoutOverrides(){
+  try{ return JSON.parse(localStorage.getItem(WORKOUT_OVERRIDES_KEY)||'{}'); }
+  catch(e){ return {}; }
+}
+function saveWorkoutOverrides(o){
+  localStorage.setItem(WORKOUT_OVERRIDES_KEY, JSON.stringify(o));
+}
+// What to render for a given day key. Override > built-in default.
+function getDisplayWorkout(dayKey){
+  const overrides = getWorkoutOverrides();
+  if(overrides[dayKey] && overrides[dayKey].name){
+    return {
+      name: overrides[dayKey].name,
+      type: overrides[dayKey].type || WORKOUTS[dayKey]?.type || ''
+    };
+  }
+  return WORKOUTS[dayKey];
+}
 
 const SK_AM = [
   'Orbis CF Wash','Orbis CF Smooth Essence','Orbis CF Lotion M',
@@ -1201,13 +1325,19 @@ function skSectionHTML(steps, id, label, time, ch, bg, bd, date, isModal){
 //  TODAY RENDER
 // ═══════════════════════════════════════════════════
 function renderSidebar(){
-  const w = WORKOUTS[DAYKEY];
+  const w = getDisplayWorkout(DAYKEY);
   document.getElementById('sidebar').innerHTML=`
     <div class="card">
       <div class="card-head">
         <span class="section-badge" style="background:var(--workout-bg);color:var(--workout-c);border-color:var(--workout-bd)">
           <span style="width:5px;height:5px;border-radius:50%;background:var(--workout-c);display:inline-block"></span>Workout
         </span>
+        <button class="workout-edit-btn" onclick="openWorkoutEdit()" title="Edit weekly workout schedule" aria-label="Edit weekly workout schedule">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 1.5l3.5 3.5L5.5 14H2v-3.5z"/>
+            <path d="M9.5 3l3.5 3.5"/>
+          </svg>
+        </button>
       </div>
       <div class="workout-name">${w.name}</div>
       <span class="workout-badge">${w.type}</span>
@@ -2584,6 +2714,65 @@ function closeRecurMgr(){
   document.body.style.overflow = '';
   recurEditingId = null;
   refreshAllScheduleViews();
+}
+
+// ─── Workout schedule editor ─────────────────────────────────
+let weEditingDay = DAYKEY; // which day is currently being edited
+
+function openWorkoutEdit(){
+  weEditingDay = DAYKEY;
+  renderWeDayPills();
+  loadWeFields(weEditingDay);
+  document.getElementById('we-overlay').classList.add('open');
+  document.getElementById('we-panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeWorkoutEdit(){
+  document.getElementById('we-overlay').classList.remove('open');
+  document.getElementById('we-panel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderWeDayPills(){
+  // Show all 7 days as pills, today highlighted by default
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  document.getElementById('we-day-row').innerHTML = days.map(d =>
+    `<button class="we-day-pill${d===weEditingDay?' active':''}" onclick="weSelectDay('${d}')">${d}</button>`
+  ).join('');
+}
+function weSelectDay(dayKey){
+  weEditingDay = dayKey;
+  renderWeDayPills();
+  loadWeFields(dayKey);
+}
+function loadWeFields(dayKey){
+  const w = getDisplayWorkout(dayKey);
+  document.getElementById('we-name').value = w.name || '';
+  document.getElementById('we-type').value = w.type || '';
+}
+function saveWorkoutEdit(){
+  const name = (document.getElementById('we-name').value || '').trim();
+  const type = (document.getElementById('we-type').value || '').trim();
+  const overrides = getWorkoutOverrides();
+  // If the user clears the name, treat as a reset for that day.
+  if(!name){
+    delete overrides[weEditingDay];
+  } else {
+    overrides[weEditingDay] = { name, type };
+  }
+  saveWorkoutOverrides(overrides);
+  // Re-render the workout card so it reflects today's (possibly updated) workout
+  renderSidebar();
+  // Re-fetch weather since renderSidebar rebuilds the weather card too
+  if(typeof loadWeather === 'function') loadWeather();
+  closeWorkoutEdit();
+}
+function resetWorkoutOverride(){
+  const overrides = getWorkoutOverrides();
+  delete overrides[weEditingDay];
+  saveWorkoutOverrides(overrides);
+  loadWeFields(weEditingDay);
+  renderSidebar();
+  if(typeof loadWeather === 'function') loadWeather();
 }
 
 function renderDayToggles(){

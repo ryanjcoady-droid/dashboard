@@ -420,36 +420,61 @@ body.session-running #history-card{display:none !important}
   .set-done-btn{width:32px; height:32px}
   .sets-row-head span{font-size:9px; letter-spacing:.06em}
 
-  /* Card padding: smaller on mobile. */
   .card{padding:13px}
   .ex-item{margin-bottom:8px}
   .ex-header{padding:9px 11px}
   .ex-name{font-size:14px}
   .ex-sets-summary{font-size:11px}
 
-  /* PR row wraps onto multiple lines instead of overflowing. */
   .ex-pr{padding:4px 11px 8px 30px; font-size:10.5px}
   .ex-pr .pr-row{flex-wrap:wrap; gap:4px}
   .ex-pr .pr-when{margin-left:4px}
 
-  /* History list items shrink to fit. */
   .hist-item{padding:8px 10px}
   .hist-item-name{font-size:12.5px}
   .hist-item-meta{font-size:9.5px}
   .hist-item-stat{font-size:13px}
 
-  /* Action buttons: keep them tappable but slightly less padded so all
-     three (Continue, New, Add exercise) fit in one row. */
   .start-btn, .finish-btn, .continue-btn, .new-session-btn, .add-ex-btn{
     font-size:13px; padding:10px 14px;
   }
 
-  /* Allow overflow inside scrollable strips without expanding the page. */
   .grid, .left-col, .right-col, .card,
   .check-row, .sk-list, .sk-step{min-width:0}
 
-  /* Long descriptions/notes wrap rather than getting clipped. */
   .ex-name, .check-note-text, .sk-name{overflow-wrap:anywhere; word-break:break-word}
+}
+
+/* Touch-device input sizing.
+   This block fires on physical touch devices regardless of whether
+   "Request desktop site" is on. Mobile media queries get ignored in
+   desktop mode (the browser pretends it's a 1024px laptop), but
+   pointer/hover queries still detect the actual hardware. We bump
+   set-input fields to a large font + tall height so Chrome's
+   auto-zoom-on-focus doesn't trigger. */
+@media (pointer: coarse) and (hover: none) {
+  .set-input{
+    font-size: 22px;
+    padding: 10px 6px;
+    min-height: 44px;
+  }
+  .set-type-select{
+    font-size: 18px !important;
+    padding: 8px 4px !important;
+  }
+  .set-done-btn{
+    width: 44px;
+    height: 44px;
+  }
+  .field input, .field select, .field textarea{
+    font-size: 18px;
+    padding: 12px 14px;
+  }
+  .rest-time-input input{
+    font-size: 18px;
+    padding: 8px 10px;
+    width: 56px;
+  }
 }
 </style>
 </head>

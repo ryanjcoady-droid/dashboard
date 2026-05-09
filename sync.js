@@ -21,6 +21,7 @@
     /^dash_/,                   // per-day completion state
     /^wt_/,                     // workout tracker (all keys: wt_workouts_v2, wt_session_*, wt_notes_*, wt_session_log, wt_active_workout, wt_session_timer, wt_completed_days)
     /^routine_overrides$/,
+    /^workout_schedule_overrides$/, // weekly recurring workout name edits
     /^recurring_events$/,
     /^custom_tasks$/,
     /^skip_tasks$/,
