@@ -121,6 +121,48 @@ body.session-running #history-card{display:none !important}
 .duration-time.finished{color:var(--green)}
 .duration-status{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
+/* ── Timer & Stopwatch widget ─────────────────────────────────── */
+.ts-widget{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+body.session-running .ts-widget{display:block}
+.ts-tabs{display:flex;gap:4px;margin-bottom:14px}
+.ts-tab{flex:1;padding:7px 0;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.ts-tab:hover{background:var(--card2);color:var(--text)}
+.ts-tab.active{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
+.ts-panel{display:none}
+.ts-panel.active{display:block}
+.ts-time-display{font-family:'Outfit',sans-serif;font-size:42px;font-weight:300;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1;margin-bottom:4px}
+.ts-time-display.sw-running{color:var(--acc)}
+.ts-time-display.sw-paused{color:var(--amber)}
+.ts-time-display.sw-zero{color:var(--muted2)}
+.ts-time-display.ct-running{color:var(--amber)}
+.ts-time-display.ct-done{color:var(--green)}
+.ts-time-display.ct-idle{color:var(--muted2)}
+.ts-sub{font-size:10px;color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:12px;min-height:15px}
+.ts-controls{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.ts-btn{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+.ts-btn:hover{background:var(--card2);color:var(--text);border-color:var(--border2)}
+.ts-btn-start{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
+.ts-btn-start:hover{background:var(--acc-bd);color:#fff}
+.ts-btn-pause{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+.ts-btn-pause:hover{background:var(--amber-bd);color:#fff}
+.ts-btn-stop{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+.ts-btn-stop:hover{background:var(--red-bd);color:#fff}
+.ts-presets{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+.ts-preset{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.ts-preset:hover{background:var(--card2);color:var(--text);border-color:var(--border2)}
+.ts-preset.sel{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
+.ts-custom-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:8px}
+.ts-custom-input{width:48px;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 6px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;text-align:center}
+.ts-custom-input:focus{border-color:var(--acc-bd)}
+.ts-custom-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+/* Progress ring for countdown */
+.ts-ring-wrap{display:flex;justify-content:center;margin-bottom:6px;position:relative}
+.ts-ring-wrap svg{transform:rotate(-90deg)}
+.ts-ring-bg{fill:none;stroke:var(--border);stroke-width:4}
+.ts-ring-fg{fill:none;stroke:var(--amber);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .5s linear,stroke .2s}
+.ts-ring-fg.done{stroke:var(--green)}
+.ts-ring-time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
 /* Workout selection */
 .workouts-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;padding-right:2px}
 .workouts-list::-webkit-scrollbar{width:3px}
@@ -475,6 +517,11 @@ body.session-running #history-card{display:none !important}
     padding: 8px 10px;
     width: 56px;
   }
+  .ts-custom-input{
+    font-size: 18px !important;
+    padding: 8px 10px !important;
+    width: 56px !important;
+  }
 }
 
 /* ── Portrait mobile: tighter spacing ─────────────────────────── */
@@ -498,6 +545,13 @@ body.session-running #history-card{display:none !important}
   /* Duration stopwatch */
   .duration-time { font-size: 28px !important; }
   .duration-status { font-size: 10px !important; }
+
+  /* Timer & Stopwatch widget */
+  .ts-time-display { font-size: 34px !important; }
+  .ts-tab { font-size: 10px !important; padding: 6px 0 !important; }
+  .ts-btn { font-size: 11px !important; padding: 6px 12px !important; }
+  .ts-preset { font-size: 10px !important; padding: 4px 9px !important; }
+  .ts-custom-input { width: 44px !important; font-size: 12px !important; }
 
   /* Workout pills */
   .wk-pill { padding: 9px 11px !important; gap: 9px !important; border-radius: 9px !important; }
@@ -637,6 +691,77 @@ body.session-running #history-card{display:none !important}
         <div class="duration-time idle" id="duration-time">0:00</div>
       </div>
       <div class="duration-status" id="duration-label">Press start when ready</div>
+
+      <!-- Timer & Stopwatch widget — visible only during active session -->
+      <div class="ts-widget" id="ts-widget">
+        <div class="ts-tabs">
+          <button class="ts-tab active" id="ts-tab-sw" onclick="tsSetTab('sw')">Stopwatch</button>
+          <button class="ts-tab" id="ts-tab-ct" onclick="tsSetTab('ct')">Timer</button>
+        </div>
+
+        <!-- Stopwatch panel -->
+        <div class="ts-panel active" id="ts-panel-sw">
+          <div class="ts-time-display sw-zero" id="sw-display">0:00</div>
+          <div class="ts-sub" id="sw-sub"></div>
+          <div class="ts-controls">
+            <button class="ts-btn ts-btn-start" id="sw-start-btn" onclick="swStart()">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
+              Start
+            </button>
+            <button class="ts-btn ts-btn-pause" id="sw-pause-btn" onclick="swPause()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="3" height="10" rx="1"/><rect x="9" y="3" width="3" height="10" rx="1"/></svg>
+              Pause
+            </button>
+            <button class="ts-btn" id="sw-resume-btn" onclick="swResume()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
+              Resume
+            </button>
+            <button class="ts-btn ts-btn-stop" id="sw-reset-btn" onclick="swReset()" style="display:none">Reset</button>
+          </div>
+        </div>
+
+        <!-- Countdown Timer panel -->
+        <div class="ts-panel" id="ts-panel-ct">
+          <div class="ts-ring-wrap" id="ct-ring-wrap">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle class="ts-ring-bg" cx="70" cy="70" r="62"/>
+              <circle class="ts-ring-fg" id="ct-ring" cx="70" cy="70" r="62" stroke-dasharray="389.56" stroke-dashoffset="0"/>
+            </svg>
+            <div class="ts-ring-time">
+              <div class="ts-time-display ct-idle" id="ct-display" style="margin-bottom:0">0:00</div>
+            </div>
+          </div>
+          <div class="ts-sub" id="ct-sub"></div>
+          <div class="ts-presets" id="ct-presets">
+            <button class="ts-preset" onclick="ctSetPreset(30)">0:30</button>
+            <button class="ts-preset sel" onclick="ctSetPreset(60)">1:00</button>
+            <button class="ts-preset" onclick="ctSetPreset(90)">1:30</button>
+            <button class="ts-preset" onclick="ctSetPreset(120)">2:00</button>
+            <button class="ts-preset" onclick="ctSetPreset(180)">3:00</button>
+          </div>
+          <div class="ts-custom-row" id="ct-custom-row">
+            <input class="ts-custom-input" type="number" id="ct-custom-min" value="1" min="0" max="99" onchange="ctCustomChanged()">
+            <span class="ts-custom-label">min</span>
+            <input class="ts-custom-input" type="number" id="ct-custom-sec" value="0" min="0" max="59" onchange="ctCustomChanged()">
+            <span class="ts-custom-label">sec</span>
+          </div>
+          <div class="ts-controls" style="margin-top:10px">
+            <button class="ts-btn ts-btn-start" id="ct-start-btn" onclick="ctStart()">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
+              Start
+            </button>
+            <button class="ts-btn ts-btn-pause" id="ct-pause-btn" onclick="ctPause()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="3" height="10" rx="1"/><rect x="9" y="3" width="3" height="10" rx="1"/></svg>
+              Pause
+            </button>
+            <button class="ts-btn" id="ct-resume-btn" onclick="ctResume()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
+              Resume
+            </button>
+            <button class="ts-btn ts-btn-stop" id="ct-reset-btn" onclick="ctReset()" style="display:none">Reset</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -1727,6 +1852,7 @@ function finishWorkout(){
   document.getElementById('duration-label').textContent = 'Workout logged ✓ — continue or start a new one';
 
   Object.keys(exTimers).forEach(cancelExTimer);
+  tsCleanup();
 
   const setsDone = Object.keys(session).filter(k=>k.endsWith('_sets')).reduce((a,k)=>a+(session[k]||[]).filter(s=>s.done).length,0);
   const banner = document.getElementById('complete-banner');
@@ -1796,6 +1922,7 @@ function startNewSession(){
   sessionTimer = null;
   saveSessionTimer(null);
   Object.keys(exTimers).forEach(cancelExTimer);
+  tsCleanup();
   document.getElementById('start-workout-btn').style.display = 'inline-flex';
   document.getElementById('continue-workout-btn').style.display = 'none';
   document.getElementById('new-session-btn').style.display = 'none';
@@ -1828,6 +1955,246 @@ function updateSessionUI(){
     document.getElementById('session-status').textContent = 'Running';
     document.getElementById('duration-label').textContent = 'In progress — keep going';
   }
+}
+
+// ════════════ TIMER & STOPWATCH WIDGET ════════════
+// ── Tab switching ──
+function tsSetTab(tab){
+  document.getElementById('ts-tab-sw').classList.toggle('active', tab==='sw');
+  document.getElementById('ts-tab-ct').classList.toggle('active', tab==='ct');
+  document.getElementById('ts-panel-sw').classList.toggle('active', tab==='sw');
+  document.getElementById('ts-panel-ct').classList.toggle('active', tab==='ct');
+}
+
+// ── STOPWATCH (count up) ──
+let swState = 'idle'; // idle | running | paused
+let swStartTime = 0;  // epoch when started (adjusted for pauses)
+let swElapsed = 0;     // accumulated seconds when paused
+let swInterval = null;
+
+function swFmtTime(totalMs){
+  const totalSec = Math.floor(totalMs / 1000);
+  const ms = Math.floor((totalMs % 1000) / 10);
+  if(totalSec < 3600){
+    const m = Math.floor(totalSec / 60);
+    const s = String(totalSec % 60).padStart(2,'0');
+    return `${m}:${s}<span style="font-size:18px;color:var(--muted);margin-left:2px">.${String(ms).padStart(2,'0')}</span>`;
+  }
+  const h = Math.floor(totalSec / 3600);
+  const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2,'0');
+  const s = String(totalSec % 60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function swUpdateDisplay(){
+  const display = document.getElementById('sw-display');
+  if(swState === 'running'){
+    const ms = Date.now() - swStartTime;
+    display.innerHTML = swFmtTime(ms);
+    display.className = 'ts-time-display sw-running';
+  } else if(swState === 'paused'){
+    display.innerHTML = swFmtTime(swElapsed);
+    display.className = 'ts-time-display sw-paused';
+  } else {
+    display.innerHTML = '0:00';
+    display.className = 'ts-time-display sw-zero';
+  }
+}
+
+function swStart(){
+  swState = 'running';
+  swStartTime = Date.now();
+  swElapsed = 0;
+  swInterval = setInterval(swUpdateDisplay, 50);
+  swUpdateDisplay();
+  document.getElementById('sw-start-btn').style.display = 'none';
+  document.getElementById('sw-pause-btn').style.display = 'inline-flex';
+  document.getElementById('sw-resume-btn').style.display = 'none';
+  document.getElementById('sw-reset-btn').style.display = 'inline-flex';
+  document.getElementById('sw-sub').textContent = '';
+}
+
+function swPause(){
+  swState = 'paused';
+  swElapsed = Date.now() - swStartTime;
+  if(swInterval){ clearInterval(swInterval); swInterval = null; }
+  swUpdateDisplay();
+  document.getElementById('sw-pause-btn').style.display = 'none';
+  document.getElementById('sw-resume-btn').style.display = 'inline-flex';
+  document.getElementById('sw-sub').textContent = 'Paused';
+}
+
+function swResume(){
+  swState = 'running';
+  swStartTime = Date.now() - swElapsed;
+  swInterval = setInterval(swUpdateDisplay, 50);
+  swUpdateDisplay();
+  document.getElementById('sw-resume-btn').style.display = 'none';
+  document.getElementById('sw-pause-btn').style.display = 'inline-flex';
+  document.getElementById('sw-sub').textContent = '';
+}
+
+function swReset(){
+  swState = 'idle';
+  swElapsed = 0;
+  if(swInterval){ clearInterval(swInterval); swInterval = null; }
+  swUpdateDisplay();
+  document.getElementById('sw-start-btn').style.display = 'inline-flex';
+  document.getElementById('sw-pause-btn').style.display = 'none';
+  document.getElementById('sw-resume-btn').style.display = 'none';
+  document.getElementById('sw-reset-btn').style.display = 'none';
+  document.getElementById('sw-sub').textContent = '';
+}
+
+// ── COUNTDOWN TIMER ──
+let ctState = 'idle'; // idle | running | paused | done
+let ctTotal = 60;     // total seconds for current timer
+let ctLeft = 60;      // seconds remaining
+let ctInterval = null;
+const CT_RING_CIRC = 2 * Math.PI * 62; // ~389.56
+
+function ctFmtTime(sec){
+  if(sec < 0) sec = 0;
+  if(sec < 3600){
+    const m = Math.floor(sec / 60);
+    const s = String(sec % 60).padStart(2,'0');
+    return `${m}:${s}`;
+  }
+  const h = Math.floor(sec / 3600);
+  const m = String(Math.floor((sec % 3600) / 60)).padStart(2,'0');
+  const s = String(sec % 60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function ctUpdateDisplay(){
+  const display = document.getElementById('ct-display');
+  const ring = document.getElementById('ct-ring');
+  display.textContent = ctFmtTime(ctLeft);
+
+  // Progress ring
+  const progress = ctTotal > 0 ? ctLeft / ctTotal : 0;
+  const offset = CT_RING_CIRC * (1 - progress);
+  ring.style.strokeDashoffset = offset;
+
+  if(ctState === 'done'){
+    display.className = 'ts-time-display ct-done';
+    ring.classList.add('done');
+  } else if(ctState === 'running'){
+    display.className = 'ts-time-display ct-running';
+    ring.classList.remove('done');
+  } else {
+    display.className = 'ts-time-display ct-idle';
+    ring.classList.remove('done');
+  }
+}
+
+function ctSetPreset(sec){
+  if(ctState === 'running' || ctState === 'paused') return; // don't change during active timer
+  ctTotal = sec;
+  ctLeft = sec;
+  // Update custom inputs
+  document.getElementById('ct-custom-min').value = Math.floor(sec / 60);
+  document.getElementById('ct-custom-sec').value = sec % 60;
+  // Highlight active preset
+  document.querySelectorAll('#ct-presets .ts-preset').forEach(btn => {
+    const val = parseInt(btn.textContent.split(':')[0]) * 60 + parseInt(btn.textContent.split(':')[1]);
+    btn.classList.toggle('sel', val === sec);
+  });
+  ctUpdateDisplay();
+}
+
+function ctCustomChanged(){
+  if(ctState === 'running' || ctState === 'paused') return;
+  const m = parseInt(document.getElementById('ct-custom-min').value) || 0;
+  const s = parseInt(document.getElementById('ct-custom-sec').value) || 0;
+  ctTotal = Math.max(1, m * 60 + s);
+  ctLeft = ctTotal;
+  // Clear preset highlights
+  document.querySelectorAll('#ct-presets .ts-preset').forEach(btn => btn.classList.remove('sel'));
+  ctUpdateDisplay();
+}
+
+function ctStart(){
+  if(ctTotal <= 0) return;
+  ctState = 'running';
+  ctLeft = ctTotal;
+  ctInterval = setInterval(() => {
+    ctLeft--;
+    if(ctLeft <= 0){
+      ctLeft = 0;
+      ctState = 'done';
+      if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
+      ctUpdateDisplay();
+      showToast('⏱ Timer done!', 3000);
+      document.getElementById('ct-sub').textContent = 'Finished';
+      document.getElementById('ct-pause-btn').style.display = 'none';
+      document.getElementById('ct-reset-btn').style.display = 'inline-flex';
+      return;
+    }
+    ctUpdateDisplay();
+  }, 1000);
+  ctUpdateDisplay();
+  document.getElementById('ct-start-btn').style.display = 'none';
+  document.getElementById('ct-pause-btn').style.display = 'inline-flex';
+  document.getElementById('ct-resume-btn').style.display = 'none';
+  document.getElementById('ct-reset-btn').style.display = 'inline-flex';
+  document.getElementById('ct-presets').style.opacity = '0.4';
+  document.getElementById('ct-presets').style.pointerEvents = 'none';
+  document.getElementById('ct-custom-row').style.opacity = '0.4';
+  document.getElementById('ct-custom-row').style.pointerEvents = 'none';
+  document.getElementById('ct-sub').textContent = '';
+}
+
+function ctPause(){
+  ctState = 'paused';
+  if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
+  document.getElementById('ct-pause-btn').style.display = 'none';
+  document.getElementById('ct-resume-btn').style.display = 'inline-flex';
+  document.getElementById('ct-sub').textContent = 'Paused';
+}
+
+function ctResume(){
+  ctState = 'running';
+  ctInterval = setInterval(() => {
+    ctLeft--;
+    if(ctLeft <= 0){
+      ctLeft = 0;
+      ctState = 'done';
+      if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
+      ctUpdateDisplay();
+      showToast('⏱ Timer done!', 3000);
+      document.getElementById('ct-sub').textContent = 'Finished';
+      document.getElementById('ct-pause-btn').style.display = 'none';
+      document.getElementById('ct-resume-btn').style.display = 'none';
+      return;
+    }
+    ctUpdateDisplay();
+  }, 1000);
+  document.getElementById('ct-resume-btn').style.display = 'none';
+  document.getElementById('ct-pause-btn').style.display = 'inline-flex';
+  document.getElementById('ct-sub').textContent = '';
+}
+
+function ctReset(){
+  ctState = 'idle';
+  ctLeft = ctTotal;
+  if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
+  ctUpdateDisplay();
+  document.getElementById('ct-start-btn').style.display = 'inline-flex';
+  document.getElementById('ct-pause-btn').style.display = 'none';
+  document.getElementById('ct-resume-btn').style.display = 'none';
+  document.getElementById('ct-reset-btn').style.display = 'none';
+  document.getElementById('ct-presets').style.opacity = '';
+  document.getElementById('ct-presets').style.pointerEvents = '';
+  document.getElementById('ct-custom-row').style.opacity = '';
+  document.getElementById('ct-custom-row').style.pointerEvents = '';
+  document.getElementById('ct-sub').textContent = '';
+}
+
+// Clean up timers when session ends or resets
+function tsCleanup(){
+  swReset();
+  ctReset();
 }
 
 // ════════════ VOLUME ════════════
