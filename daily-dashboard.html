@@ -322,7 +322,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cal-evt{font-size:11px;padding:4px 7px;border-radius:6px;background:var(--cal-bg);border:1px solid var(--cal-bd);color:var(--cal-c)}
 .cal-evt-time{font-size:10px;opacity:.7;margin-bottom:1px}
 .cal-evt-title{font-weight:500;line-height:1.3}
-.custom-pill{font-size:10px;padding:3px 7px;border-radius:99px;background:var(--custom-bg);border:1px solid var(--custom-bd);color:var(--custom-c);margin-top:2px}
+.custom-pill{font-size:10px;padding:3px 7px;border-radius:5px;background:var(--custom-bg);border:1px solid var(--custom-bd);color:var(--custom-c);margin-top:2px}
 .day-progress{height:2px;background:var(--border2);border-radius:99px;margin-top:8px;overflow:hidden}
 .day-progress-fill{height:100%;border-radius:99px;background:#4ADE80;transition:width .3s}
 .day-empty{font-size:11px;color:var(--muted2);padding:2px 0}
@@ -642,7 +642,7 @@ html, body{overflow-x:hidden; max-width:100vw}
 .hour-hum{font-size:10px;color:#C8C4BC}
 .hourly-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;margin-top:2px}
 
-.recur-pill{font-size:10px;padding:3px 7px;border-radius:99px;background:var(--recur-bg);border:1px solid var(--recur-bd);color:var(--recur-c);margin-top:2px}
+.recur-pill{font-size:10px;padding:3px 7px;border-radius:5px;background:var(--recur-bg);border:1px solid var(--recur-bd);color:var(--recur-c);margin-top:2px}
 .month-dot.recur{background:var(--recur-c)}
 .recur-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:6px;border:1px solid var(--recur-bd);background:var(--recur-bg);color:var(--recur-c)}
 .recur-mgr-btn{
@@ -1041,6 +1041,74 @@ html, body{overflow-x:hidden; max-width:100vw}
   .workout-banner { display: block; }
   #sidebar .sidebar-workout-wrap { display: none; }
 }
+
+/* Skincare card edit button */
+.sk-edit-btn {
+  margin-left: auto;
+  width: 26px; height: 26px; border-radius: 7px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted2); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .12s; padding: 0; flex-shrink: 0;
+}
+.sk-edit-btn:hover { color: var(--text); border-color: var(--border2); background: var(--card2); }
+
+/* Skincare editor panel — reuses recur-panel style */
+.sk-step-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; background: var(--card2);
+  border: 1px solid var(--border2); border-radius: 9px;
+}
+.sk-step-num-label {
+  font-size: 10px; font-weight: 600; color: var(--muted2);
+  min-width: 18px; text-align: center; flex-shrink: 0;
+}
+.sk-step-info { flex: 1; min-width: 0; }
+.sk-step-name { font-size: 13px; color: var(--text); line-height: 1.3; }
+.sk-step-note { font-size: 11px; color: var(--muted); margin-top: 2px; font-style: italic; }
+.sk-step-btns { display: flex; gap: 3px; flex-shrink: 0; }
+.sk-step-btn {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--border2); background: none;
+  color: var(--muted2); cursor: pointer; font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s; padding: 0;
+}
+.sk-step-btn:hover { color: var(--text); background: var(--card); }
+.sk-step-btn.del:hover { color: #F87171; border-color: #3D1818; }
+.sk-step-btn:disabled { opacity: .25; cursor: not-allowed; }
+.sk-tab-row { display: flex; gap: 4px; margin-bottom: 14px; }
+.sk-tab {
+  flex: 1; padding: 7px 4px; border-radius: 8px;
+  border: 1px solid var(--border2); background: none;
+  color: var(--muted); font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all .12s; text-align: center;
+}
+.sk-tab.active { background: var(--am-skin-bg); border-color: var(--am-skin-bd); color: #67E8F9; }
+.sk-tab.pm-tret.active { background: var(--pm-tret-bg); border-color: var(--pm-tret-bd); color: #F9A8D4; }
+.sk-tab.pm-rec.active  { background: var(--pm-rec-bg);  border-color: var(--pm-rec-bd);  color: #6EE7B7; }
+.sk-add-form { background: var(--card2); border: 1px solid var(--border2); border-radius: 10px; padding: 12px; margin-top: 10px; }
+.sk-add-title { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.sk-add-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 8px 10px; font-size: 13px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .15s;
+  margin-bottom: 8px;
+}
+.sk-add-input:focus { border-color: #0A3040; }
+.sk-add-input::placeholder { color: var(--muted2); }
+.sk-add-btn {
+  width: 100%; padding: 9px; border-radius: 8px;
+  border: 1px solid var(--am-skin-bd); background: var(--am-skin-bg);
+  color: #67E8F9; font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .12s;
+}
+.sk-add-btn:hover { background: var(--am-skin-bd); }
+.sk-step-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
+
+/* Dynamic PM routine tabs */
+.sk-tab.pm-tab.active { background: var(--pm-tret-bg); border-color: var(--pm-tret-bd); color: #F9A8D4; }
 </style>
 </head>
 <body>
@@ -1281,22 +1349,71 @@ function getDisplayWorkout(dayKey){
   return WORKOUTS[dayKey];
 }
 
-const SK_AM = [
-  'Orbis CF Wash','Orbis CF Smooth Essence','Orbis CF Lotion M',
-  'Orbis CF Brightening','Orbis CF Spot Treatment',
-  'Hypochlorous Acid Spray','Hada Labo Gokujyun White HA',
-  'Orbis CF Moisturiser M','TO Multi-Peptide Eye Serum','LRP Invisible Fluid SPF',
+// ── Skincare routines — stored in localStorage so they're editable ──
+const SK_DEFAULTS = {
+  am: [
+    'Orbis CF Wash','Orbis CF Smooth Essence','Orbis CF Lotion M',
+    'Orbis CF Brightening','Orbis CF Spot Treatment',
+    'Hypochlorous Acid Spray','Hada Labo Gokujyun White HA',
+    'Orbis CF Moisturiser M','TO Multi-Peptide Eye Serum','LRP Invisible Fluid SPF',
+  ],
+  pmTret: [
+    'Bioderma Micellar Water','PC Ultra Gentle Cleanser',
+    'Hada Labo Gokujyun White HA','Torriden Balanceful Moisturiser',
+    'TO Multi-Peptide Eye Serum',{name:'Acnatac',note:'Tretinoin + Clindamycin'},
+  ],
+  pmRec: [
+    'Orbis CF Wash','Keana Rice Mask','Orbis CF Lotion M',
+    'Hada Labo Gokujyun White HA','TO Multi-Peptide Eye Serum',
+    'Torriden Balanceful Moisturiser',
+  ],
+};
+const SKINCARE_KEY = 'skincare_routines';
+function loadSkincareData(){
+  try{ const v=localStorage.getItem(SKINCARE_KEY); return v?JSON.parse(v):SK_DEFAULTS; }
+  catch(e){ return SK_DEFAULTS; }
+}
+function saveSkincareData(d){ localStorage.setItem(SKINCARE_KEY,JSON.stringify(d)); }
+function getSK(key){ const d=loadSkincareData(); return d[key]||SK_DEFAULTS[key]||[]; }
+// Legacy references kept so any remaining callsites still work
+function getSK_AM(){ return getSK('am'); }
+// ── Skincare routine metadata (names + day assignments) ──────────
+const SKINCARE_META_KEY = 'skincare_meta';
+const SK_META_DEFAULTS = {
+  am: { name: 'AM Skincare' },
+  pm: [
+    { id: 'pmTret', name: 'Tretinoin night', days: ['Mon','Tue','Wed','Fri','Sat'] },
+    { id: 'pmRec',  name: 'Recovery night',  days: ['Thu','Sun'] },
+  ]
+};
+function loadSkincareMeta(){
+  try{
+    const v = localStorage.getItem(SKINCARE_META_KEY);
+    if(!v) return JSON.parse(JSON.stringify(SK_META_DEFAULTS));
+    const m = JSON.parse(v);
+    // Ensure backwards-compatible structure
+    if(!m.am) m.am = {name:'AM Skincare'};
+    if(!m.pm) m.pm = JSON.parse(JSON.stringify(SK_META_DEFAULTS.pm));
+    return m;
+  } catch(e){ return JSON.parse(JSON.stringify(SK_META_DEFAULTS)); }
+}
+function saveSkincareMeta(m){ localStorage.setItem(SKINCARE_META_KEY, JSON.stringify(m)); }
+function getPMRoutineForDay(dayKey){
+  const meta = loadSkincareMeta();
+  return meta.pm.find(r => r.days && r.days.includes(dayKey)) || null;
+}
+const SK_PM_COLORS = [
+  { ch:'#F9A8D4', bg:'var(--pm-tret-bg)', bd:'var(--pm-tret-bd)' },
+  { ch:'#6EE7B7', bg:'var(--pm-rec-bg)',  bd:'var(--pm-rec-bd)'  },
+  { ch:'#A5B4FC', bg:'var(--cal-bg)',      bd:'var(--cal-bd)'     },
+  { ch:'#FCD34D', bg:'var(--amber-bg)',    bd:'var(--amber-bd)'   },
 ];
-const SK_PM_TRET = [
-  'Bioderma Micellar Water','PC Ultra Gentle Cleanser',
-  'Hada Labo Gokujyun White HA','Torriden Balanceful Moisturiser',
-  'TO Multi-Peptide Eye Serum',{name:'Acnatac',note:'Tretinoin + Clindamycin'},
-];
-const SK_PM_REC = [
-  'Orbis CF Wash','Keana Rice Mask','Orbis CF Lotion M',
-  'Hada Labo Gokujyun White HA','TO Multi-Peptide Eye Serum',
-  'Torriden Balanceful Moisturiser',
-];
+function getPMColors(routineId){
+  const meta = loadSkincareMeta();
+  const idx = meta.pm.findIndex(r => r.id === routineId);
+  return SK_PM_COLORS[Math.max(0,idx) % SK_PM_COLORS.length];
+}
+
 
 const CHK    = `<svg viewBox="0 0 9 8" fill="none"><path d="M1 4l2.5 3 4.5-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const CHK_LG = `<svg viewBox="0 0 12 10" fill="none"><path d="M1 5l3.5 4 6.5-8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -1556,12 +1673,14 @@ function buildDayTasks(dateStr){
         note:'Take 30–60 minutes before bed — separate from magnesium so it peaks at sleep onset. L-Theanine raises alpha brain waves and GABA within 30–60 min, promoting calm without sedation. Taking it earlier would let the effect wear off before you actually sleep.' },
     ]});
 
-  const skPm    = isTret ? SK_PM_TRET : SK_PM_REC;
-  const skLabel = isTret ? 'Tretinoin night' : 'Recovery night';
+  const pmRoutine = getPMRoutineForDay(dk);
+  const skPm    = pmRoutine ? getSK(pmRoutine.id) : getSK('pmRec');
+  const skLabel = pmRoutine ? pmRoutine.name : 'PM Skincare';
+  const pmRoutineId = pmRoutine ? pmRoutine.id : 'pmRec';
 
   applyRoutineOverrides(sections, d.getDay());
 
-  return{sections,skPm,skLabel,dk,isTret,isWorkout,workout};
+  return{sections,skPm,skLabel,dk,isTret,isWorkout,workout,pmRoutineId};
 }
 
 function getAllItemIds(dateStr){
@@ -1631,7 +1750,7 @@ function sectionHTML(s, date, isModal, secIdx, secTotal){
   </div>`;
 }
 
-function skSectionHTML(steps, id, label, time, ch, bg, bd, date, isModal){
+function skSectionHTML(steps, id, label, time, ch, bg, bd, date, isModal, routineKey){
   const checked = isCheckedOn(date, id);
   const clickFn = isModal ? `modalToggle('${date}','${id}')` : `toggleItem('${id}')`;
   const list = steps.map((s,i)=>{
@@ -1647,6 +1766,9 @@ function skSectionHTML(steps, id, label, time, ch, bg, bd, date, isModal){
         <span style="width:5px;height:5px;border-radius:50%;background:${ch};display:inline-block"></span>${label}
       </span>
       <span class="section-time">${time}</span>
+      ${(!isModal && routineKey) ? `<button class="sk-edit-btn" onclick="openSkincareEditor('${routineKey}')" title="Edit routine">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 1.5l3.5 3.5L5.5 14H2v-3.5z"/><path d="M9.5 3l3.5 3.5"/></svg>
+      </button>` : ''}
     </div>
     <div class="sk-list">${list}</div>
     <div class="sk-check-row${checked?' checked':''}" onclick="${clickFn}">
@@ -1695,14 +1817,13 @@ function renderSidebar(){
 }
 
 function renderMain(){
-  const{sections,skPm,skLabel,isTret}=buildDayTasks(TODAY);
-  const pmCh = isTret?'#F9A8D4':'#6EE7B7';
-  const pmBg = isTret?'var(--pm-tret-bg)':'var(--pm-rec-bg)';
-  const pmBd = isTret?'var(--pm-tret-bd)':'var(--pm-rec-bd)';
+  const{sections,skPm,skLabel,pmRoutineId}=buildDayTasks(TODAY);
+  const pmCol = getPMColors(pmRoutineId);
+  const amName = loadSkincareMeta().am?.name || 'AM Skincare';
   document.getElementById('main').innerHTML=
     sections.map((s,i)=>sectionHTML(s,TODAY,false,i,sections.length)).join('')+
-    skSectionHTML(SK_AM,'sk-am','AM Skincare','morning routine','#67E8F9','var(--am-skin-bg)','var(--am-skin-bd)',TODAY,false)+
-    skSectionHTML(skPm,'sk-pm','PM Skincare',skLabel,pmCh,pmBg,pmBd,TODAY,false);
+    skSectionHTML(getSK('am'),'sk-am',amName,'morning routine','#67E8F9','var(--am-skin-bg)','var(--am-skin-bd)',TODAY,false,'am')+
+    skSectionHTML(skPm,'sk-pm','PM Skincare',skLabel,pmCol.ch,pmCol.bg,pmCol.bd,TODAY,false,pmRoutineId);
 }
 
 function updateOverall(){
@@ -1836,10 +1957,9 @@ function closeModal(){
 }
 
 function renderModalBody(dateStr){
-  const{sections,skPm,skLabel,isTret,workout,isWorkout}=buildDayTasks(dateStr);
-  const pmCh=isTret?'#F9A8D4':'#6EE7B7';
-  const pmBg=isTret?'var(--pm-tret-bg)':'var(--pm-rec-bg)';
-  const pmBd=isTret?'var(--pm-tret-bd)':'var(--pm-rec-bd)';
+  const{sections,skPm,skLabel,isTret,workout,isWorkout,pmRoutineId}=buildDayTasks(dateStr);
+  const _pmCol=getPMColors(pmRoutineId);
+  const pmCh=_pmCol.ch, pmBg=_pmCol.bg, pmBd=_pmCol.bd;
   const custom=getCustom(dateStr);
   const calEvts=calEvents[dateStr]||[];
 
@@ -1885,7 +2005,7 @@ function renderModalBody(dateStr){
   document.getElementById('modal-body').innerHTML=
     workoutHTML+recurHTML+calHTML+
     sections.map(s=>sectionHTML(s,dateStr,true)).join('')+
-    skSectionHTML(SK_AM,'sk-am','AM Skincare','morning routine','#67E8F9','var(--am-skin-bg)','var(--am-skin-bd)',dateStr,true)+
+    skSectionHTML(getSK('am'),'sk-am','AM Skincare','morning routine','#67E8F9','var(--am-skin-bg)','var(--am-skin-bd)',dateStr,true)+
     skSectionHTML(skPm,'sk-pm','PM Skincare',skLabel,pmCh,pmBg,pmBd,dateStr,true)+
     customHTML;
 }
@@ -3294,6 +3414,239 @@ loadGCal();
     if(document.visibilityState === 'visible') checkAndRollover();
   });
 })();
+
+// ════════════ SKINCARE EDITOR ════════════
+let _skActiveTab = 'am';
+function _skEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const DAY_KEYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function openSkincareEditor(routineKey){
+  _skActiveTab = routineKey || 'am';
+  document.getElementById('sk-overlay').classList.add('open');
+  document.getElementById('sk-panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderSkTabs();
+  renderRoutineSettings();
+  renderSkStepList();
+}
+function closeSkincareEditor(){
+  document.getElementById('sk-overlay').classList.remove('open');
+  document.getElementById('sk-panel').classList.remove('open');
+  document.body.style.overflow = '';
+  rerender();
+}
+function switchSkTab(key){
+  _skActiveTab = key;
+  renderSkTabs();
+  renderRoutineSettings();
+  renderSkStepList();
+}
+
+// ── Tabs (dynamic from metadata) ─────────────────────────────────
+function renderSkTabs(){
+  const meta = loadSkincareMeta();
+  const tabs = [
+    { id:'am', label: meta.am?.name || 'AM Skincare', cls:'' },
+    ...meta.pm.map((r,i) => ({ id:r.id, label:r.name, cls:'pm-tab', idx:i }))
+  ];
+  document.getElementById('sk-tab-row').innerHTML = tabs.map(t =>
+    `<button class="sk-tab${t.cls?' '+t.cls:''}${t.id===_skActiveTab?' active':''}" onclick="switchSkTab('${_skEsc(t.id)}')">${_skEsc(t.label)}</button>`
+  ).join('');
+}
+
+// ── Routine settings (name + days) ───────────────────────────────
+function renderRoutineSettings(){
+  const meta = loadSkincareMeta();
+  const el = document.getElementById('sk-routine-settings');
+  if(_skActiveTab === 'am'){
+    const name = meta.am?.name || 'AM Skincare';
+    el.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+      <input class="sk-add-input" id="sk-rname" value="${_skEsc(name)}" placeholder="Routine name" style="margin-bottom:0;flex:1">
+      <button class="sk-step-btn" onclick="saveRoutineName()" style="width:auto;padding:0 12px;height:36px;color:var(--recur-c);border-color:var(--recur-bd)">Save</button>
+    </div>`;
+  } else {
+    const r = meta.pm.find(x=>x.id===_skActiveTab);
+    if(!r){ el.innerHTML=''; return; }
+    const canDel = meta.pm.length > 1;
+    el.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input class="sk-add-input" id="sk-rname" value="${_skEsc(r.name)}" placeholder="Routine name" style="margin-bottom:0;flex:1">
+      <button class="sk-step-btn" onclick="saveRoutineName()" style="width:auto;padding:0 12px;height:36px;color:var(--recur-c);border-color:var(--recur-bd)">Save</button>
+      ${canDel?`<button class="sk-step-btn del" onclick="deletePMRoutine('${_skEsc(r.id)}')" title="Delete routine" style="width:auto;padding:0 10px;height:36px">Delete</button>`:''}
+    </div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:6px">Active days</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${DAY_KEYS.map(d=>
+      `<button class="day-tog${r.days&&r.days.includes(d)?' sel':''}" onclick="toggleRoutineDay('${d}')">${d}</button>`
+    ).join('')}</div>`;
+  }
+}
+
+function saveRoutineName(){
+  const name = document.getElementById('sk-rname')?.value.trim();
+  if(!name) return;
+  const meta = loadSkincareMeta();
+  if(_skActiveTab === 'am'){
+    meta.am.name = name;
+  } else {
+    const r = meta.pm.find(x=>x.id===_skActiveTab);
+    if(r) r.name = name;
+  }
+  saveSkincareMeta(meta);
+  renderSkTabs();
+  renderRoutineSettings();
+}
+
+function toggleRoutineDay(dayKey){
+  const meta = loadSkincareMeta();
+  const r = meta.pm.find(x=>x.id===_skActiveTab); if(!r) return;
+  if(!r.days) r.days = [];
+  if(r.days.includes(dayKey)) r.days = r.days.filter(d=>d!==dayKey);
+  else r.days.push(dayKey);
+  saveSkincareMeta(meta);
+  renderRoutineSettings();
+}
+
+function deletePMRoutine(id){
+  if(!confirm('Delete this PM routine and its steps?')) return;
+  const meta = loadSkincareMeta();
+  if(meta.pm.length <= 1){ return; }
+  meta.pm = meta.pm.filter(r=>r.id!==id);
+  // Also remove steps
+  const data = loadSkincareData();
+  delete data[id];
+  saveSkincareData(data);
+  saveSkincareMeta(meta);
+  _skActiveTab = meta.pm[0]?.id || 'am';
+  renderSkTabs();
+  renderRoutineSettings();
+  renderSkStepList();
+}
+
+function addNewPMRoutine(){
+  const name = prompt('New PM routine name:');
+  if(!name || !name.trim()) return;
+  const meta = loadSkincareMeta();
+  const id = 'pm_' + Date.now();
+  meta.pm.push({ id, name: name.trim(), days: [] });
+  saveSkincareMeta(meta);
+  // Init with empty steps
+  const data = loadSkincareData();
+  if(!data[id]) data[id] = [];
+  saveSkincareData(data);
+  _skActiveTab = id;
+  renderSkTabs();
+  renderRoutineSettings();
+  renderSkStepList();
+}
+
+// ── Step list ─────────────────────────────────────────────────────
+function renderSkStepList(){
+  const steps = getSK(_skActiveTab);
+  const list = document.getElementById('sk-step-list');
+  if(!list) return;
+  if(!steps.length){ list.innerHTML='<div style="font-size:12px;color:var(--muted2);padding:4px 0 8px;font-style:italic">No steps yet. Add one below.</div>'; return; }
+  list.innerHTML = steps.map((s,i)=>{
+    const name = typeof s==='string'?s:s.name;
+    const note = typeof s==='string'?null:s.note;
+    return `<div class="sk-step-item" id="sk-step-row-${i}">
+      <span class="sk-step-num-label">${i+1}</span>
+      <div class="sk-step-info">
+        <div class="sk-step-name">${_skEsc(name)}</div>
+        ${note?'<div class="sk-step-note">'+_skEsc(note)+'</div>':''}
+      </div>
+      <div class="sk-step-btns">
+        <button class="sk-step-btn" onclick="moveSkStep(${i},-1)" ${i===0?'disabled':''} title="Move up">▲</button>
+        <button class="sk-step-btn" onclick="moveSkStep(${i},1)"  ${i===steps.length-1?'disabled':''} title="Move down">▼</button>
+        <button class="sk-step-btn" onclick="editSkStep(${i})" title="Edit" style="font-size:12px">✎</button>
+        <button class="sk-step-btn del" onclick="deleteSkStep(${i})" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function editSkStep(idx){
+  const steps = getSK(_skActiveTab);
+  const s = steps[idx];
+  const name = typeof s==='string'?s:s.name;
+  const note = typeof s==='string'?'':s.note||'';
+  const row = document.getElementById('sk-step-row-'+idx);
+  if(!row) return;
+  row.innerHTML = `
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+      <input class="sk-add-input" id="sk-edit-name-${idx}" value="${_skEsc(name)}" placeholder="Product name" style="margin-bottom:0">
+      <input class="sk-add-input" id="sk-edit-note-${idx}" value="${_skEsc(note)}" placeholder="Note (optional)" style="margin-bottom:0">
+    </div>
+    <div class="sk-step-btns" style="flex-direction:column;gap:4px">
+      <button class="sk-step-btn" onclick="saveSkStepEdit(${idx})" title="Save" style="color:var(--recur-c);border-color:var(--recur-bd)">✓</button>
+      <button class="sk-step-btn" onclick="renderSkStepList()" title="Cancel">✕</button>
+    </div>`;
+}
+function saveSkStepEdit(idx){
+  const name = document.getElementById('sk-edit-name-'+idx)?.value.trim();
+  const note = document.getElementById('sk-edit-note-'+idx)?.value.trim();
+  if(!name) return;
+  const data = loadSkincareData();
+  const steps = [...(data[_skActiveTab]||[])];
+  steps[idx] = note ? {name,note} : name;
+  data[_skActiveTab] = steps;
+  saveSkincareData(data);
+  renderSkStepList();
+}
+function moveSkStep(idx, delta){
+  const data = loadSkincareData();
+  const steps = [...(data[_skActiveTab]||[])];
+  const newIdx = idx+delta;
+  if(newIdx<0||newIdx>=steps.length) return;
+  [steps[idx],steps[newIdx]]=[steps[newIdx],steps[idx]];
+  data[_skActiveTab]=steps;
+  saveSkincareData(data);
+  renderSkStepList();
+}
+function deleteSkStep(idx){
+  const data = loadSkincareData();
+  const steps = [...(data[_skActiveTab]||[])];
+  steps.splice(idx,1);
+  data[_skActiveTab]=steps;
+  saveSkincareData(data);
+  renderSkStepList();
+}
+function addSkincareStep(){
+  const name = document.getElementById('sk-new-name').value.trim();
+  const note = document.getElementById('sk-new-note').value.trim();
+  const status = document.getElementById('sk-status');
+  if(!name){ status.textContent='Enter a product name.'; return; }
+  status.textContent='';
+  const data = loadSkincareData();
+  if(!data[_skActiveTab]) data[_skActiveTab]=[...( SK_DEFAULTS[_skActiveTab]||[])];
+  const step = note ? {name,note} : name;
+  data[_skActiveTab].push(step);
+  saveSkincareData(data);
+  document.getElementById('sk-new-name').value='';
+  document.getElementById('sk-new-note').value='';
+  renderSkStepList();
+}
 </script>
+
+<div class="recur-overlay" id="sk-overlay" onclick="closeSkincareEditor()"></div>
+<div class="recur-panel" id="sk-panel" style="width:min(500px,94vw)">
+  <div class="recur-panel-head">
+    <div>
+      <div class="recur-panel-title" id="sk-panel-title">Edit Skincare Routine</div>
+      <div class="recur-panel-sub">Add, remove or reorder steps. Changes save automatically.</div>
+    </div>
+    <button class="modal-close" onclick="closeSkincareEditor()">&#10005;</button>
+  </div>
+  <div class="recur-panel-body">
+    <div class="sk-tab-row" id="sk-tab-row"></div>
+    <div id="sk-routine-settings" style="margin-bottom:12px"></div>
+    <div class="sk-step-list" id="sk-step-list"></div>
+    <div class="sk-add-form">
+      <div class="sk-add-title">Add step</div>
+      <input class="sk-add-input" id="sk-new-name" type="text" placeholder="Product name" autocomplete="off">
+      <input class="sk-add-input" id="sk-new-note" type="text" placeholder="Note / description (optional)" autocomplete="off">
+      <button class="sk-add-btn" onclick="addSkincareStep()">+ Add step</button>
+      <div id="sk-status" style="font-size:11px;color:#F87171;margin-top:6px;min-height:14px"></div>
+    </div>
+    <button class="sk-add-btn" onclick="addNewPMRoutine()" style="margin-top:10px;background:var(--card2);border-color:var(--border2);color:var(--muted2)">+ New PM routine</button>
+  </div>
+</div>
 </body>
 </html>
