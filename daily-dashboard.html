@@ -117,25 +117,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* Main grid */
 .grid{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
 
-/* Narrow-window overflow protection (applies to anything ≤ 900px wide,
-   covering portrait phones, narrow browser windows, sidebar views).
-   Stops individual elements from forcing the page wider than the window. */
+/* ─── Universal overflow protection ───────────────────────────
+   These rules apply at all widths because they're safe on wide
+   screens (they only have an effect when content would otherwise
+   overflow). They prevent the dashboard from clipping at any
+   narrow viewport, including portrait phone widths down to ~320px. */
+html, body{overflow-x:hidden; max-width:100vw}
+
+/* Allow any flex/grid container that hosts wide content to shrink
+   below its intrinsic width. Without this, e.g. the schedule strip
+   pushes its parent card wider than the viewport. */
+.grid, .card, .schedule-wrap, .schedule-strip, .hourly-strip,
+.check-row, .check-label-col, .sk-list, .sk-step,
+.header, .header > *, .calendar-row, .calendar-col,
+.workout-card, .weather-card{min-width:0}
+
+/* Long text wraps instead of pushing the row wider than the viewport.
+   `anywhere` is the most aggressive break rule and handles the worst
+   cases (long URLs, unbroken descriptions). */
+.check-note-text, .check-label, .check-dose,
+.sk-name, .sk-check-sub, .sk-check-label,
+.workout-name, .date-main, .date-sub,
+.calendar-event-name, .calendar-event-time{
+  overflow-wrap:anywhere; word-break:break-word; min-width:0;
+}
+
+/* Weather stats: force three equal columns rather than letting "30 km/h"
+   or similar push individual columns wider than 1/3 of available space. */
+.weather-stats-row{grid-template-columns:repeat(3, minmax(0, 1fr))}
+.weather-stats-row > *{min-width:0; overflow:hidden}
+
+/* Header wraps when its two halves can't fit on one line. Flex-wrap
+   only triggers when needed, so wide screens still show one row. */
+.header{flex-wrap:wrap; gap:8px}
+
 @media(max-width:900px){
-  html, body{overflow-x:hidden; max-width:100vw}
-  /* Allow these containers to shrink below their intrinsic content width
-     so internal scroll containers like the schedule strip stay inside. */
-  .grid, .card, .schedule-wrap, .schedule-strip, .hourly-strip,
-  .check-row, .check-label-col, .sk-list, .sk-step,
-  .header, .calendar-row, .calendar-col{min-width:0}
-  /* Long descriptions and titles wrap rather than clipping at right edge. */
-  .check-note-text, .check-label, .check-dose,
-  .sk-name, .sk-check-sub, .sk-check-label,
-  .workout-name, .calendar-event-name, .calendar-event-time{
-    overflow-wrap:anywhere; word-break:break-word;
-  }
-  /* Weather stats: force equal columns so "30 km/h" can't push wider. */
-  .weather-stats-row{grid-template-columns:repeat(3, minmax(0, 1fr))}
-  .weather-stats-row > *{min-width:0; overflow:hidden}
+  /* Tighter mobile-specific tweaks could go here in future. */
 }
 
 /* Single-column layout collapse at the existing 720px breakpoint. */
