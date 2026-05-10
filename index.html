@@ -73,7 +73,7 @@
     /* Compact top bar that doesn't overlap iframe content */
     .switcher{top:8px;right:8px;font-size:11px;padding:3px}
     .switcher button{padding:5px 9px;gap:5px}
-    .sync-btn{top:8px;left:8px;width:30px;height:30px;border-radius:8px}
+    .sync-btn{bottom:max(16px,env(safe-area-inset-bottom));left:10px;width:30px;height:30px;border-radius:8px}
     .sync-btn svg{width:14px;height:14px}
     /* Push the iframes down so the bar above is clear */
     .frame{top:48px;height:calc(100% - 48px)}
@@ -87,7 +87,7 @@
 
   /* Sync pairing UI */
   .sync-btn{
-    position:fixed;top:16px;left:16px;z-index:9999;
+    position:fixed;bottom:20px;left:16px;z-index:9999;
     width:34px;height:34px;border-radius:10px;
     background:rgba(20,20,24,0.85);backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
@@ -100,7 +100,7 @@
   .sync-btn[data-state="ok"]{color:#4ADE80}
   .sync-btn[data-state="off"]{color:#9B978F}
   .sync-btn svg{width:16px;height:16px}
-  @media(max-width:600px){.sync-btn{top:10px;left:10px;width:30px;height:30px}}
+  @media(max-width:600px){.sync-btn{bottom:max(16px,env(safe-area-inset-bottom));left:10px;width:30px;height:30px}}
 
   .sync-modal-bg{
     position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);

@@ -11,9 +11,9 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0D0D0B; --card:#161614; --card2:#1C1C19;
-  --border:#272522; --border2:#2F2D2A;
-  --text:#F5F3EF; --muted:#C0BBB2; --muted2:#9B978F;
+  --bg:#0D0D0B; --card:#191917; --card2:#212120;
+  --border:#343230; --border2:#403D3A;
+  --text:#F5F3EF; --muted:#D0CBC3; --muted2:#B5B0A8;
   --acc:#7DD3FC; --acc-bg:#061520; --acc-bd:#0D2F45; --acc-hover:#38BDF8;
   --green:#4ADE80; --green-bg:#0A1F0F; --green-bd:#1A3D20;
   --amber:#FCD34D; --amber-bg:#1A1500; --amber-bd:#3D3000;
@@ -476,6 +476,97 @@ body.session-running #history-card{display:none !important}
     width: 56px;
   }
 }
+
+/* ── Portrait mobile: tighter spacing ─────────────────────────── */
+@media (max-width: 600px) {
+  body { padding: 10px 10px 20px !important; }
+  .header { margin-bottom: 12px !important; padding-bottom: 12px !important; gap: 8px !important; flex-wrap: wrap !important; }
+  .header-left .date-label { font-size: 9px !important; margin-bottom: 2px !important; }
+  .header-left .date-main  { font-size: 24px !important; }
+  .header-left .date-sub   { font-size: 12px !important; }
+  .header-right { gap: 6px !important; flex-wrap: wrap !important; justify-content: flex-end !important; }
+  .ghost-btn { font-size: 12px !important; padding: 8px 12px !important; }
+
+  /* Layout: column */
+  .layout { gap: 10px !important; }
+  .sidebar > .card { margin-bottom: 8px !important; padding: 12px !important; }
+  .card { padding: 12px !important; margin-bottom: 8px !important; border-radius: 11px !important; }
+  .card-head { margin-bottom: 10px !important; gap: 6px !important; }
+  .badge { font-size: 9px !important; padding: 2px 7px !important; }
+  .card-head-meta { font-size: 10px !important; }
+
+  /* Duration stopwatch */
+  .duration-time { font-size: 28px !important; }
+  .duration-status { font-size: 10px !important; }
+
+  /* Workout pills */
+  .wk-pill { padding: 9px 11px !important; gap: 9px !important; border-radius: 9px !important; }
+  .wk-pill-name { font-size: 12px !important; }
+  .wk-pill-type { font-size: 10px !important; }
+  .wk-add-btn { padding: 8px !important; font-size: 11px !important; margin-top: 6px !important; }
+
+  /* Week progress */
+  .week-stats { gap: 12px !important; }
+  .week-stat-val { font-size: 18px !important; }
+  .week-stat-lbl { font-size: 9px !important; }
+
+  /* Volume */
+  .vol-grid { gap: 6px !important; }
+  .vol-stat { padding: 8px 10px !important; border-radius: 8px !important; }
+  .vol-stat-val { font-size: 16px !important; }
+  .vol-stat-lbl { font-size: 9px !important; }
+
+  /* Exercise items */
+  .ex-item { border-radius: 9px !important; margin-bottom: 6px !important; }
+  .ex-header { padding: 10px 11px !important; gap: 8px !important; }
+  .ex-name { font-size: 13px !important; }
+  .ex-sets-summary { font-size: 10px !important; }
+  .ex-section-title { font-size: 9px !important; margin-bottom: 7px !important; }
+  .ex-section { margin-bottom: 12px !important; }
+
+  /* Sets table */
+  .ex-sets { padding: 0 11px 11px !important; gap: 4px !important; }
+  .ex-item.expanded .ex-sets { padding-top: 10px !important; }
+  .set-row { padding: 4px 2px !important; gap: 4px !important; }
+
+  /* History */
+  .hist-item { padding: 7px 9px !important; border-radius: 8px !important; }
+  .hist-item-name { font-size: 12px !important; }
+  .hist-item-meta { font-size: 9px !important; }
+
+  /* Complete banner */
+  .complete-banner { padding: 12px 14px !important; gap: 10px !important; border-radius: 10px !important; margin-bottom: 10px !important; }
+  .complete-banner-title { font-size: 13px !important; }
+  .complete-banner-sub { font-size: 11px !important; }
+
+  /* Notes */
+  .notes-area { font-size: 13px !important; padding: 9px 10px !important; min-height: 60px !important; }
+
+  /* Reorder buttons — always visible on touch */
+  .ex-reorder-btn { opacity: 1 !important; }
+}
+
+/* Exercise reorder up/down buttons */
+.ex-reorder-wrap { display:flex; flex-direction:column; gap:2px; flex-shrink:0; margin-right:2px; }
+.ex-reorder-btn {
+  width:20px; height:18px; border:none; background:none;
+  color:var(--muted2); cursor:pointer; font-size:10px; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:4px; padding:0; transition:color .12s, background .12s;
+  opacity:0; transition:opacity .15s, color .12s, background .12s;
+}
+.ex-header:hover .ex-reorder-btn { opacity:1; }
+.ex-reorder-btn:hover { color:var(--text); background:var(--card2); }
+.ex-reorder-btn:disabled { opacity:.2 !important; cursor:not-allowed; }
+
+/* Trash icon on workout pill */
+.wk-pill-del {
+  background:none; border:none; color:var(--muted2); cursor:pointer;
+  font-size:13px; padding:2px 4px; opacity:0; transition:opacity .15s, color .12s;
+  line-height:1; flex-shrink:0;
+}
+.wk-pill:hover .wk-pill-del { opacity:1; }
+.wk-pill-del:hover { color:#F87171; }
 </style>
 </head>
 <body>
@@ -613,7 +704,7 @@ body.session-running #history-card{display:none !important}
 
     <div class="card">
       <div class="card-head"><span class="badge badge-muted">Notes</span></div>
-      <textarea class="notes-area" id="workout-notes" placeholder="Permanent scratchpad — anything you write here stays until you delete it." rows="6"></textarea>
+      <textarea class="notes-area" id="workout-notes" placeholder="" rows="6"></textarea>
     </div>
   </div>
 </div>
@@ -1116,6 +1207,9 @@ function renderWorkoutList(){
       <button class="wk-pill-edit" onclick="event.stopPropagation();openEditWorkout('${esc(w.id)}')" title="Edit">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>
       </button>
+      <button class="wk-pill-del" onclick="event.stopPropagation();deleteWorkoutDirect('${esc(w.id)}','${esc(w.name)}')" title="Delete workout">
+        <svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h10M4 3V2h4v1M2 3l.8 9h6.4L10 3"/></svg>
+      </button>
     </div>
   `).join('');
 }
@@ -1187,6 +1281,10 @@ function renderWorkout(){
       html += `<div class="ex-item${isDone?' done':''}${expanded?' expanded':''}" id="ex-${esc(ex.id)}">
         <div class="ex-header" onclick="toggleEx('${esc(ex.id)}')">
           <div class="ex-check">${CHK}</div>
+          <div class="ex-reorder-wrap" onclick="event.stopPropagation()">
+            <button class="ex-reorder-btn" title="Move up" onclick="moveExercise('${esc(ex.id)}',-1)" ${ex===exList[0]&&cat===Object.keys(groups)[0]?'disabled':''}>▲</button>
+            <button class="ex-reorder-btn" title="Move down" onclick="moveExercise('${esc(ex.id)}',1)" ${ex===exList[exList.length-1]&&cat===Object.keys(groups)[Object.keys(groups).length-1]?'disabled':''}>▼</button>
+          </div>
           <div class="ex-drag" title="Drag to reorder" onmousedown="startDrag(event,'${esc(ex.id)}')" ontouchstart="startDrag(event,'${esc(ex.id)}')">
             <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" style="opacity:.35"><circle cx="3" cy="2.5" r="1.5"/><circle cx="7" cy="2.5" r="1.5"/><circle cx="3" cy="7" r="1.5"/><circle cx="7" cy="7" r="1.5"/><circle cx="3" cy="11.5" r="1.5"/><circle cx="7" cy="11.5" r="1.5"/></svg>
           </div>
@@ -1996,6 +2094,31 @@ function addCustomExercise(){
   closeModal('add-ex-modal');
   renderWorkout();
   showToast('Exercise added');
+}
+
+
+// ════════════ EXERCISE REORDER ════════════
+
+function deleteWorkoutDirect(id, name){
+  if(workouts.length <= 1){ showToast('Cannot delete — need at least one workout'); return; }
+  if(!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  workouts = workouts.filter(w => w.id !== id);
+  if(activeId === id) activeId = workouts[0].id;
+  localStorage.setItem(ACTIVE_KEY, activeId);
+  saveWorkouts(workouts);
+  renderWorkoutList();
+  renderWorkout();
+  showToast('Workout deleted');
+}
+function moveExercise(exId, delta){
+  const w = getActiveWorkout(); if(!w) return;
+  const exs = w.exercises;
+  const idx = exs.findIndex(e=>e.id===exId); if(idx<0) return;
+  const newIdx = idx + delta;
+  if(newIdx < 0 || newIdx >= exs.length) return;
+  [exs[idx], exs[newIdx]] = [exs[newIdx], exs[idx]];
+  saveWorkouts(workouts);
+  renderWorkout();
 }
 
 // ════════════ ADD/EDIT WORKOUT ════════════
