@@ -215,9 +215,8 @@ body.session-running .ts-widget{display:block}
 .ex-sets-summary{font-size:11px;color:var(--muted);white-space:nowrap}
 .ex-chevron{width:16px;height:16px;color:var(--muted);flex-shrink:0;transition:transform .2s}
 .ex-item.expanded .ex-chevron{transform:rotate(180deg)}
-.ex-del-btn{background:none;border:none;color:var(--muted2);cursor:pointer;padding:2px 4px;font-size:13px;opacity:0;transition:all .12s}
-.ex-header:hover .ex-del-btn{opacity:1}
-.ex-del-btn:hover{color:var(--red)}
+.ex-del-btn{background:none;border:none;color:var(--muted2);cursor:pointer;padding:2px 4px;font-size:13px;opacity:.45;transition:all .12s}
+.ex-del-btn:hover{opacity:1;color:var(--red)}
 .ex-drag{display:flex;align-items:center;padding:0 6px 0 0;cursor:grab;color:var(--muted2);flex-shrink:0;touch-action:none}
 .ex-drag:active{cursor:grabbing}
 .ex-set-actions{display:flex;gap:6px;margin-top:4px}
@@ -1080,6 +1079,52 @@ function fmtDuration(s){
   return `${h}:${m}:${sec}`;
 }
 
+// ════════════ AUDIO & NOTIFICATIONS ════════════
+// Web Audio beep — works even in background tabs on most browsers.
+let _audioCtx = null;
+function getAudioCtx(){
+  if(!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playBeep(){
+  try{
+    const ctx = getAudioCtx();
+    if(ctx.state === 'suspended') ctx.resume();
+    // Two-tone beep: short high, short higher
+    [660, 880].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.value = 0.25;
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15 + i*0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + i*0.2);
+      osc.stop(ctx.currentTime + 0.15 + i*0.2);
+    });
+  }catch(e){ /* audio not available */ }
+}
+// Request notification permission proactively (called on first timer start).
+function ensureNotifPermission(){
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+// Fire a notification (works when app is backgrounded / screen off).
+function fireTimerNotification(title, body){
+  playBeep();
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{ new Notification(title, { body, icon: 'icons/icon-192.png', tag: 'timer-done', renotify: true }); }
+    catch(e){ /* SW-only env, try via SW */ 
+      if(navigator.serviceWorker?.controller){
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, { body, icon: 'icons/icon-192.png', tag: 'timer-done', renotify: true });
+        });
+      }
+    }
+  }
+}
+
 // ════════════ WEEK / STREAK (weekly) ════════════
 function getWeekStart(d){ // Monday as week start
   const r = new Date(d); const dow = r.getDay(); const off = (dow+6)%7; r.setDate(r.getDate()-off); r.setHours(0,0,0,0); return r;
@@ -1740,24 +1785,30 @@ function startExTimer(exId){
   const total = ex.rest||0;
   if(total<=0) return;
 
-  exTimers[exId] = { total, left: total, finished: false, intervalId: null };
+  ensureNotifPermission();
+
+  // Store the wall-clock end time so the timer survives backgrounding.
+  const endAt = Date.now() + total * 1000;
+  exTimers[exId] = { total, endAt, finished: false, intervalId: null };
   const t = exTimers[exId];
 
   t.intervalId = setInterval(()=>{
-    t.left--;
-    if(t.left<=0){
+    const left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
+    t.left = left;
+    if(left <= 0){
       clearInterval(t.intervalId);
-      t.left = 0;
       t.finished = true;
+      t.left = 0;
       updateExTimerUI(exId);
+      fireTimerNotification('Rest done', ex.name + ' — time to go');
       showToast('⏱ Rest done — '+ex.name, 2500);
-      // auto-hide after 5s
       setTimeout(()=>{ if(exTimers[exId]?.finished) cancelExTimer(exId); }, 5000);
       return;
     }
     updateExTimerUI(exId);
-  }, 1000);
+  }, 250);
 
+  t.left = total;
   updateExTimerUI(exId);
 }
 
@@ -1771,6 +1822,8 @@ function cancelExTimer(exId){
 
 function updateExTimerUI(exId){
   const t = exTimers[exId]; if(!t) return;
+  // Recompute from wall-clock if still running
+  if(!t.finished && t.endAt) t.left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
   const el = document.getElementById('rest-'+exId); if(!el) return;
   el.classList.add('active');
   if(t.finished) el.classList.add('done-state');
@@ -2050,6 +2103,8 @@ function swReset(){
 let ctState = 'idle'; // idle | running | paused | done
 let ctTotal = 60;     // total seconds for current timer
 let ctLeft = 60;      // seconds remaining
+let ctEndAt = 0;      // wall-clock timestamp when timer should finish
+let ctPausedLeft = 0; // seconds remaining when paused
 let ctInterval = null;
 const CT_RING_CIRC = 2 * Math.PI * 62; // ~389.56
 
@@ -2116,15 +2171,18 @@ function ctCustomChanged(){
 
 function ctStart(){
   if(ctTotal <= 0) return;
+  ensureNotifPermission();
   ctState = 'running';
   ctLeft = ctTotal;
+  ctEndAt = Date.now() + ctTotal * 1000;
   ctInterval = setInterval(() => {
-    ctLeft--;
+    ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
     if(ctLeft <= 0){
       ctLeft = 0;
       ctState = 'done';
       if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
       ctUpdateDisplay();
+      fireTimerNotification('Timer done', ctFmtTime(ctTotal) + ' countdown complete');
       showToast('⏱ Timer done!', 3000);
       document.getElementById('ct-sub').textContent = 'Finished';
       document.getElementById('ct-pause-btn').style.display = 'none';
@@ -2132,7 +2190,7 @@ function ctStart(){
       return;
     }
     ctUpdateDisplay();
-  }, 1000);
+  }, 250);
   ctUpdateDisplay();
   document.getElementById('ct-start-btn').style.display = 'none';
   document.getElementById('ct-pause-btn').style.display = 'inline-flex';
@@ -2147,6 +2205,8 @@ function ctStart(){
 
 function ctPause(){
   ctState = 'paused';
+  ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
+  ctPausedLeft = ctLeft;
   if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
   document.getElementById('ct-pause-btn').style.display = 'none';
   document.getElementById('ct-resume-btn').style.display = 'inline-flex';
@@ -2155,13 +2215,15 @@ function ctPause(){
 
 function ctResume(){
   ctState = 'running';
+  ctEndAt = Date.now() + ctPausedLeft * 1000;
   ctInterval = setInterval(() => {
-    ctLeft--;
+    ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
     if(ctLeft <= 0){
       ctLeft = 0;
       ctState = 'done';
       if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
       ctUpdateDisplay();
+      fireTimerNotification('Timer done', ctFmtTime(ctTotal) + ' countdown complete');
       showToast('⏱ Timer done!', 3000);
       document.getElementById('ct-sub').textContent = 'Finished';
       document.getElementById('ct-pause-btn').style.display = 'none';
@@ -2169,7 +2231,7 @@ function ctResume(){
       return;
     }
     ctUpdateDisplay();
-  }, 1000);
+  }, 250);
   document.getElementById('ct-resume-btn').style.display = 'none';
   document.getElementById('ct-pause-btn').style.display = 'inline-flex';
   document.getElementById('ct-sub').textContent = '';
@@ -2631,6 +2693,33 @@ function recoverStaleSession(){
 
 // ════════════ INIT ════════════
 function init(){
+  // Intercept sync.js remote changes — re-render instead of reloading the page.
+  // This prevents losing in-progress timers and scroll position when logging exercises.
+  window.addEventListener('sync:remote-change', (ev) => {
+    ev.markHandled();
+    // Re-read state from localStorage (sync.js already wrote the new values)
+    session = loadSession(TODAY);
+    workouts = loadWorkouts();
+    sessionTimer = loadSessionTimer();
+    renderWorkout();
+    renderVolume();
+    renderHistory();
+    renderWeek();
+    renderWorkoutList();
+    // Restore session timer UI
+    if(sessionTimer){
+      if(sessionTimer.end){
+        const dur = Math.floor((sessionTimer.end-sessionTimer.start)/1000);
+        document.getElementById('duration-time').className = 'duration-time finished';
+        document.getElementById('duration-time').textContent = fmtDuration(dur);
+        document.getElementById('session-status').textContent = 'Finished';
+      } else if(!sessionInterval){
+        startSessionTick();
+      }
+    }
+    setSessionRunningClass();
+  });
+
   // Run state recovery BEFORE first render so renderWorkout sees a clean state.
   recoverStaleSession();
 
@@ -2664,6 +2753,47 @@ function init(){
   // was crossed while we were away.
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'visible') return;
+
+    // ── Catch up all timers after returning from background ──
+    // Per-exercise rest timers
+    Object.keys(exTimers).forEach(exId => {
+      const t = exTimers[exId];
+      if(!t || t.finished) return;
+      const left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
+      t.left = left;
+      if(left <= 0){
+        if(t.intervalId) clearInterval(t.intervalId);
+        t.finished = true;
+        t.left = 0;
+        updateExTimerUI(exId);
+        const ex = findEx(exId);
+        fireTimerNotification('Rest done', (ex?.name||'Exercise') + ' — time to go');
+        showToast('⏱ Rest done — '+(ex?.name||''), 2500);
+        setTimeout(()=>{ if(exTimers[exId]?.finished) cancelExTimer(exId); }, 5000);
+      } else {
+        updateExTimerUI(exId);
+      }
+    });
+    // Countdown timer
+    if(ctState === 'running'){
+      ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
+      if(ctLeft <= 0){
+        ctLeft = 0;
+        ctState = 'done';
+        if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
+        ctUpdateDisplay();
+        fireTimerNotification('Timer done', ctFmtTime(ctTotal) + ' countdown complete');
+        showToast('⏱ Timer done!', 3000);
+        document.getElementById('ct-sub').textContent = 'Finished';
+        document.getElementById('ct-pause-btn').style.display = 'none';
+        document.getElementById('ct-reset-btn').style.display = 'inline-flex';
+      } else {
+        ctUpdateDisplay();
+      }
+    }
+    // Stopwatch display catch-up (already timestamp-based, just refresh)
+    if(swState === 'running') swUpdateDisplay();
+
     // Midnight rollover: if the calendar day changed while we were hidden,
     // reload so TODAY and everything dependent on it re-initialises.
     if(fmtDate(new Date()) !== TODAY){
