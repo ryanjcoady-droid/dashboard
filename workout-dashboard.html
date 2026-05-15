@@ -155,6 +155,23 @@ body.session-running .ts-widget{display:block}
 .ts-custom-input{width:48px;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 6px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;text-align:center}
 .ts-custom-input:focus{border-color:var(--acc-bd)}
 .ts-custom-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+
+/* Import session cards */
+.imp-card{padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:default}
+.imp-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.imp-card-date{font-size:13px;font-weight:600;color:var(--text)}
+.imp-card-meta{font-size:11px;color:var(--muted)}
+.imp-diff{font-size:12px;color:var(--muted);margin-bottom:10px}
+.imp-diff-item{padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:baseline}
+.imp-diff-item:last-child{border-bottom:none}
+.imp-diff-label{font-weight:600;color:var(--text);min-width:100px;flex-shrink:0;font-size:11px}
+.imp-diff-old{text-decoration:line-through;color:var(--red);opacity:.7;font-size:11px}
+.imp-diff-arrow{color:var(--muted2);font-size:10px}
+.imp-diff-new{color:var(--green);font-weight:500;font-size:11px}
+.imp-no-diff{font-size:12px;color:var(--muted2);font-style:italic}
+.imp-apply-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--acc-bd);background:var(--acc-bg);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.imp-apply-btn:hover{background:var(--acc-bd);color:#fff}
+.imp-empty{text-align:center;padding:30px 20px;color:var(--muted);font-size:13px}
 /* Progress ring for countdown */
 .ts-ring-wrap{display:flex;justify-content:center;margin-bottom:6px;position:relative}
 .ts-ring-wrap svg{transform:rotate(-90deg)}
@@ -186,9 +203,11 @@ body.session-running .ts-widget{display:block}
 .week-prog-cell{flex:1;height:5px;border-radius:99px;background:var(--border2);overflow:hidden}
 .week-prog-fill{height:100%;border-radius:99px;background:var(--green);transition:width .4s ease}
 .week-day-row{display:flex;justify-content:space-between;font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2);margin-bottom:14px}
-.week-day-row span{flex:1;text-align:center}
+.week-day-row span{flex:1;text-align:center;cursor:pointer;padding:4px 0;border-radius:6px;transition:all .12s}
+.week-day-row span:hover{background:var(--card2);color:var(--text)}
 .week-day-row span.today-ind{color:var(--acc)}
 .week-day-row span.done-ind{color:var(--green)}
+.week-day-row span.selected-day{background:var(--acc-bg);color:var(--acc);border:1px solid var(--acc-bd)}
 .week-stats{display:flex;gap:16px}
 .week-stat{display:flex;flex-direction:column}
 .week-stat-val{font-family:'Outfit',sans-serif;font-size:22px;font-weight:400;line-height:1}
@@ -666,6 +685,10 @@ body.session-running .ts-widget{display:block}
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
       Add exercise
     </button>
+    <button class="ghost-btn" onclick="openImportSession()" title="Import changes from a past session">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14V9m0 0l3 3m-3-3l-3 3M13 2v5m0 0l3-3m-3 3l-3-3M8 1v14"/></svg>
+      Import
+    </button>
   </div>
 </div>
 
@@ -823,6 +846,11 @@ body.session-running .ts-widget{display:block}
         <span style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:400;line-height:1;margin-left:6px" id="workout-title">—</span>
         <span class="card-head-meta" id="workout-type-label"></span>
       </div>
+      <div id="viewing-past-banner" style="display:none;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--amber);display:none;align-items:center;gap:8px">
+        <span>📋</span>
+        <span id="viewing-past-text"></span>
+        <button onclick="switchToDay(TODAY)" style="margin-left:auto;background:none;border:1px solid var(--amber-bd);color:var(--amber);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">Back to today</button>
+      </div>
       <div id="exercise-list"></div>
     </div>
 
@@ -916,6 +944,23 @@ body.session-running .ts-widget{display:block}
     <div class="modal-actions">
       <button class="btn-danger-outline" onclick="deleteSessionFromModal()" style="margin-right:auto">Delete entry</button>
       <button class="btn-secondary" onclick="closeModal('session-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import from past session modal -->
+<div class="modal-overlay" id="import-modal" onclick="handleModalClick(event,'import-modal')">
+  <div class="modal-panel" style="max-width:480px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Import from session</div>
+        <div class="modal-sub">Apply exercise names, set counts and types from a past session to the workout template</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('import-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="import-body" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('import-modal')">Cancel</button>
     </div>
   </div>
 </div>
@@ -1339,6 +1384,9 @@ function getAllTimeCount(){
   return Object.keys(completed).length;
 }
 
+// Track which day is selected in the week strip (null = today by default)
+let selectedWeekDate = null;
+
 function renderWeek(){
   const dates = getWeekDates();
   const labels = ['M','T','W','T','F','S','S'];
@@ -1349,19 +1397,81 @@ function renderWeek(){
     const done = isWorkoutDoneOnDay(d);
     if(done) doneThisWeek++;
     const isToday = d===TODAY;
-    return {date:d, done, isToday, label:labels[i], idx:i};
+    const isSelected = selectedWeekDate === d;
+    return {date:d, done, isToday, isSelected, label:labels[i], idx:i};
   });
 
   const row = document.getElementById('week-prog-row');
   row.innerHTML = cells.map(c=>`<div class="week-prog-cell"><div class="week-prog-fill" style="width:${c.done?'100':c.isToday?'30':'0'}%;background:${c.done?'var(--green)':c.isToday?'var(--acc)':'var(--border2)'}"></div></div>`).join('');
 
   const dayRow = document.getElementById('week-day-row');
-  dayRow.innerHTML = cells.map(c=>`<span class="${c.done?'done-ind':c.isToday?'today-ind':''}">${c.label}</span>`).join('');
+  dayRow.innerHTML = cells.map(c=>{
+    let cls = c.isSelected ? 'selected-day' : c.done ? 'done-ind' : c.isToday ? 'today-ind' : '';
+    return `<span class="${cls}" onclick="switchToDay('${c.date}')">${c.label}</span>`;
+  }).join('');
 
   document.getElementById('ws-done').textContent = doneThisWeek;
   document.getElementById('ws-streak').textContent = getWeeklyStreak();
   document.getElementById('ws-total').textContent = getAllTimeCount();
   document.getElementById('week-meta').textContent = doneThisWeek>0 ? `${doneThisWeek} this week` : 'No sessions yet';
+}
+
+function switchToDay(dateStr){
+  // If tapping today (or the already-selected day), reset to current state
+  if(dateStr === TODAY || dateStr === selectedWeekDate){
+    selectedWeekDate = null;
+    // Restore today's active workout and session
+    activeId = localStorage.getItem(ACTIVE_KEY) || workouts[0]?.id;
+    session = loadSession(TODAY);
+    sessionTimer = loadSessionTimer();
+    renderWeek();
+    renderWorkoutList();
+    renderWorkout();
+    renderVolume();
+    return;
+  }
+
+  // Find which workout was logged on that day
+  const log = loadSessionLog();
+  const completed = loadCompletedDays();
+  let foundWorkoutId = null;
+
+  // Check session log first (most reliable — has the actual workout ID)
+  for(let i = log.length - 1; i >= 0; i--){
+    if(log[i].date === dateStr && log[i].workoutId){
+      foundWorkoutId = log[i].workoutId;
+      break;
+    }
+  }
+  // Fall back to completed days map
+  if(!foundWorkoutId && completed[dateStr]){
+    foundWorkoutId = completed[dateStr];
+  }
+
+  if(!foundWorkoutId){
+    showToast('No workout logged for that day');
+    return;
+  }
+
+  // Check the workout still exists
+  if(!workouts.find(w => w.id === foundWorkoutId)){
+    showToast('That workout has been deleted');
+    return;
+  }
+
+  selectedWeekDate = dateStr;
+  activeId = foundWorkoutId;
+
+  // Load that day's session data so exercises show the logged sets
+  session = loadSession(dateStr);
+
+  renderWeek();
+  renderWorkoutList();
+  renderWorkout();
+  renderVolume();
+
+  const w = workouts.find(w => w.id === foundWorkoutId);
+  showToast(`Viewing ${w?.name || 'workout'} — ${dateStr}`);
 }
 
 // ════════════ WORKOUT LIST ════════════
@@ -1385,8 +1495,11 @@ function renderWorkoutList(){
 }
 
 function setActiveWorkout(id){
+  selectedWeekDate = null;
   activeId = id;
   localStorage.setItem(ACTIVE_KEY, id);
+  session = loadSession(TODAY);
+  renderWeek();
   renderWorkoutList();
   renderWorkout();
 }
@@ -1413,6 +1526,20 @@ function renderWorkout(){
   document.getElementById('workout-title').textContent = w.name;
   document.getElementById('workout-type-label').textContent = w.type;
 
+  // Show/hide past-day viewing banner
+  const pastBanner = document.getElementById('viewing-past-banner');
+  const isViewingPast = selectedWeekDate && selectedWeekDate !== TODAY;
+  if(pastBanner){
+    if(isViewingPast){
+      pastBanner.style.display = 'flex';
+      const d = new Date(selectedWeekDate + 'T00:00:00');
+      const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+      document.getElementById('viewing-past-text').textContent = `Viewing ${dayName}'s session (${selectedWeekDate})`;
+    } else {
+      pastBanner.style.display = 'none';
+    }
+  }
+
   const exs = w.exercises||[];
   // Group by category
   const groups = {};
@@ -1434,7 +1561,8 @@ function renderWorkout(){
       const expanded = !isDone;
       // Pull last session's data for placeholders
       const lastSets = getLastSetsFor(ex.id);
-      const setData = session[ex.id+'_sets'] || Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type:(lastSets[i]?.type)||'normal',done:false}));
+      const defaultTypes = ex.defaultTypes || [];
+      const setData = session[ex.id+'_sets'] || Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type: defaultTypes[i] || (lastSets[i]?.type) || 'normal',done:false}));
       const setsDone = setData.filter(s=>s.done).length;
       const totalSets = setData.length;
       const restMin = Math.floor((ex.rest||0)/60);
@@ -1545,6 +1673,11 @@ function renderWorkout(){
 
   document.getElementById('exercise-list').innerHTML = html;
 
+  // Hide session controls when viewing a past day (read-only review mode)
+  const viewingPast = selectedWeekDate && selectedWeekDate !== TODAY;
+  const headerRight = document.querySelector('.header-right');
+  if(headerRight) headerRight.style.display = viewingPast ? 'none' : '';
+
   // Notes - permanent, not tied to date or session
   const notes = document.getElementById('workout-notes');
   if(!notes._wired){
@@ -1584,11 +1717,21 @@ function ghostFocus(input){
 }
 
 function updateSet(exId, idx, field, val){
-  const ex = findEx(exId); if(!ex) return;
+  const w = getActiveWorkout(); if(!w) return;
+  const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
   if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},()=>({reps:'',weight:'',type:'normal',done:false}));
   if(!session[exId+'_sets'][idx]) session[exId+'_sets'][idx]={};
   session[exId+'_sets'][idx][field] = val;
   saveSession(TODAY, session);
+
+  // Persist set type changes to the workout template so the choice
+  // (normal / warmup / failure / stroke) is the default next session.
+  if(field==='type'){
+    if(!ex.defaultTypes) ex.defaultTypes = [];
+    ex.defaultTypes[idx] = val;
+    saveWorkouts(workouts);
+  }
+
   renderVolume();
   renderHistory();
   renderPRsFor(exId);
@@ -1665,9 +1808,10 @@ function toggleSetDone(exId, idx){
 function addSet(exId){
   const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
   // Ensure session sets array matches current ex.sets before adding
-  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type:'normal',done:false}));
+  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type:(ex.defaultTypes||[])[i]||'normal',done:false}));
+  const newType = (ex.defaultTypes||[])[session[exId+'_sets'].length] || 'normal';
   ex.sets = session[exId+'_sets'].length + 1;
-  session[exId+'_sets'].push({reps:'',weight:'',type:'normal',done:false});
+  session[exId+'_sets'].push({reps:'',weight:'',type:newType,done:false});
   saveWorkouts(workouts);
   saveSession(TODAY, session);
   renderWorkout();
@@ -1676,9 +1820,12 @@ function addSet(exId){
 
 function removeSet(exId){
   const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
-  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},()=>({reps:'',weight:'',type:'normal',done:false}));
+  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type:(ex.defaultTypes||[])[i]||'normal',done:false}));
   if(session[exId+'_sets'].length <= 1){ showToast('Need at least 1 set'); return; }
   session[exId+'_sets'].pop();
+  if(ex.defaultTypes && ex.defaultTypes.length > session[exId+'_sets'].length){
+    ex.defaultTypes.length = session[exId+'_sets'].length;
+  }
   ex.sets = session[exId+'_sets'].length;
   saveWorkouts(workouts);
   saveSession(TODAY, session);
@@ -1844,6 +1991,12 @@ function setSessionRunningClass(){
 }
 
 function startWorkout(){
+  // Snap back to today if viewing a past day
+  if(selectedWeekDate && selectedWeekDate !== TODAY){
+    selectedWeekDate = null;
+    activeId = localStorage.getItem(ACTIVE_KEY) || workouts[0]?.id;
+    session = loadSession(TODAY);
+  }
   if(sessionTimer && !sessionTimer.end){ showToast('Workout already running'); return; }
   sessionTimer = { start: Date.now(), end: null };
   saveSessionTimer(sessionTimer);
@@ -2257,6 +2410,141 @@ function ctReset(){
 function tsCleanup(){
   swReset();
   ctReset();
+}
+
+// ════════════ IMPORT FROM PAST SESSION ════════════
+function openImportSession(){
+  const w = getActiveWorkout();
+  if(!w){ showToast('No workout selected'); return; }
+  const log = loadSessionLog();
+  // Find sessions for the current workout, most recent first
+  const sessions = [];
+  for(let i = log.length - 1; i >= 0; i--){
+    const entry = log[i];
+    if(entry.workoutId !== w.id) continue;
+    sessions.push({ idx: i, entry });
+    if(sessions.length >= 10) break; // show up to 10
+  }
+
+  const body = document.getElementById('import-body');
+  if(!sessions.length){
+    body.innerHTML = '<div class="imp-empty">No past sessions found for this workout.<br>Complete a workout first, then you can import from it.</div>';
+    openModal('import-modal');
+    return;
+  }
+
+  let html = '';
+  sessions.forEach(({ idx, entry }) => {
+    const d = new Date(entry.start);
+    const dayName = DAY_NAMES[d.getDay()];
+    const dateStr = `${d.getDate()} ${MON_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+    const durSec = entry.end ? Math.floor((entry.end - entry.start)/1000) : 0;
+    const durStr = durSec > 0 ? fmtDuration(durSec) : '—';
+
+    // Build diff: compare session data vs current workout template
+    const diffs = buildImportDiff(w, entry);
+
+    html += `<div class="imp-card">
+      <div class="imp-card-head">
+        <span class="imp-card-date">${dayName}, ${dateStr}</span>
+        <span class="imp-card-meta">${durStr}</span>
+      </div>
+      <div class="imp-diff">
+        ${diffs.length ? diffs.map(d => `<div class="imp-diff-item">
+          <span class="imp-diff-label">${esc(d.label)}</span>
+          <span class="imp-diff-old">${esc(d.from)}</span>
+          <span class="imp-diff-arrow">→</span>
+          <span class="imp-diff-new">${esc(d.to)}</span>
+        </div>`).join('') : '<div class="imp-no-diff">No differences — workout matches this session</div>'}
+      </div>
+      ${diffs.length ? `<button class="imp-apply-btn" onclick="applyImportSession(${idx})">Apply ${diffs.length} change${diffs.length>1?'s':''}</button>` : ''}
+    </div>`;
+  });
+
+  body.innerHTML = html;
+  openModal('import-modal');
+}
+
+function buildImportDiff(workout, logEntry){
+  const diffs = [];
+  const exercises = workout.exercises || [];
+  const sessionSets = logEntry.sets || {};
+  const sessionNames = logEntry.exerciseNames || {};
+
+  exercises.forEach(ex => {
+    // Name change
+    const logName = sessionNames[ex.id];
+    if(logName && logName !== ex.name){
+      diffs.push({ label: ex.name, field: 'name', exId: ex.id, from: ex.name, to: logName });
+    }
+
+    // Set count change
+    const logSets = sessionSets[ex.id];
+    if(logSets && logSets.length !== ex.sets){
+      diffs.push({ label: logName || ex.name, field: 'sets', exId: ex.id, from: ex.sets + ' sets', to: logSets.length + ' sets' });
+    }
+
+    // Default type changes
+    if(logSets){
+      logSets.forEach((s, i) => {
+        const currentType = (ex.defaultTypes || [])[i] || 'normal';
+        if(s.type && s.type !== currentType){
+          diffs.push({ label: (logName || ex.name) + ' set ' + (i+1), field: 'type', exId: ex.id, setIdx: i, from: currentType, to: s.type });
+        }
+      });
+    }
+  });
+
+  return diffs;
+}
+
+function applyImportSession(logIdx){
+  const log = loadSessionLog();
+  const entry = log[logIdx];
+  if(!entry){ showToast('Session not found'); return; }
+
+  const w = getActiveWorkout();
+  if(!w){ showToast('No workout selected'); return; }
+
+  const sessionSets = entry.sets || {};
+  const sessionNames = entry.exerciseNames || {};
+  let changes = 0;
+
+  w.exercises.forEach(ex => {
+    // Apply name
+    const logName = sessionNames[ex.id];
+    if(logName && logName !== ex.name){
+      ex.name = logName;
+      changes++;
+    }
+
+    // Apply set count
+    const logSets = sessionSets[ex.id];
+    if(logSets && logSets.length !== ex.sets){
+      ex.sets = logSets.length;
+      changes++;
+    }
+
+    // Apply default types
+    if(logSets){
+      if(!ex.defaultTypes) ex.defaultTypes = [];
+      logSets.forEach((s, i) => {
+        if(s.type){
+          if(ex.defaultTypes[i] !== s.type){
+            ex.defaultTypes[i] = s.type;
+            changes++;
+          }
+        }
+      });
+    }
+  });
+
+  saveWorkouts(workouts);
+  closeModal('import-modal');
+  renderWorkout();
+  renderWorkoutList();
+  Object.keys(exTimers).forEach(updateExTimerUI);
+  showToast(`✅ Applied ${changes} change${changes!==1?'s':''} from ${entry.date}`, 3000);
 }
 
 // ════════════ VOLUME ════════════
@@ -2697,10 +2985,16 @@ function init(){
   // This prevents losing in-progress timers and scroll position when logging exercises.
   window.addEventListener('sync:remote-change', (ev) => {
     ev.markHandled();
-    // Re-read state from localStorage (sync.js already wrote the new values)
+    // Re-read SESSION state from localStorage (sync.js already wrote the new values).
+    // But do NOT reload workouts — our in-memory workout template is the
+    // authoritative copy. The sync snapshot can arrive with stale Firestore
+    // data before our push completes, which would silently revert structural
+    // changes the user just made (exercise names, set counts, rest times).
+    // Instead, re-save the in-memory workouts back to localStorage so any
+    // stale sync overwrite is immediately corrected.
     session = loadSession(TODAY);
-    workouts = loadWorkouts();
     sessionTimer = loadSessionTimer();
+    saveWorkouts(workouts);   // re-assert our truth over stale sync data
     renderWorkout();
     renderVolume();
     renderHistory();
@@ -2753,6 +3047,11 @@ function init(){
   // was crossed while we were away.
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'visible') return;
+
+    // Re-assert the in-memory workout template to localStorage.
+    // While we were in the background, sync may have overwritten
+    // our local changes with stale Firestore data.
+    saveWorkouts(workouts);
 
     // ── Catch up all timers after returning from background ──
     // Per-exercise rest timers
@@ -2824,6 +3123,14 @@ function init(){
   // it continue and the rollover will happen on next visibilitychange
   // or when the user finishes.
   (function scheduleRollover(){
+
+  // Ensure the latest workout template is in localStorage before the
+  // page unloads (navigation, refresh, tab close). Without this, a
+  // sync snapshot that arrived after our last save could leave stale
+  // data in localStorage for the next page load.
+  window.addEventListener('beforeunload', () => {
+    saveWorkouts(workouts);
+  });
     const now = new Date();
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 5);
     setTimeout(() => {
