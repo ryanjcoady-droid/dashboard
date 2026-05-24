@@ -218,6 +218,145 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
   line-height:1.6;
 }
 
+/* ── Fuel calculator ─────────────────────────────────────────── */
+.fuel{
+  padding:28px 16px 40px;
+  border-top:1px solid var(--border);
+  margin-top:14px;
+}
+.fuel-eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+}
+.fuel-title{
+  font-family:'Bebas Neue',sans-serif;font-size:30px;
+  line-height:.95;letter-spacing:.02em;margin-bottom:18px;
+}
+.fuel-title .hl{color:var(--bike)}
+
+.fuel-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;margin-bottom:14px;
+}
+.fuel-stat{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:11px;padding:11px 12px;
+}
+.fuel-stat-label{
+  font-size:9px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted2);margin-bottom:5px;
+}
+.fuel-stat-val{
+  font-family:'Outfit',sans-serif;font-size:18px;
+  font-weight:400;color:var(--text);letter-spacing:-.01em;
+}
+
+.fuel-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;margin-bottom:10px;
+}
+.fuel-card:last-child{margin-bottom:0}
+
+.fuel-head{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:3px;
+}
+.fuel-icon{
+  width:24px;height:24px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.fuel-name{
+  font-family:'Bebas Neue',sans-serif;font-size:20px;
+  letter-spacing:.04em;line-height:1;flex:1;
+}
+.fuel-pill{
+  font-size:9px;font-weight:600;padding:3px 8px;border-radius:5px;
+  letter-spacing:.05em;text-transform:uppercase;
+  border:1px solid;
+}
+.fuel-card.gel .fuel-pill{color:var(--bike);background:var(--bike-bg);border-color:var(--bike-bd)}
+.fuel-card.gel .fuel-name,
+.fuel-card.gel .fuel-icon{color:var(--bike)}
+.fuel-card.elec .fuel-pill{color:var(--swim);background:var(--swim-bg);border-color:var(--swim-bd)}
+.fuel-card.elec .fuel-name,
+.fuel-card.elec .fuel-icon{color:var(--swim)}
+
+.fuel-sub{
+  font-size:11px;color:var(--muted);
+  margin-bottom:14px;line-height:1.5;
+}
+
+.fuel-slider-row{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:12px;
+  padding:9px 11px;background:var(--bg);
+  border:1px solid var(--border);border-radius:9px;
+}
+.fuel-slider-label{
+  font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted2);
+  min-width:54px;
+}
+.fuel-slider{
+  flex:1;height:3px;background:var(--border2);
+  border-radius:3px;outline:none;appearance:none;-webkit-appearance:none;
+  cursor:pointer;
+}
+.fuel-slider::-webkit-slider-thumb{
+  appearance:none;-webkit-appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--text);border:2px solid var(--card);
+  cursor:pointer;box-shadow:0 0 0 1px var(--border2);
+}
+.fuel-slider::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--text);border:2px solid var(--card);
+  cursor:pointer;
+}
+.fuel-card.gel .fuel-slider::-webkit-slider-thumb{background:var(--bike)}
+.fuel-card.gel .fuel-slider::-moz-range-thumb{background:var(--bike)}
+.fuel-card.elec .fuel-slider::-webkit-slider-thumb{background:var(--swim)}
+.fuel-card.elec .fuel-slider::-moz-range-thumb{background:var(--swim)}
+
+.fuel-slider-out{
+  font-family:'DM Mono',monospace;font-size:12px;font-weight:500;
+  min-width:64px;text-align:right;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+
+.fuel-table{width:100%;border-collapse:collapse;font-size:12px}
+.fuel-table td{
+  padding:7px 0;border-bottom:1px solid var(--border);
+  vertical-align:top;color:var(--muted);
+}
+.fuel-table tr:last-child td{border-bottom:none}
+.fuel-table td.qty{
+  text-align:right;font-family:'DM Mono',monospace;
+  font-size:12px;color:var(--text);white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.fuel-table td .optional{font-size:10px;color:var(--muted2)}
+.fuel-card.gel .qty .num{color:var(--bike)}
+.fuel-card.elec .qty .num{color:var(--swim)}
+
+.fuel-meta{
+  font-size:10px;color:var(--muted2);margin-top:10px;
+  padding-top:10px;border-top:1px solid var(--border);
+  line-height:1.5;
+}
+
+.fuel-method-title{
+  font-size:10px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted2);
+  margin:14px 0 8px;
+}
+.fuel-method{
+  font-size:11px;line-height:1.7;color:var(--muted);
+  padding-left:18px;margin:0;
+}
+.fuel-method li{margin-bottom:3px}
+.fuel-method li::marker{color:var(--bike);font-weight:600}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media(max-width:720px){
   .header{padding:16px 14px 14px}
@@ -265,6 +404,119 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 
 <!-- ── Week Container ────────────────────────────────────────── -->
 <div class="week" id="week-container"></div>
+
+<!-- ── Race Day Fuel ─────────────────────────────────────────── -->
+<div class="fuel">
+  <div class="fuel-eyebrow">Race Day Nutrition</div>
+  <div class="fuel-title">DIY <span class="hl">Fuel</span> Calculator</div>
+
+  <div class="fuel-stats">
+    <div class="fuel-stat">
+      <div class="fuel-stat-label">Carbs / hr</div>
+      <div class="fuel-stat-val">60–90 g</div>
+    </div>
+    <div class="fuel-stat">
+      <div class="fuel-stat-label">Sodium / hr</div>
+      <div class="fuel-stat-val">500–800 mg</div>
+    </div>
+    <div class="fuel-stat">
+      <div class="fuel-stat-label">Fluid / hr</div>
+      <div class="fuel-stat-val">500–1000 ml</div>
+    </div>
+  </div>
+
+  <!-- DIY carb gel -->
+  <div class="fuel-card gel">
+    <div class="fuel-head">
+      <svg class="fuel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2c1 3 4 5 4 9a4 4 0 1 1-8 0c0-3 2-4 4-9z"/>
+        <path d="M12 16v5"/>
+      </svg>
+      <span class="fuel-name">DIY Carb Gel</span>
+      <span class="fuel-pill">2:1 malto : fructose</span>
+    </div>
+    <div class="fuel-sub">Jeukendrup classic &middot; ~30 g carbs per gel</div>
+
+    <div class="fuel-slider-row">
+      <span class="fuel-slider-label">Batch</span>
+      <input type="range" class="fuel-slider" min="5" max="20" value="10" step="1" id="gel-count">
+      <span class="fuel-slider-out"><span id="gel-count-out">10</span> gels</span>
+    </div>
+
+    <table class="fuel-table">
+      <tr>
+        <td>Maltodextrin (DE 10–19)</td>
+        <td class="qty"><span class="num gel-scale" data-base="200">200</span> g</td>
+      </tr>
+      <tr>
+        <td>Fructose (crystalline)</td>
+        <td class="qty"><span class="num gel-scale" data-base="100">100</span> g</td>
+      </tr>
+      <tr>
+        <td>Warm water (~60 °C)</td>
+        <td class="qty"><span class="num gel-scale" data-base="115">115</span> ml</td>
+      </tr>
+      <tr>
+        <td>Citric acid</td>
+        <td class="qty"><span class="num gel-scale" data-base="2.5">2.5</span> g</td>
+      </tr>
+    </table>
+
+    <div class="fuel-meta">Per gel: ~30 g carbs &middot; sodium covered by electrolyte drink</div>
+
+    <div class="fuel-method-title">Method</div>
+    <ol class="fuel-method">
+      <li>Warm the water to roughly 60 °C — hot tap water works.</li>
+      <li>Whisk in citric acid until fully dissolved.</li>
+      <li>Dissolve the fructose, then add maltodextrin gradually while whisking.</li>
+      <li>Stir in any natural flavouring.</li>
+      <li>Cool, transfer to refillable flasks, refrigerate and use within 5–7 days.</li>
+    </ol>
+  </div>
+
+  <!-- DIY electrolyte drink -->
+  <div class="fuel-card elec">
+    <div class="fuel-head">
+      <svg class="fuel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.5c3 4 6 7 6 11a6 6 0 1 1-12 0c0-4 3-7 6-11z"/>
+      </svg>
+      <span class="fuel-name">DIY Electrolyte Drink</span>
+      <span class="fuel-pill">Race strength</span>
+    </div>
+    <div class="fuel-sub">Sodium and potassium, scaled to your bottle</div>
+
+    <div class="fuel-slider-row">
+      <span class="fuel-slider-label">Volume</span>
+      <input type="range" class="fuel-slider" min="500" max="2000" value="1000" step="100" id="elec-vol">
+      <span class="fuel-slider-out"><span id="elec-vol-out">1000</span> ml</span>
+    </div>
+
+    <table class="fuel-table">
+      <tr>
+        <td>Table salt (NaCl)</td>
+        <td class="qty"><span class="num elec-scale" data-base="2.5">2.5</span> g</td>
+      </tr>
+      <tr>
+        <td>Potassium chloride (pure)</td>
+        <td class="qty"><span class="num elec-scale" data-base="0.4">0.4</span> g</td>
+      </tr>
+      <tr>
+        <td>Citric acid</td>
+        <td class="qty"><span class="num elec-scale" data-base="0.75">0.75</span> g</td>
+      </tr>
+      <tr>
+        <td>Freeze-dried fruit powder</td>
+        <td class="qty"><span class="num elec-scale" data-base="2">2</span> g</td>
+      </tr>
+      <tr>
+        <td>Malto / fructose mix <span class="optional">(optional carbs)</span></td>
+        <td class="qty"><span class="num elec-scale" data-base="40">40</span> g</td>
+      </tr>
+    </table>
+
+    <div class="fuel-meta">Per litre: ~980 mg sodium &middot; ~210 mg potassium. Dissolve the KCl in warm water first to avoid grit.</div>
+  </div>
+</div>
 
 <script>
 /* ── Countdown ──────────────────────────────────────────────── */
@@ -972,6 +1224,31 @@ function render(){
 }
 
 render();
+
+/* ── Fuel calculator ────────────────────────────────────────── */
+function fmt(n){ return n >= 10 ? Math.round(n).toString() : (Math.round(n*10)/10).toString(); }
+
+const gelSlider = document.getElementById('gel-count');
+const gelOut    = document.getElementById('gel-count-out');
+function updateGels(){
+  const c = parseInt(gelSlider.value);
+  gelOut.textContent = c;
+  document.querySelectorAll('.gel-scale').forEach(el => {
+    el.textContent = fmt(parseFloat(el.dataset.base) * c / 10);
+  });
+}
+gelSlider.addEventListener('input', updateGels);
+
+const elecSlider = document.getElementById('elec-vol');
+const elecOut    = document.getElementById('elec-vol-out');
+function updateElec(){
+  const v = parseInt(elecSlider.value);
+  elecOut.textContent = v;
+  document.querySelectorAll('.elec-scale').forEach(el => {
+    el.textContent = fmt(parseFloat(el.dataset.base) * v / 1000);
+  });
+}
+elecSlider.addEventListener('input', updateElec);
 </script>
 </body>
 </html>
