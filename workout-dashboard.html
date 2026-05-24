@@ -3,3146 +3,975 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Workout Dashboard</title>
-<script src="firebase-config.js"></script>
-<script src="sync.js"></script>
+<title>Ironman 70.3 Training</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0D0D0B; --card:#191917; --card2:#212120;
-  --border:#343230; --border2:#403D3A;
-  --text:#F5F3EF; --muted:#D0CBC3; --muted2:#B5B0A8;
-  --acc:#7DD3FC; --acc-bg:#061520; --acc-bd:#0D2F45; --acc-hover:#38BDF8;
-  --green:#4ADE80; --green-bg:#0A1F0F; --green-bd:#1A3D20;
-  --amber:#FCD34D; --amber-bg:#1A1500; --amber-bd:#3D3000;
-  --red:#F87171; --red-bg:#1A0A0A; --red-bd:#3D1818;
-}
-html,body{height:100%;background:var(--bg)}
-body{font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;padding:28px 24px;line-height:1.5}
-
-/* Disable double-tap-to-zoom on touch devices but keep pinch zoom intact.
-   touch-action:manipulation removes the 300ms tap delay and the
-   double-tap-zoom gesture without disabling user-scalable, so accessibility
-   zoom still works if needed. */
 *{touch-action:manipulation}
 
-/* During an active workout session, hide all sidebar cards except the
-   session timer so the screen is focused on the exercises. The session
-   card has the .duration-card class, everything else collapses.
-   Use !important and a wider selector so it works regardless of layout. */
-body.session-running .sidebar > .card:not(.duration-card),
-body.session-running #volume-card,
-body.session-running #history-card{display:none !important}
+:root{
+  /* Warm dark base — matches workout dashboard */
+  --bg:#0D0D0B;
+  --card:#191917;
+  --card2:#212120;
+  --border:#343230;
+  --border2:#403D3A;
+  --text:#F5F3EF;
+  --muted:#D0CBC3;
+  --muted2:#B5B0A8;
 
-/* Fix for mobile auto-zoom on input focus. Browsers (Chrome/Safari) auto-
-   zoom into inputs whose font-size is below 16px. We keep visual size
-   small by relying on the input's small height + transform-free layout,
-   but force font-size to 16px on mobile so the page doesn't zoom in. */
-@media (max-width: 900px){
-  .set-input,
-  input[type="text"],
-  input[type="number"],
-  input[inputmode="decimal"],
-  input[inputmode="numeric"],
-  textarea,
-  select{
-    font-size: 16px !important;
-  }
+  /* Sport colours */
+  --swim:#38BDF8;   --swim-bg:rgba(56,189,248,.07);  --swim-bd:rgba(56,189,248,.22);
+  --bike:#F59E0B;   --bike-bg:rgba(245,158,11,.07);  --bike-bd:rgba(245,158,11,.22);
+  --run:#F87171;    --run-bg:rgba(248,113,113,.07);  --run-bd:rgba(248,113,113,.22);
+  --str:#A78BFA;    --str-bg:rgba(167,139,250,.07);  --str-bd:rgba(167,139,250,.22);
+  --rest:#4ADE80;   --rest-bg:rgba(74,222,128,.07);  --rest-bd:rgba(74,222,128,.22);
+  --sport:#94A3B8;  --sport-bg:rgba(148,163,184,.07);--sport-bd:rgba(148,163,184,.22);
 }
 
-.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
-.header-left .date-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.header-left .date-main{font-family:'Outfit',sans-serif;font-size:42px;font-weight:400;line-height:1}
-.header-left .date-sub{font-family:'Outfit',sans-serif;font-size:17px;color:var(--muted);margin-top:4px}
-.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
 
-.ghost-btn{display:inline-flex;align-items:center;gap:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:8px 14px;border-radius:9px;background:var(--card);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all .12s}
-.ghost-btn:hover{background:var(--card2);border-color:var(--border2)}
-.ghost-btn svg{width:14px;height:14px;opacity:.6}
-.start-btn{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-.start-btn:hover{background:var(--acc-bd)}
-.finish-btn{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
-.finish-btn:hover{background:var(--green-bd)}
-
-/* Coloured variants for the Continue / New / Add exercise buttons.
-   Continue gets green (resume), New gets accent blue (fresh start),
-   Add exercise gets accent blue too since it's a primary action. */
-.continue-btn{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
-.continue-btn:hover{background:var(--green-bd);color:#fff}
-.continue-btn svg{opacity:1}
-.new-session-btn{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-.new-session-btn:hover{background:var(--acc-bd);color:#fff}
-.new-session-btn svg{opacity:1}
-.add-ex-btn{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-.add-ex-btn:hover{background:var(--acc-bd);color:#fff}
-.add-ex-btn svg{opacity:1}
-
-/* On mobile, scale up the primary action buttons for comfortable tapping.
-   The Start/Finish/Continue/New buttons are the lifecycle controls and
-   "Add exercise" is the most-tapped action during a session. */
-@media (max-width: 720px){
-  .start-btn, .finish-btn, .continue-btn, .new-session-btn, .add-ex-btn{
-    font-size: 14px;
-    padding: 12px 18px;
-    border-radius: 11px;
-    font-weight: 600;
-  }
-  .start-btn svg, .finish-btn svg, .continue-btn svg,
-  .new-session-btn svg, .add-ex-btn svg{
-    width: 16px;
-    height: 16px;
-  }
-  /* Wrap the action button row so they don't squash on narrow screens */
-  .header-right{flex-wrap: wrap; justify-content: flex-end}
-}
-
-.layout{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
-@media(max-width:900px){.layout{grid-template-columns:1fr}}
-
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;animation:fadeUp .2s ease both}
-.card:last-child{margin-bottom:0}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.card-head{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:6px;border:1px solid}
-.badge-acc{color:var(--acc);background:var(--acc-bg);border-color:var(--acc-bd)}
-.badge-green{color:var(--green);background:var(--green-bg);border-color:var(--green-bd)}
-.badge-amber{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-bd)}
-.badge-muted{color:var(--muted);background:var(--card2);border-color:var(--border2)}
-.card-head-meta{font-size:11px;color:var(--muted);margin-left:auto}
-
-/* Workout duration stopwatch */
-.duration-card{}
-.duration-display{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-.duration-time{font-family:'Outfit',sans-serif;font-size:36px;font-weight:300;line-height:1;letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
-.duration-time.idle{color:var(--muted2)}
-.duration-time.running{color:var(--acc)}
-.duration-time.finished{color:var(--green)}
-.duration-status{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-
-/* ── Timer & Stopwatch widget ─────────────────────────────────── */
-.ts-widget{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
-body.session-running .ts-widget{display:block}
-.ts-tabs{display:flex;gap:4px;margin-bottom:14px}
-.ts-tab{flex:1;padding:7px 0;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.ts-tab:hover{background:var(--card2);color:var(--text)}
-.ts-tab.active{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-.ts-panel{display:none}
-.ts-panel.active{display:block}
-.ts-time-display{font-family:'Outfit',sans-serif;font-size:42px;font-weight:300;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1;margin-bottom:4px}
-.ts-time-display.sw-running{color:var(--acc)}
-.ts-time-display.sw-paused{color:var(--amber)}
-.ts-time-display.sw-zero{color:var(--muted2)}
-.ts-time-display.ct-running{color:var(--amber)}
-.ts-time-display.ct-done{color:var(--green)}
-.ts-time-display.ct-idle{color:var(--muted2)}
-.ts-sub{font-size:10px;color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:12px;min-height:15px}
-.ts-controls{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
-.ts-btn{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
-.ts-btn:hover{background:var(--card2);color:var(--text);border-color:var(--border2)}
-.ts-btn-start{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-.ts-btn-start:hover{background:var(--acc-bd);color:#fff}
-.ts-btn-pause{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
-.ts-btn-pause:hover{background:var(--amber-bd);color:#fff}
-.ts-btn-stop{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
-.ts-btn-stop:hover{background:var(--red-bd);color:#fff}
-.ts-presets{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
-.ts-preset{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.ts-preset:hover{background:var(--card2);color:var(--text);border-color:var(--border2)}
-.ts-preset.sel{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-.ts-custom-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:8px}
-.ts-custom-input{width:48px;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 6px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;text-align:center}
-.ts-custom-input:focus{border-color:var(--acc-bd)}
-.ts-custom-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em}
-
-/* Import session cards */
-.imp-card{padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:default}
-.imp-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.imp-card-date{font-size:13px;font-weight:600;color:var(--text)}
-.imp-card-meta{font-size:11px;color:var(--muted)}
-.imp-diff{font-size:12px;color:var(--muted);margin-bottom:10px}
-.imp-diff-item{padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:baseline}
-.imp-diff-item:last-child{border-bottom:none}
-.imp-diff-label{font-weight:600;color:var(--text);min-width:100px;flex-shrink:0;font-size:11px}
-.imp-diff-old{text-decoration:line-through;color:var(--red);opacity:.7;font-size:11px}
-.imp-diff-arrow{color:var(--muted2);font-size:10px}
-.imp-diff-new{color:var(--green);font-weight:500;font-size:11px}
-.imp-no-diff{font-size:12px;color:var(--muted2);font-style:italic}
-.imp-apply-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--acc-bd);background:var(--acc-bg);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.imp-apply-btn:hover{background:var(--acc-bd);color:#fff}
-.imp-empty{text-align:center;padding:30px 20px;color:var(--muted);font-size:13px}
-/* Progress ring for countdown */
-.ts-ring-wrap{display:flex;justify-content:center;margin-bottom:6px;position:relative}
-.ts-ring-wrap svg{transform:rotate(-90deg)}
-.ts-ring-bg{fill:none;stroke:var(--border);stroke-width:4}
-.ts-ring-fg{fill:none;stroke:var(--amber);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .5s linear,stroke .2s}
-.ts-ring-fg.done{stroke:var(--green)}
-.ts-ring-time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-
-/* Workout selection */
-.workouts-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;padding-right:2px}
-.workouts-list::-webkit-scrollbar{width:3px}
-.workouts-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
-.wk-pill{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .15s;user-select:none}
-.wk-pill:hover{border-color:var(--border2);background:var(--card2)}
-.wk-pill.active{border-color:var(--acc-bd);background:var(--acc-bg)}
-.wk-pill-name{font-size:13px;font-weight:500;flex:1;line-height:1.3}
-.wk-pill.active .wk-pill-name{color:var(--acc)}
-.wk-pill-type{font-size:11px;color:var(--muted);margin-top:1px}
-.wk-pill-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0}
-.wk-pill.active .wk-pill-dot{background:var(--acc)}
-.wk-add-btn{width:100%;margin-top:8px;padding:9px;border-radius:9px;border:1px dashed var(--border2);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.wk-add-btn:hover{border-color:var(--muted2);color:var(--text);background:var(--card2)}
-.wk-pill-edit{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:12px;padding:2px 4px;opacity:0;transition:opacity .15s}
-.wk-pill:hover .wk-pill-edit{opacity:1}
-.wk-pill-edit:hover{color:var(--text)}
-
-/* Week progress */
-.week-prog-row{display:flex;gap:4px;margin-bottom:6px}
-.week-prog-cell{flex:1;height:5px;border-radius:99px;background:var(--border2);overflow:hidden}
-.week-prog-fill{height:100%;border-radius:99px;background:var(--green);transition:width .4s ease}
-.week-day-row{display:flex;justify-content:space-between;font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2);margin-bottom:14px}
-.week-day-row span{flex:1;text-align:center;cursor:pointer;padding:4px 0;border-radius:6px;transition:all .12s}
-.week-day-row span:hover{background:var(--card2);color:var(--text)}
-.week-day-row span.today-ind{color:var(--acc)}
-.week-day-row span.done-ind{color:var(--green)}
-.week-day-row span.selected-day{background:var(--acc-bg);color:var(--acc);border:1px solid var(--acc-bd)}
-.week-stats{display:flex;gap:16px}
-.week-stat{display:flex;flex-direction:column}
-.week-stat-val{font-family:'Outfit',sans-serif;font-size:22px;font-weight:400;line-height:1}
-.week-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-
-/* Exercise list */
-.ex-section{margin-bottom:18px}
-.ex-section:last-child{margin-bottom:0}
-.ex-section-title{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.ex-list{display:flex;flex-direction:column;gap:8px}
-
-.ex-item{border:1px solid var(--border);border-radius:11px;overflow:hidden;transition:border-color .15s}
-.ex-item.done{border-color:var(--green-bd);background:var(--green-bg)}
-
-.ex-header{display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;user-select:none;transition:background .12s}
-.ex-header:hover{background:var(--card2)}
-.ex-item.done .ex-header:hover{background:rgba(74,222,128,.05)}
-.ex-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.ex-item.done .ex-check{background:var(--green);border-color:var(--green)}
-.ex-check svg{display:none;width:11px;height:11px}
-.ex-item.done .ex-check svg{display:block}
-.ex-name{font-size:14px;font-weight:500;flex:1}
-.ex-item.done .ex-name{text-decoration:line-through;color:var(--muted)}
-.ex-sets-summary{font-size:11px;color:var(--muted);white-space:nowrap}
-.ex-chevron{width:16px;height:16px;color:var(--muted);flex-shrink:0;transition:transform .2s}
-.ex-item.expanded .ex-chevron{transform:rotate(180deg)}
-.ex-del-btn{background:none;border:none;color:var(--muted2);cursor:pointer;padding:2px 4px;font-size:13px;opacity:.45;transition:all .12s}
-.ex-del-btn:hover{opacity:1;color:var(--red)}
-.ex-drag{display:flex;align-items:center;padding:0 6px 0 0;cursor:grab;color:var(--muted2);flex-shrink:0;touch-action:none}
-.ex-drag:active{cursor:grabbing}
-.ex-set-actions{display:flex;gap:6px;margin-top:4px}
-.ex-remove-set{color:var(--red);border-color:var(--red-bd) !important}
-.ex-remove-set:hover:not(.ex-remove-disabled){background:var(--red-bg) !important;color:var(--red) !important}
-.ex-remove-disabled{opacity:.35;cursor:not-allowed !important}
-.ex-item.dragging{opacity:.4;border-style:dashed}
-.ex-item.drag-over{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
-
-.ex-sets{display:none;padding:0 14px 14px;flex-direction:column;gap:6px;border-top:1px solid var(--border)}
-.ex-item.expanded .ex-sets{display:flex;padding-top:12px}
-
-.sets-row-head{display:grid;grid-template-columns:28px 1fr 1fr 1fr 38px;gap:8px;padding:0 2px;margin-bottom:2px}
-.sets-row-head span{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-
-.set-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr 38px;gap:8px;align-items:center;padding:5px 4px;border-radius:8px;transition:background .12s;position:relative}
-.set-row.type-warmup{background:rgba(252,211,77,.05)}
-.set-row.type-warmup .set-num{color:var(--amber)}
-.set-row.type-failure{background:rgba(248,113,113,.05)}
-.set-row.type-failure .set-num{color:var(--red)}
-.set-row.type-cardio{background:rgba(125,211,252,.05)}
-.set-row.type-cardio .set-num{color:var(--acc)}
-.set-type-select{cursor:pointer;text-align:left;padding:6px 8px;background-image:none;appearance:none;-webkit-appearance:none}
-.set-type-warmup{color:var(--amber);border-color:var(--amber-bd) !important;background:var(--amber-bg) !important}
-.set-type-failure{color:var(--red);border-color:var(--red-bd) !important;background:var(--red-bg) !important}
-.set-type-cardio{color:var(--acc);border-color:var(--acc-bd) !important;background:var(--acc-bg) !important}
-.set-row:hover{background:var(--card2)}
-.set-row.set-done{background:rgba(74,222,128,.06)}
-.set-num{font-size:11px;font-weight:600;color:var(--muted);text-align:center}
-.set-input{background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%;text-align:center;min-width:0}
-.set-input:focus{border-color:var(--acc-bd)}
-.set-input::placeholder{color:var(--muted2);opacity:.85}
-/* When the placeholder is a ghost value (data-last set), style it more
-   distinctly so it reads as "your last session's number". */
-.set-input[data-last]:not([data-last=""])::placeholder{color:var(--muted);font-style:italic;opacity:.55}
-.set-input:disabled{opacity:.45;cursor:not-allowed}
-
-/* SMALLER tick — fixes the "too big tick" bug */
-.set-done-btn{width:26px;height:26px;border-radius:7px;border:1.5px solid var(--border2);background:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;padding:0;justify-self:center}
-.set-done-btn svg{width:11px;height:11px;display:block}
-.set-done-btn:hover{border-color:var(--green-bd);color:var(--green)}
-.set-row.set-done .set-done-btn{background:var(--green);border-color:var(--green);color:#0D0D0B}
-.set-row.set-done .set-input{opacity:.55;border-color:transparent}
-
-.ex-add-set{width:100%;margin-top:4px;padding:7px;border-radius:8px;border:1px dashed var(--border2);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.ex-add-set:hover{border-color:var(--muted2);color:var(--text);background:var(--card2)}
-
-/* Per-exercise rest timer (inline) */
-.ex-rest{display:none;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--amber-bg);border:1px solid var(--amber-bd)}
-.ex-rest.active{display:flex}
-.ex-rest.done-state{background:var(--green-bg);border-color:var(--green-bd)}
-.ex-rest-icon{width:14px;height:14px;color:var(--amber);flex-shrink:0}
-.ex-rest.done-state .ex-rest-icon{color:var(--green)}
-.ex-rest-time{font-family:'Outfit',sans-serif;font-size:18px;font-weight:400;color:var(--amber);font-variant-numeric:tabular-nums;letter-spacing:.02em}
-.ex-rest.done-state .ex-rest-time{color:var(--green)}
-.ex-rest-bar{flex:1;height:4px;background:rgba(252,211,77,.18);border-radius:99px;overflow:hidden;min-width:50px}
-.ex-rest-bar-fill{height:100%;background:var(--amber);border-radius:99px;transition:width .5s linear}
-.ex-rest.done-state .ex-rest-bar-fill{background:var(--green)}
-.ex-rest-cancel{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px;padding:2px 8px;border-radius:5px;font-family:'DM Sans',sans-serif;transition:color .12s}
-.ex-rest-cancel:hover{color:var(--text)}
-.ex-rest-config{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:9px}
-.ex-rest-config-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:auto}
-.rest-time-input{display:flex;align-items:center;gap:4px}
-.rest-time-input input{width:40px;background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:4px 6px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;text-align:center}
-.rest-time-input input:focus{border-color:var(--acc-bd)}
-.rest-time-input span{font-size:11px;color:var(--muted)}
-.preset-mini{display:flex;gap:4px}
-.preset-mini button{padding:3px 7px;font-size:11px;border-radius:5px;border:1px solid var(--border2);background:none;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.preset-mini button:hover{color:var(--text);background:var(--card)}
-.preset-mini button.sel{background:var(--acc-bg);border-color:var(--acc-bd);color:var(--acc)}
-
-/* Workout complete banner */
-.complete-banner{display:none;align-items:center;gap:14px;padding:16px 18px;border-radius:12px;background:var(--green-bg);border:1px solid var(--green-bd);margin-bottom:14px}
-.complete-banner.show{display:flex}
-.complete-banner-icon{font-size:24px;flex-shrink:0}
-.complete-banner-title{font-size:14px;font-weight:600;color:var(--green)}
-.complete-banner-sub{font-size:12px;color:var(--muted);margin-top:2px}
-.complete-banner-dismiss{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px}
-.complete-banner-dismiss:hover{color:var(--text)}
-
-/* Volume */
-.vol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.vol-stat{background:var(--card2);border-radius:9px;padding:10px 12px}
-.vol-stat-val{font-family:'Outfit',sans-serif;font-size:20px;font-weight:400;line-height:1}
-.vol-stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-
-/* Personal records / swim totals badge — sits under the exercise header,
-   visible whether the exercise is expanded or collapsed. */
-.ex-pr{
-  font-size:11px;color:var(--muted);
-  padding:4px 14px 8px 38px;
+/* ── Header ─────────────────────────────────────────────────── */
+.header{
+  padding:24px 22px 20px;
   border-bottom:1px solid var(--border);
-  display:none;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap;gap:14px;
 }
-.ex-item.expanded .ex-pr{display:block}
-.ex-pr .pr-row{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}
-.ex-pr .pr-label{
-  text-transform:uppercase;letter-spacing:.08em;font-weight:600;
-  font-size:9px;color:var(--muted2);
+.race-eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px;
 }
-.ex-pr .pr-val{
-  color:var(--text);font-family:'Outfit',sans-serif;font-weight:400;
-  font-size:12px;font-variant-numeric:tabular-nums;
+.race-title{
+  font-family:'Bebas Neue',sans-serif;font-size:42px;
+  line-height:.9;letter-spacing:.02em;
 }
-.ex-pr .pr-sep{color:var(--muted2);margin:0 2px}
-.ex-pr .pr-when{
-  margin-left:6px;font-size:10px;color:var(--muted2);
-  font-style:italic;
+.race-title .hl{color:var(--swim)}
+.race-sub{font-size:12px;color:var(--muted);margin-top:6px}
+
+.countdown{text-align:right;flex-shrink:0}
+.countdown-label{
+  font-size:10px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:3px;
 }
-.ex-pr .pr-empty{color:var(--muted2);font-size:11px;font-style:italic}
-.ex-pr .pr-new{
-  margin-left:8px;color:var(--green);font-weight:600;font-size:11px;
-  background:var(--green-bg);border:1px solid var(--green-bd);
-  padding:2px 8px;border-radius:6px;
-  animation:pr-pulse 1.2s ease-in-out infinite;
+.countdown-num{
+  font-family:'Outfit',sans-serif;font-size:36px;font-weight:300;
+  line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums;
 }
-@keyframes pr-pulse{
-  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(74,222,128,0)}
-  50%{transform:scale(1.04);box-shadow:0 0 0 4px rgba(74,222,128,.12)}
-}
-
-/* Swim stroke coloured pills via the type select */
-.set-stroke-free{color:var(--acc);border-color:var(--acc-bd) !important;background:var(--acc-bg) !important}
-.set-stroke-back{color:#A78BFA;border-color:#3B2A5C !important;background:#161029 !important}
-.set-stroke-breast{color:#F472B6;border-color:#3D1828 !important;background:#190A12 !important}
-.set-stroke-fly{color:var(--amber);border-color:var(--amber-bd) !important;background:var(--amber-bg) !important}
-.set-stroke-im{color:#34D399;border-color:#0A3020 !important;background:#041510 !important}
-.set-stroke-kick{color:var(--muted);border-color:var(--border2) !important}
-.set-stroke-pull{color:var(--muted);border-color:var(--border2) !important}
-.set-stroke-drill{color:var(--muted2);border-color:var(--border2) !important;font-style:italic}
-
-/* History */
-.hist-list{display:flex;flex-direction:column;gap:6px}
-.hist-item{
-  background:var(--card2);border:1px solid var(--border2);border-radius:9px;
-  padding:9px 11px;cursor:pointer;transition:border-color .12s,background .12s;
-  display:flex;align-items:center;justify-content:space-between;gap:8px;
-  font-family:'DM Sans',sans-serif;
-}
-.hist-item:hover{border-color:var(--acc-bd);background:var(--card)}
-.hist-item-left{min-width:0;flex:1}
-.hist-item-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hist-item-meta{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
-.hist-item-stat{font-family:'Outfit',sans-serif;font-size:14px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
-.hist-empty{font-size:12px;color:var(--muted);text-align:center;padding:14px 8px;font-style:italic}
-.hist-all-btn{
-  border:none;background:none;color:var(--muted);font-size:11px;cursor:pointer;
-  padding:2px 8px;border-radius:6px;font-family:'DM Sans',sans-serif;transition:color .12s,background .12s;
-  letter-spacing:.04em;
-}
-.hist-all-btn:hover{color:var(--text);background:var(--card2)}
-
-/* Session detail modal */
-.sess-meta-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.sess-meta-pill{
-  background:var(--card2);border:1px solid var(--border2);border-radius:7px;
-  padding:5px 10px;font-size:11px;color:var(--muted);
-  display:inline-flex;align-items:center;gap:5px;
-}
-.sess-meta-pill strong{color:var(--text);font-weight:500;font-family:'Outfit',sans-serif}
-.sess-ex{margin-bottom:14px}
-.sess-ex:last-child{margin-bottom:0}
-.sess-ex-head{
-  display:flex;align-items:baseline;justify-content:space-between;
-  padding-bottom:5px;margin-bottom:6px;border-bottom:1px solid var(--border);
-}
-.sess-ex-name{font-family:'Outfit',sans-serif;font-size:15px;font-weight:400;color:var(--text)}
-.sess-ex-meta{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-.sess-set-row{
-  display:grid;grid-template-columns:32px 1fr 1fr auto;gap:8px;align-items:center;
-  padding:5px 0;font-size:13px;
-}
-.sess-set-row + .sess-set-row{border-top:1px dashed var(--border)}
-.sess-set-num{
-  font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.05em;
-  text-transform:uppercase;font-family:'DM Sans',sans-serif;
-}
-.sess-set-val{font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums}
-.sess-set-val small{color:var(--muted);font-family:'DM Sans',sans-serif;font-size:10px;margin-left:3px;letter-spacing:.04em}
-.sess-set-tag{
-  font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
-  padding:2px 7px;border-radius:5px;background:var(--amber-bg);color:var(--amber);
-  border:1px solid var(--amber-bd);
-}
-.sess-no-data{font-size:12px;color:var(--muted);font-style:italic;padding:6px 0}
-.btn-danger-outline{
-  padding:9px 16px;border-radius:9px;border:1px solid var(--red-bd);background:transparent;
-  color:var(--red);font-size:13px;font-weight:500;cursor:pointer;
-  font-family:'DM Sans',sans-serif;transition:all .12s;
-}
-.btn-danger-outline:hover{background:var(--red-bg)}
-
-/* Notes */
-.notes-area{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:vertical;min-height:72px;outline:none;transition:border-color .15s;line-height:1.5}
-.notes-area:focus{border-color:var(--acc-bd)}
-.notes-area::placeholder{color:var(--muted2)}
-
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal-panel{background:var(--card);border:1px solid var(--border2);border-radius:18px;width:min(560px,94vw);max-height:88vh;display:flex;flex-direction:column;transform:translateY(12px);transition:transform .2s;overflow:hidden}
-.modal-overlay.open .modal-panel{transform:translateY(0)}
-.modal-head{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 20px 0}
-.modal-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:400}
-.modal-sub{font-size:12px;color:var(--muted);margin-top:3px}
-.modal-close{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;margin-top:2px}
-.modal-close:hover{background:var(--card2);color:var(--text)}
-.modal-body{flex:1;overflow-y:auto;padding:16px 20px 20px}
-.modal-body::-webkit-scrollbar{width:4px}
-.modal-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.field input,.field select,.field textarea{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--acc-bd)}
-.field textarea{resize:vertical;min-height:60px;line-height:1.5}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border)}
-.btn-primary{padding:9px 20px;border-radius:9px;border:1px solid var(--acc-bd);background:var(--acc-bg);color:var(--acc);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.btn-primary:hover{background:var(--acc-bd)}
-.btn-secondary{padding:9px 16px;border-radius:9px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.btn-secondary:hover{color:var(--text);background:var(--card2)}
-.btn-danger{padding:9px 16px;border-radius:9px;border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
-.btn-danger:hover{background:var(--red-bd)}
-
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px 18px;font-size:13px;color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:all .2s;z-index:500;white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-@media(max-width:600px){
-  body{padding:14px 12px 24px}
-  .header-left .date-main{font-size:32px}
-
-  /* Prevent any horizontal page scroll. Anything wider than the viewport
-     is contained inside its own scroll container instead. */
-  html, body{overflow-x:hidden; max-width:100vw}
-
-  /* Tighten the set row so three 16px-font inputs + a select fit on a
-     phone viewport (~360-380px) without overflowing. */
-  .sets-row-head{grid-template-columns:24px 1fr 1fr 1fr 32px; gap:5px}
-  .set-row{grid-template-columns:24px 1fr 1fr 1fr 32px; gap:5px; padding:5px 2px}
-  .set-input{padding:6px 4px; font-size:16px}
-  .set-num{font-size:10px}
-  .set-type-select{font-size:13px !important; padding:4px 2px !important}
-  .set-done-btn{width:32px; height:32px}
-  .sets-row-head span{font-size:9px; letter-spacing:.06em}
-
-  .card{padding:13px}
-  .ex-item{margin-bottom:8px}
-  .ex-header{padding:9px 11px}
-  .ex-name{font-size:14px}
-  .ex-sets-summary{font-size:11px}
-
-  .ex-pr{padding:4px 11px 8px 30px; font-size:10.5px}
-  .ex-pr .pr-row{flex-wrap:wrap; gap:4px}
-  .ex-pr .pr-when{margin-left:4px}
-
-  .hist-item{padding:8px 10px}
-  .hist-item-name{font-size:12.5px}
-  .hist-item-meta{font-size:9.5px}
-  .hist-item-stat{font-size:13px}
-
-  .start-btn, .finish-btn, .continue-btn, .new-session-btn, .add-ex-btn{
-    font-size:13px; padding:10px 14px;
-  }
-
-  .grid, .left-col, .right-col, .card,
-  .check-row, .sk-list, .sk-step{min-width:0}
-
-  .ex-name, .check-note-text, .sk-name{overflow-wrap:anywhere; word-break:break-word}
+.countdown-sub{
+  font-size:9px;color:var(--muted2);letter-spacing:.12em;
+  text-transform:uppercase;font-weight:600;margin-top:3px;
 }
 
-/* Touch-device input sizing.
-   This block fires on physical touch devices regardless of whether
-   "Request desktop site" is on. Mobile media queries get ignored in
-   desktop mode (the browser pretends it's a 1024px laptop), but
-   pointer/hover queries still detect the actual hardware. We bump
-   set-input fields to a large font + tall height so Chrome's
-   auto-zoom-on-focus doesn't trigger. */
-@media (pointer: coarse) and (hover: none) {
-  .set-input{
-    font-size: 22px;
-    padding: 10px 6px;
-    min-height: 44px;
-  }
-  .set-type-select{
-    font-size: 18px !important;
-    padding: 8px 4px !important;
-  }
-  .set-done-btn{
-    width: 44px;
-    height: 44px;
-  }
-  .field input, .field select, .field textarea{
-    font-size: 18px;
-    padding: 12px 14px;
-  }
-  .rest-time-input input{
-    font-size: 18px;
-    padding: 8px 10px;
-    width: 56px;
-  }
-  .ts-custom-input{
-    font-size: 18px !important;
-    padding: 8px 10px !important;
-    width: 56px !important;
-  }
+/* ── Phase Nav ───────────────────────────────────────────────── */
+.phase-nav{
+  display:flex;gap:6px;padding:14px 22px;
+  border-bottom:1px solid var(--border);overflow-x:auto;
+}
+.phase-nav::-webkit-scrollbar{display:none}
+
+.phase-pill{
+  display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:9px 15px;border-radius:10px;border:1px solid var(--border);
+  background:none;color:var(--muted);cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;
+  transition:all .15s;white-space:nowrap;flex-shrink:0;
+  line-height:1.2;
+}
+.phase-pill:hover{background:var(--card2);border-color:var(--border2);color:var(--text)}
+.phase-pill-sub{
+  font-size:9px;font-weight:400;text-transform:none;
+  letter-spacing:.02em;color:var(--muted2);display:block;
+}
+.phase-pill.active .phase-pill-sub{opacity:.7}
+
+.phase-pill.p1.active{color:var(--swim);background:var(--swim-bg);border-color:var(--swim-bd)}
+.phase-pill.p2.active{color:var(--bike);background:var(--bike-bg);border-color:var(--bike-bd)}
+.phase-pill.p3.active{color:var(--run);background:var(--run-bg);border-color:var(--run-bd)}
+.phase-pill.p4.active{color:var(--rest);background:var(--rest-bg);border-color:var(--rest-bd)}
+
+/* ── Week container ──────────────────────────────────────────── */
+.week{padding:14px 16px}
+
+.phase-note{
+  background:var(--card);border:1px solid var(--border2);border-radius:12px;
+  padding:12px 14px;font-size:12px;color:var(--muted);line-height:1.6;
+  margin-bottom:12px;
+  animation:fadeUp .2s ease both;
+}
+.phase-note strong{color:var(--text);font-weight:600}
+
+/* ── Day Cards ───────────────────────────────────────────────── */
+.day-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;margin-bottom:8px;overflow:hidden;
+  transition:border-color .15s;
+  animation:fadeUp .2s ease both;
+}
+.day-card:last-child{margin-bottom:0}
+.day-card.today{border-color:var(--swim-bd)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.day-header{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  cursor:pointer;user-select:none;transition:background .12s;
+  border-bottom:1px solid transparent;
+}
+.day-card.open .day-header{border-bottom-color:var(--border)}
+.day-header:hover{background:var(--card2)}
+
+.day-pip{
+  width:5px;height:5px;border-radius:50%;background:var(--swim);
+  flex-shrink:0;display:none;
+}
+.day-card.today .day-pip{display:block}
+
+.day-name{
+  font-size:11px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;min-width:70px;flex-shrink:0;
+}
+.day-card.today .day-name{color:var(--swim)}
+
+.day-tags{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.tag{
+  display:inline-flex;align-items:center;font-size:9px;font-weight:600;
+  padding:2px 7px;border-radius:5px;border:1px solid;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+.t-swim{color:var(--swim);background:var(--swim-bg);border-color:var(--swim-bd)}
+.t-bike{color:var(--bike);background:var(--bike-bg);border-color:var(--bike-bd)}
+.t-run{color:var(--run);background:var(--run-bg);border-color:var(--run-bd)}
+.t-str{color:var(--str);background:var(--str-bg);border-color:var(--str-bd)}
+.t-rest{color:var(--rest);background:var(--rest-bg);border-color:var(--rest-bd)}
+.t-sport{color:var(--sport);background:var(--sport-bg);border-color:var(--sport-bd)}
+
+.chevron{color:var(--muted2);font-size:9px;transition:transform .2s;flex-shrink:0}
+.day-card.open .chevron{transform:rotate(180deg)}
+
+.day-body{display:none;padding:12px}
+.day-card.open .day-body{display:block}
+
+/* ── Session Blocks ──────────────────────────────────────────── */
+.session-block{
+  margin-bottom:8px;border:1px solid var(--border);
+  border-radius:11px;overflow:hidden;
+}
+.session-block:last-child{margin-bottom:0}
+
+.session-title{
+  padding:8px 12px;font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  border-bottom:1px solid transparent;
+}
+.s-swim .session-title{background:var(--swim-bg);color:var(--swim);border-bottom-color:var(--swim-bd)}
+.s-bike .session-title{background:var(--bike-bg);color:var(--bike);border-bottom-color:var(--bike-bd)}
+.s-run  .session-title{background:var(--run-bg);color:var(--run);border-bottom-color:var(--run-bd)}
+.s-str  .session-title{background:var(--str-bg);color:var(--str);border-bottom-color:var(--str-bd)}
+.s-rest .session-title{background:var(--rest-bg);color:var(--rest);border-bottom-color:var(--rest-bd)}
+.s-sport .session-title{background:var(--sport-bg);color:var(--sport);border-bottom-color:var(--sport-bd)}
+
+.session-content{padding:10px 12px;background:var(--bg)}
+
+.set-table{width:100%;border-collapse:collapse;font-size:12px}
+.set-table th{
+  font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted2);padding:0 0 6px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.set-table td{
+  padding:5px 0;border-bottom:1px solid var(--border);vertical-align:top;
+}
+.set-table tr:last-child td{border-bottom:none}
+.set-table td.comp{
+  color:var(--muted2);font-family:'DM Mono',monospace;
+  font-size:10px;font-weight:500;padding-right:10px;
+  white-space:nowrap;width:36%;
+}
+.set-table td.target{
+  font-family:'DM Mono',monospace;font-size:11px;
+  white-space:nowrap;padding-right:10px;width:28%;
+}
+.s-swim .target{color:var(--swim)}
+.s-bike .target{color:var(--bike)}
+.s-run  .target{color:var(--run)}
+.s-str  .target{color:var(--str)}
+.s-rest .target{color:var(--rest)}
+.set-table td.note-cell{color:var(--muted);font-size:11px}
+
+.total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:8px;padding-top:8px;border-top:1px solid var(--border);
+}
+.total-label{
+  font-size:9px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted2);
+}
+.total-val{
+  font-family:'Outfit',sans-serif;font-size:18px;
+  font-weight:400;color:var(--text);
+}
+.session-note{
+  font-size:11px;color:var(--muted);margin-top:8px;
+  padding-top:8px;border-top:1px solid var(--border);
+  line-height:1.6;
 }
 
-/* ── Portrait mobile: tighter spacing ─────────────────────────── */
-@media (max-width: 600px) {
-  body { padding: 10px 10px 20px !important; }
-  .header { margin-bottom: 12px !important; padding-bottom: 12px !important; gap: 8px !important; flex-wrap: wrap !important; }
-  .header-left .date-label { font-size: 9px !important; margin-bottom: 2px !important; }
-  .header-left .date-main  { font-size: 24px !important; }
-  .header-left .date-sub   { font-size: 12px !important; }
-  .header-right { gap: 6px !important; flex-wrap: wrap !important; justify-content: flex-end !important; }
-  .ghost-btn { font-size: 12px !important; padding: 8px 12px !important; }
-
-  /* Layout: column */
-  .layout { gap: 10px !important; }
-  .sidebar > .card { margin-bottom: 8px !important; padding: 12px !important; }
-  .card { padding: 12px !important; margin-bottom: 8px !important; border-radius: 11px !important; }
-  .card-head { margin-bottom: 10px !important; gap: 6px !important; }
-  .badge { font-size: 9px !important; padding: 2px 7px !important; }
-  .card-head-meta { font-size: 10px !important; }
-
-  /* Duration stopwatch */
-  .duration-time { font-size: 28px !important; }
-  .duration-status { font-size: 10px !important; }
-
-  /* Timer & Stopwatch widget */
-  .ts-time-display { font-size: 34px !important; }
-  .ts-tab { font-size: 10px !important; padding: 6px 0 !important; }
-  .ts-btn { font-size: 11px !important; padding: 6px 12px !important; }
-  .ts-preset { font-size: 10px !important; padding: 4px 9px !important; }
-  .ts-custom-input { width: 44px !important; font-size: 12px !important; }
-
-  /* Workout pills */
-  .wk-pill { padding: 9px 11px !important; gap: 9px !important; border-radius: 9px !important; }
-  .wk-pill-name { font-size: 12px !important; }
-  .wk-pill-type { font-size: 10px !important; }
-  .wk-add-btn { padding: 8px !important; font-size: 11px !important; margin-top: 6px !important; }
-
-  /* Week progress */
-  .week-stats { gap: 12px !important; }
-  .week-stat-val { font-size: 18px !important; }
-  .week-stat-lbl { font-size: 9px !important; }
-
-  /* Volume */
-  .vol-grid { gap: 6px !important; }
-  .vol-stat { padding: 8px 10px !important; border-radius: 8px !important; }
-  .vol-stat-val { font-size: 16px !important; }
-  .vol-stat-lbl { font-size: 9px !important; }
-
-  /* Exercise items */
-  .ex-item { border-radius: 9px !important; margin-bottom: 6px !important; }
-  .ex-header { padding: 10px 11px !important; gap: 8px !important; }
-  .ex-name { font-size: 13px !important; }
-  .ex-sets-summary { font-size: 10px !important; }
-  .ex-section-title { font-size: 9px !important; margin-bottom: 7px !important; }
-  .ex-section { margin-bottom: 12px !important; }
-
-  /* Sets table */
-  .ex-sets { padding: 0 11px 11px !important; gap: 4px !important; }
-  .ex-item.expanded .ex-sets { padding-top: 10px !important; }
-  .set-row { padding: 4px 2px !important; gap: 4px !important; }
-
-  /* History */
-  .hist-item { padding: 7px 9px !important; border-radius: 8px !important; }
-  .hist-item-name { font-size: 12px !important; }
-  .hist-item-meta { font-size: 9px !important; }
-
-  /* Complete banner */
-  .complete-banner { padding: 12px 14px !important; gap: 10px !important; border-radius: 10px !important; margin-bottom: 10px !important; }
-  .complete-banner-title { font-size: 13px !important; }
-  .complete-banner-sub { font-size: 11px !important; }
-
-  /* Notes */
-  .notes-area { font-size: 13px !important; padding: 9px 10px !important; min-height: 60px !important; }
-
-  /* Reorder buttons — always visible on touch */
-  .ex-reorder-btn { opacity: 1 !important; }
+/* ── Responsive ──────────────────────────────────────────────── */
+@media(max-width:720px){
+  .header{padding:16px 14px 14px}
+  .race-title{font-size:30px}
+  .countdown-num{font-size:28px}
+  .phase-nav{padding:10px 14px;gap:5px}
+  .phase-pill{padding:7px 12px;font-size:11px}
+  .week{padding:10px 12px}
+  .day-card{border-radius:11px}
+  .day-header{padding:10px 12px}
 }
-
-/* Exercise reorder up/down buttons */
-.ex-reorder-wrap { display:flex; flex-direction:column; gap:2px; flex-shrink:0; margin-right:2px; }
-.ex-reorder-btn {
-  width:20px; height:18px; border:none; background:none;
-  color:var(--muted2); cursor:pointer; font-size:10px; line-height:1;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:4px; padding:0; transition:color .12s, background .12s;
-  opacity:0; transition:opacity .15s, color .12s, background .12s;
-}
-.ex-header:hover .ex-reorder-btn { opacity:1; }
-.ex-reorder-btn:hover { color:var(--text); background:var(--card2); }
-.ex-reorder-btn:disabled { opacity:.2 !important; cursor:not-allowed; }
-
-/* Trash icon on workout pill */
-.wk-pill-del {
-  background:none; border:none; color:var(--muted2); cursor:pointer;
-  font-size:13px; padding:2px 4px; opacity:0; transition:opacity .15s, color .12s;
-  line-height:1; flex-shrink:0;
-}
-.wk-pill:hover .wk-pill-del { opacity:1; }
-.wk-pill-del:hover { color:#F87171; }
 </style>
 </head>
 <body>
 
-<script>
-// Apply session-running class as early as possible so the History/Workouts/
-// Volume/Week cards don't flash visible during a running session. Uses the
-// same localStorage key as the main script. Wrapped in try-catch since this
-// runs before sync.js attaches its overrides.
-(function(){
-  try{
-    var raw = localStorage.getItem('wt_session_timer');
-    if(!raw) return;
-    var t = JSON.parse(raw);
-    if(t && t.start && !t.end) document.body.classList.add('session-running');
-  }catch(e){}
-})();
-</script>
-
+<!-- ── Header ─────────────────────────────────────────────────── -->
 <div class="header">
-  <div class="header-left">
-    <div class="date-label" id="day-label"></div>
-    <div class="date-main" id="date-num"></div>
-    <div class="date-sub" id="month-yr"></div>
-  </div>
-  <div class="header-right">
-    <button class="ghost-btn start-btn" id="start-workout-btn" onclick="startWorkout()">
-      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
-      Start workout
-    </button>
-    <button class="ghost-btn finish-btn" id="finish-workout-btn" onclick="finishWorkout()" style="display:none">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l3 3 7-7"/></svg>
-      Finish workout
-    </button>
-    <button class="ghost-btn continue-btn" id="continue-workout-btn" onclick="continueWorkout()" style="display:none">
-      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
-      Continue session
-    </button>
-    <button class="ghost-btn new-session-btn" id="new-session-btn" onclick="startNewSession()" style="display:none">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8a5 5 0 1 1 1.5 3.5"/><path d="M3 5v3h3"/></svg>
-      New session
-    </button>
-    <button class="ghost-btn add-ex-btn" onclick="openAddExercise()">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
-      Add exercise
-    </button>
-    <button class="ghost-btn" onclick="openImportSession()" title="Import changes from a past session">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14V9m0 0l3 3m-3-3l-3 3M13 2v5m0 0l3-3m-3 3l-3-3M8 1v14"/></svg>
-      Import
-    </button>
-  </div>
-</div>
-
-<div class="complete-banner" id="complete-banner">
-  <div class="complete-banner-icon">🏆</div>
   <div>
-    <div class="complete-banner-title">Workout complete!</div>
-    <div class="complete-banner-sub" id="complete-sub"></div>
+    <div class="race-eyebrow">Training Plan</div>
+    <div class="race-title">Ironman <span class="hl">70.3</span> Melbourne</div>
+    <div class="race-sub">St Kilda Beach &middot; Sunday 8 November 2026</div>
   </div>
-  <button class="complete-banner-dismiss" onclick="document.getElementById('complete-banner').classList.remove('show')">✕</button>
-</div>
-
-<div class="layout">
-  <div class="sidebar">
-
-    <div class="card duration-card">
-      <div class="card-head">
-        <span class="badge badge-acc">Session</span>
-        <span class="card-head-meta" id="session-status">Not started</span>
-      </div>
-      <div class="duration-display">
-        <div class="duration-time idle" id="duration-time">0:00</div>
-      </div>
-      <div class="duration-status" id="duration-label">Press start when ready</div>
-
-      <!-- Timer & Stopwatch widget — visible only during active session -->
-      <div class="ts-widget" id="ts-widget">
-        <div class="ts-tabs">
-          <button class="ts-tab active" id="ts-tab-sw" onclick="tsSetTab('sw')">Stopwatch</button>
-          <button class="ts-tab" id="ts-tab-ct" onclick="tsSetTab('ct')">Timer</button>
-        </div>
-
-        <!-- Stopwatch panel -->
-        <div class="ts-panel active" id="ts-panel-sw">
-          <div class="ts-time-display sw-zero" id="sw-display">0:00</div>
-          <div class="ts-sub" id="sw-sub"></div>
-          <div class="ts-controls">
-            <button class="ts-btn ts-btn-start" id="sw-start-btn" onclick="swStart()">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
-              Start
-            </button>
-            <button class="ts-btn ts-btn-pause" id="sw-pause-btn" onclick="swPause()" style="display:none">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="3" height="10" rx="1"/><rect x="9" y="3" width="3" height="10" rx="1"/></svg>
-              Pause
-            </button>
-            <button class="ts-btn" id="sw-resume-btn" onclick="swResume()" style="display:none">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
-              Resume
-            </button>
-            <button class="ts-btn ts-btn-stop" id="sw-reset-btn" onclick="swReset()" style="display:none">Reset</button>
-          </div>
-        </div>
-
-        <!-- Countdown Timer panel -->
-        <div class="ts-panel" id="ts-panel-ct">
-          <div class="ts-ring-wrap" id="ct-ring-wrap">
-            <svg width="140" height="140" viewBox="0 0 140 140">
-              <circle class="ts-ring-bg" cx="70" cy="70" r="62"/>
-              <circle class="ts-ring-fg" id="ct-ring" cx="70" cy="70" r="62" stroke-dasharray="389.56" stroke-dashoffset="0"/>
-            </svg>
-            <div class="ts-ring-time">
-              <div class="ts-time-display ct-idle" id="ct-display" style="margin-bottom:0">0:00</div>
-            </div>
-          </div>
-          <div class="ts-sub" id="ct-sub"></div>
-          <div class="ts-presets" id="ct-presets">
-            <button class="ts-preset" onclick="ctSetPreset(30)">0:30</button>
-            <button class="ts-preset sel" onclick="ctSetPreset(60)">1:00</button>
-            <button class="ts-preset" onclick="ctSetPreset(90)">1:30</button>
-            <button class="ts-preset" onclick="ctSetPreset(120)">2:00</button>
-            <button class="ts-preset" onclick="ctSetPreset(180)">3:00</button>
-          </div>
-          <div class="ts-custom-row" id="ct-custom-row">
-            <input class="ts-custom-input" type="number" id="ct-custom-min" value="1" min="0" max="99" onchange="ctCustomChanged()">
-            <span class="ts-custom-label">min</span>
-            <input class="ts-custom-input" type="number" id="ct-custom-sec" value="0" min="0" max="59" onchange="ctCustomChanged()">
-            <span class="ts-custom-label">sec</span>
-          </div>
-          <div class="ts-controls" style="margin-top:10px">
-            <button class="ts-btn ts-btn-start" id="ct-start-btn" onclick="ctStart()">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
-              Start
-            </button>
-            <button class="ts-btn ts-btn-pause" id="ct-pause-btn" onclick="ctPause()" style="display:none">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="3" height="10" rx="1"/><rect x="9" y="3" width="3" height="10" rx="1"/></svg>
-              Pause
-            </button>
-            <button class="ts-btn" id="ct-resume-btn" onclick="ctResume()" style="display:none">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7-4.5z"/></svg>
-              Resume
-            </button>
-            <button class="ts-btn ts-btn-stop" id="ct-reset-btn" onclick="ctReset()" style="display:none">Reset</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <span class="badge badge-acc">Week</span>
-        <span class="card-head-meta" id="week-meta"></span>
-      </div>
-      <div class="week-prog-row" id="week-prog-row"></div>
-      <div class="week-day-row" id="week-day-row"></div>
-      <div class="week-stats">
-        <div class="week-stat">
-          <div class="week-stat-val" id="ws-done">0</div>
-          <div class="week-stat-lbl">This week</div>
-        </div>
-        <div class="week-stat">
-          <div class="week-stat-val" id="ws-streak">0</div>
-          <div class="week-stat-lbl">Week streak</div>
-        </div>
-        <div class="week-stat">
-          <div class="week-stat-val" id="ws-total">0</div>
-          <div class="week-stat-lbl">All time</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <span class="badge badge-muted">Workouts</span>
-      </div>
-      <div class="workouts-list" id="workouts-list"></div>
-      <button class="wk-add-btn" onclick="openAddWorkout()">+ New workout</button>
-    </div>
-
-    <div class="card" id="volume-card" style="display:none">
-      <div class="card-head">
-        <span class="badge badge-green">Volume</span>
-      </div>
-      <div class="vol-grid">
-        <div class="vol-stat"><div class="vol-stat-val" id="vol-sets">0</div><div class="vol-stat-lbl">Sets</div></div>
-        <div class="vol-stat"><div class="vol-stat-val" id="vol-reps">0</div><div class="vol-stat-lbl">Reps</div></div>
-        <div class="vol-stat"><div class="vol-stat-val" id="vol-kg">0</div><div class="vol-stat-lbl">Total kg</div></div>
-      </div>
-    </div>
-
-    <div class="card" id="history-card" style="display:none">
-      <div class="card-head">
-        <span class="badge badge-amber">History</span>
-        <span class="card-head-meta" id="history-count"></span>
-        <button class="hist-all-btn" id="hist-all-btn" onclick="toggleHistoryAll()" style="margin-left:auto;display:none">Show all</button>
-      </div>
-      <div class="hist-list" id="hist-list"></div>
-    </div>
-
-  </div>
-
-  <div class="main-col">
-    <div class="card">
-      <div class="card-head">
-        <span class="badge badge-acc" id="workout-badge">Workout</span>
-        <span style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:400;line-height:1;margin-left:6px" id="workout-title">—</span>
-        <span class="card-head-meta" id="workout-type-label"></span>
-      </div>
-      <div id="viewing-past-banner" style="display:none;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--amber);display:none;align-items:center;gap:8px">
-        <span>📋</span>
-        <span id="viewing-past-text"></span>
-        <button onclick="switchToDay(TODAY)" style="margin-left:auto;background:none;border:1px solid var(--amber-bd);color:var(--amber);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">Back to today</button>
-      </div>
-      <div id="exercise-list"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><span class="badge badge-muted">Notes</span></div>
-      <textarea class="notes-area" id="workout-notes" placeholder="" rows="6"></textarea>
-    </div>
+  <div class="countdown">
+    <div class="countdown-label">Race day</div>
+    <div class="countdown-num" id="cd-nums">&mdash;</div>
+    <div class="countdown-sub">to go</div>
   </div>
 </div>
 
-<!-- Edit Exercise Modal -->
-<div class="modal-overlay" id="edit-ex-modal" onclick="handleModalClick(event,'edit-ex-modal')">
-  <div class="modal-panel">
-    <div class="modal-head">
-      <div><div class="modal-title">Edit exercise</div><div class="modal-sub" id="edit-ex-sub">Update details</div></div>
-      <button class="modal-close" onclick="closeModal('edit-ex-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>Exercise name</label><input type="text" id="edit-ex-name" placeholder="Exercise name"></div>
-      <div class="field"><label>Category</label><select id="edit-ex-cat"><option>Compound</option><option>Isolation</option><option>Cardio</option><option>Core</option><option>Stretch</option></select></div>
-      <div class="field"><label>Default reps / target</label><input type="text" id="edit-ex-reps" placeholder="e.g. 8-10, 30s, AMRAP"></div>
-      <div class="field"><label>Notes / cues</label><textarea id="edit-ex-note" placeholder="Form cues, tempo, etc." rows="2"></textarea></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('edit-ex-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveEditExercise()">Save</button>
-    </div>
-  </div>
+<!-- ── Phase Nav ──────────────────────────────────────────────── -->
+<div class="phase-nav">
+  <button class="phase-pill p1" onclick="setPhase(1)">
+    Phase 1<span class="phase-pill-sub">Base &middot; 11 May&ndash;6 Jul</span>
+  </button>
+  <button class="phase-pill p2" onclick="setPhase(2)">
+    Phase 2<span class="phase-pill-sub">Volume &middot; 7 Jul&ndash;30 Aug</span>
+  </button>
+  <button class="phase-pill p3" onclick="setPhase(3)">
+    Phase 3<span class="phase-pill-sub">Race Specific &middot; 31 Aug&ndash;18 Oct</span>
+  </button>
+  <button class="phase-pill p4" onclick="setPhase(4)">
+    Taper<span class="phase-pill-sub">19 Oct&ndash;8 Nov</span>
+  </button>
 </div>
 
-<!-- Add Exercise Modal -->
-<div class="modal-overlay" id="add-ex-modal" onclick="handleModalClick(event,'add-ex-modal')">
-  <div class="modal-panel">
-    <div class="modal-head">
-      <div><div class="modal-title">Add exercise</div><div class="modal-sub">Add to current workout</div></div>
-      <button class="modal-close" onclick="closeModal('add-ex-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>Exercise name</label><input type="text" id="new-ex-name" placeholder="e.g. Romanian Deadlift"></div>
-      <div class="field"><label>Category</label><select id="new-ex-cat"><option>Compound</option><option>Isolation</option><option>Cardio</option><option>Core</option><option>Stretch</option></select></div>
-      <div class="field"><label>Default sets</label><input type="number" id="new-ex-sets" value="3" min="1" max="20"></div>
-      <div class="field"><label>Default reps</label><input type="text" id="new-ex-reps" placeholder="e.g. 8-10, AMRAP, 30s"></div>
-      <div class="field">
-        <label>Rest timer (default for this exercise)</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="number" id="new-ex-rest-min" value="1" min="0" max="59" style="width:80px;text-align:center">
-          <span style="color:var(--muted)">min</span>
-          <input type="number" id="new-ex-rest-sec" value="30" min="0" max="59" style="width:80px;text-align:center">
-          <span style="color:var(--muted)">sec</span>
-        </div>
-      </div>
-      <div class="field"><label>Notes (optional)</label><textarea id="new-ex-notes" placeholder="Cues, form notes, tempo…" rows="2"></textarea></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('add-ex-modal')">Cancel</button>
-      <button class="btn-primary" onclick="addCustomExercise()">Add</button>
-    </div>
-  </div>
-</div>
-
-<!-- Add/Edit Workout Modal -->
-<div class="modal-overlay" id="workout-modal" onclick="handleModalClick(event,'workout-modal')">
-  <div class="modal-panel">
-    <div class="modal-head">
-      <div><div class="modal-title" id="wm-title">New workout</div><div class="modal-sub" id="wm-sub">Create a custom workout</div></div>
-      <button class="modal-close" onclick="closeModal('workout-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>Workout name</label><input type="text" id="wm-name" placeholder="e.g. Running, Push Day, Yoga"></div>
-      <div class="field"><label>Type</label><input type="text" id="wm-type" placeholder="e.g. Cardio, Resistance, Recovery"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-danger" id="wm-delete" onclick="deleteWorkout()" style="margin-right:auto;display:none">Delete</button>
-      <button class="btn-secondary" onclick="closeModal('workout-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveWorkout()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Session history detail modal -->
-<div class="modal-overlay" id="session-modal" onclick="handleModalClick(event,'session-modal')">
-  <div class="modal-panel">
-    <div class="modal-head">
-      <div>
-        <div class="modal-title" id="sm-title">Session</div>
-        <div class="modal-sub" id="sm-sub"></div>
-      </div>
-      <button class="modal-close" onclick="closeModal('session-modal')">✕</button>
-    </div>
-    <div class="modal-body" id="sm-body"></div>
-    <div class="modal-actions">
-      <button class="btn-danger-outline" onclick="deleteSessionFromModal()" style="margin-right:auto">Delete entry</button>
-      <button class="btn-secondary" onclick="closeModal('session-modal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Import from past session modal -->
-<div class="modal-overlay" id="import-modal" onclick="handleModalClick(event,'import-modal')">
-  <div class="modal-panel" style="max-width:480px">
-    <div class="modal-head">
-      <div>
-        <div class="modal-title">Import from session</div>
-        <div class="modal-sub">Apply exercise names, set counts and types from a past session to the workout template</div>
-      </div>
-      <button class="modal-close" onclick="closeModal('import-modal')">✕</button>
-    </div>
-    <div class="modal-body" id="import-body" style="max-height:55vh;overflow-y:auto"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('import-modal')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<!-- ── Week Container ────────────────────────────────────────── -->
+<div class="week" id="week-container"></div>
 
 <script>
-// ════════════ DATE ════════════
-const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MON_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const today = new Date();
-function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
-const TODAY = fmtDate(today);
-const DI = today.getDay();
-
-document.getElementById('day-label').textContent = DAY_NAMES[DI].toUpperCase();
-document.getElementById('date-num').textContent = today.getDate();
-document.getElementById('month-yr').textContent = MON_SHORT[today.getMonth()] + ' ' + today.getFullYear();
-
-// ════════════ DEFAULT WORKOUTS ════════════
-const DEFAULT_WORKOUTS = [
-  {id:'upper', name:'Upper', type:'Resistance training', exercises:[
-    {id:'ohp',name:'Overhead Press',cat:'Compound',sets:3,reps:'5',rest:120,note:''},
-    {id:'db-row',name:'DB Single-arm Row',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
-    {id:'dips',name:'Weighted Dips',cat:'Compound',sets:3,reps:'6-8',rest:90,note:''},
-    {id:'chin-up',name:'Chin-up',cat:'Compound',sets:3,reps:'AMRAP',rest:90,note:''},
-    {id:'hammer-c',name:'Hammer Curl',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
-    {id:'z2-bike-upper',name:'Zone 2 (assault bike)',cat:'Cardio',sets:1,reps:'20-30 min',rest:0,note:'~65-75% MHR, easy nasal breathing'},
-  ]},
-  {id:'legs', name:'Legs', type:'Resistance training', exercises:[
-    {id:'squat',name:'Back Squat',cat:'Compound',sets:3,reps:'5',rest:150,note:'Brace core, chest up'},
-    {id:'rdl',name:'Romanian Deadlift',cat:'Compound',sets:3,reps:'8-10',rest:120,note:'Hip hinge'},
-    {id:'leg-press',name:'Leg Press',cat:'Compound',sets:3,reps:'10-12',rest:90,note:''},
-    {id:'leg-curl',name:'Lying Leg Curl',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
-    {id:'calf-r',name:'Calf Raises',cat:'Isolation',sets:4,reps:'15-20',rest:45,note:'Full ROM'},
-    {id:'z2-bike-legs',name:'Zone 2 (assault bike)',cat:'Cardio',sets:1,reps:'20-30 min',rest:0,note:'~65-75% MHR, after legs'},
-  ]},
-  {id:'swim', name:'Swim', type:'Cardio', kind:'swim', exercises:[
-    {id:'sw-warmup',name:'Warm-up',cat:'Warm-up',sets:2,reps:'100',rest:30,note:'Easy pace'},
-    {id:'sw-drill',name:'Drill set',cat:'Technique',sets:4,reps:'50',rest:20,note:'Focus on form'},
-    {id:'sw-main',name:'Main set',cat:'Main',sets:6,reps:'100',rest:30,note:'Threshold pace'},
-    {id:'sw-kick',name:'Kick set',cat:'Main',sets:4,reps:'50',rest:20,note:'Board kick'},
-    {id:'sw-pull',name:'Pull set',cat:'Main',sets:4,reps:'50',rest:20,note:'Pull buoy, focus arms'},
-    {id:'sw-cooldown',name:'Cool-down',cat:'Cool-down',sets:1,reps:'200',rest:0,note:'Easy pace'},
-  ]},
-  {id:'push', name:'Push', type:'Resistance + cardio', exercises:[
-    {id:'bench',name:'Barbell Bench Press',cat:'Compound',sets:3,reps:'5',rest:120,note:'Drive through legs'},
-    {id:'incline-db',name:'Incline DB Press',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
-    {id:'ohp-push',name:'Overhead Press',cat:'Compound',sets:3,reps:'6-8',rest:90,note:''},
-    {id:'cable-fly-push',name:'Cable Fly',cat:'Isolation',sets:3,reps:'12-15',rest:60,note:'Control negative'},
-    {id:'tricep-pd-push',name:'Tricep Pushdown',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
-    {id:'lat-raise-push',name:'Lateral Raise',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
-    {id:'run-5k',name:'5km Run',cat:'Cardio',sets:1,reps:'5 km',rest:0,note:'Steady pace, post-lift'},
-  ]},
-  {id:'pull', name:'Pull', type:'Resistance + sport', exercises:[
-    {id:'deadlift',name:'Conventional Deadlift',cat:'Compound',sets:3,reps:'5',rest:180,note:'Push the floor'},
-    {id:'pull-up',name:'Weighted Pull-up',cat:'Compound',sets:3,reps:'6-8',rest:120,note:''},
-    {id:'row-bb',name:'Barbell Row',cat:'Compound',sets:3,reps:'8',rest:90,note:'Elbows to hips'},
-    {id:'lat-pd',name:'Lat Pulldown',cat:'Compound',sets:3,reps:'10-12',rest:75,note:''},
-    {id:'face-pull',name:'Face Pull',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
-    {id:'bicep-curl',name:'Barbell Curl',cat:'Isolation',sets:3,reps:'10-12',rest:60,note:''},
-    {id:'volleyball',name:'Volleyball',cat:'Sport',sets:1,reps:'session',rest:0,note:'Game / training'},
-  ]},
-  {id:'cycling', name:'Outdoor Bike Ride', type:'Cardio', exercises:[
-    {id:'bike-warmup',name:'Warm-up',cat:'Cardio',sets:1,reps:'10 min',rest:0,note:'Easy spin'},
-    {id:'bike-main',name:'Main ride',cat:'Cardio',sets:1,reps:'30-90 min',rest:0,note:'Steady aerobic effort'},
-    {id:'bike-cool',name:'Cool-down',cat:'Cardio',sets:1,reps:'5 min',rest:0,note:'Easy spin home'},
-  ]},
-  // Legacy workouts kept so older session-log entries still resolve cleanly
-  {id:'chest', name:'Chest', type:'Resistance training', exercises:[
-    {id:'bench',name:'Barbell Bench Press',cat:'Compound',sets:3,reps:'5',rest:120,note:''},
-    {id:'incline',name:'Incline DB Press',cat:'Compound',sets:3,reps:'8-10',rest:90,note:''},
-    {id:'cable-fly',name:'Cable Fly',cat:'Isolation',sets:3,reps:'12-15',rest:60,note:''},
-    {id:'tricep-pd',name:'Tricep Pushdown',cat:'Isolation',sets:3,reps:'12',rest:60,note:''},
-    {id:'lat-raise',name:'Lateral Raise',cat:'Isolation',sets:3,reps:'15',rest:45,note:''},
-  ]},
-  {id:'back', name:'Back', type:'Resistance training', exercises:[
-    {id:'deadlift-back',name:'Conventional Deadlift',cat:'Compound',sets:3,reps:'5',rest:180,note:''},
-    {id:'pull-up-back',name:'Weighted Pull-up',cat:'Compound',sets:3,reps:'6-8',rest:120,note:''},
-    {id:'row-bb-back',name:'Barbell Row',cat:'Compound',sets:3,reps:'8',rest:90,note:''},
-  ]},
-];
-
-// ════════════ STATE ════════════
-const WORKOUTS_KEY = 'wt_workouts_v2';
-const SESSION_KEY = d => `wt_session_${d}`;
-const NOTES_KEY = 'wt_notes_permanent'; // single permanent notes blob
-const SESSION_LOG_KEY = 'wt_session_log'; // [{date, workoutId, start, end, sets:{...}}]
-const ACTIVE_KEY = 'wt_active_workout';
-const SESSION_TIMER_KEY = 'wt_session_timer';
-const COMPLETED_DAYS_KEY = 'wt_completed_days'; // {[date]: workoutId}
-
-function loadWorkouts(){
-  try{ const v = localStorage.getItem(WORKOUTS_KEY); return v ? JSON.parse(v) : DEFAULT_WORKOUTS; }
-  catch(e){ return DEFAULT_WORKOUTS; }
+/* ── Countdown ──────────────────────────────────────────────── */
+const RACE = new Date('2026-11-08T06:00:00+11:00');
+function updateCD(){
+  const diff = RACE - Date.now();
+  if(diff <= 0){ document.getElementById('cd-nums').textContent = 'Race day!'; return; }
+  const d = Math.floor(diff / 86400000);
+  document.getElementById('cd-nums').textContent = Math.floor(d/7)+'w '+d%7+'d';
 }
-function saveWorkouts(w){ localStorage.setItem(WORKOUTS_KEY, JSON.stringify(w)); }
+updateCD();
 
-// Seed-once migration: append any new default workouts that the user
-// doesn't already have, without touching their existing customisations.
-// Bump SEED_VERSION when DEFAULT_WORKOUTS gains new entries.
-const SEED_VERSION_KEY = 'wt_seed_version';
-const SEED_VERSION = 'v3-pull-push-cycling';
-function maybeSeedWorkouts(){
-  if(localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) return;
-  try{
-    const stored = localStorage.getItem(WORKOUTS_KEY);
-    if(!stored){
-      // No local workouts at all — defaults will load on first run.
-      localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
-      return;
-    }
-    const existing = JSON.parse(stored) || [];
-    const existingIds = new Set(existing.map(w => w.id));
-    let changed = false;
-    DEFAULT_WORKOUTS.forEach(def => {
-      if(!existingIds.has(def.id)){
-        existing.push(def);
-        changed = true;
-      }
-    });
-    if(changed) saveWorkouts(existing);
-    localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
-  }catch(e){ /* ignore — non-fatal */ }
-}
-maybeSeedWorkouts();
-function loadSession(d){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY(d)))||{}; }catch(e){ return {}; } }
-function saveSession(d,s){ localStorage.setItem(SESSION_KEY(d), JSON.stringify(s)); }
-function loadCompletedDays(){ try{ return JSON.parse(localStorage.getItem(COMPLETED_DAYS_KEY))||{}; }catch(e){ return {}; } }
-function saveCompletedDays(c){ localStorage.setItem(COMPLETED_DAYS_KEY, JSON.stringify(c)); }
-function loadSessionTimer(){ try{ return JSON.parse(localStorage.getItem(SESSION_TIMER_KEY))||null; }catch(e){ return null; } }
-function saveSessionTimer(s){ if(s===null) localStorage.removeItem(SESSION_TIMER_KEY); else localStorage.setItem(SESSION_TIMER_KEY, JSON.stringify(s)); }
+/* ── Training data ──────────────────────────────────────────── */
+const PLAN = {
+  1: {
+    note: '<strong>Phase 1 — Base Building (11 May – 6 Jul · 8 weeks).</strong> All cardio in Zone 2 (65–75% MHR). Swim focus is technique and aerobic base. Resist going hard.',
+    days: [
+      {
+        id:'mon', name:'Monday', tags:['swim','str'],
+        sessions:[
+          { type:'swim', title:'Swim — Technique & Aerobic Base',
+            sets:[
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free · long stroke · bilateral breathing'},
+              {label:'Drill set', target:'4 × 50 m',    desc:'Catch-up drill · 15 s rest · full arm extension before pull'},
+              {label:'Drill set', target:'4 × 50 m',    desc:'Fingertip drag · 15 s rest · high elbow recovery'},
+              {label:'Main set',  target:'6 × 100 m',   desc:'Zone 2 comfortable pace · 25 s rest · hold stroke rate'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy backstroke or very easy free'},
+            ],
+            totals:'1100 m total',
+            note:'Phase 1 priority is stroke mechanics. If 6×100 feels easy by week 4, add 2 reps. Rest intervals are generous — don\'t rush them.'
+          },
+          { type:'str', title:'Legs — Your Routine',
+            sets:[
+              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+            ],
+            note:'Swim first, legs after. Keep volume controlled — legs are supporting bike and run sessions throughout the week.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['str','run'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine',
+            sets:[
+              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+            ],
+            note:'~50 min. Upper session has minimal leg interference — run after is uncompromised.'
+          },
+          { type:'run', title:'Long Easy Run — Zone 2 Base',
+            sets:[
+              {label:'Progression',   target:'Weeks 1–8',    desc:'Start at 6 km · build by 0.5 km/week to 9 km'},
+              {label:'Target volume', target:'9 km',         desc:'Conversational pace throughout · Zone 2 only'},
+              {label:'Pace target',   target:'~5:40–6:30/km',desc:'Whatever keeps HR at 65–75% MHR'},
+              {label:'Incline',       target:'1%',           desc:'If treadmill — replicates outdoor resistance'},
+            ],
+            totals:'9 km · Zone 2',
+            note:'Tuesday is now the weekly long Z2 run — the highest-return session for building the aerobic engine that underpins the 70.3 half-marathon. Strict Z2 throughout. If HR drifts above 75% MHR, slow down or take a brief walk break.'
+          },
+        ]
+      },
+      {
+        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        sessions:[
+          { type:'swim', title:'Swim — Volume & Endurance',
+            sets:[
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free'},
+              {label:'Main set',  target:'8 × 100 m',   desc:'Zone 2 · 20 s rest · focus on even splits'},
+              {label:'Kick set',  target:'4 × 50 m',    desc:'Board kick · 20 s rest · builds leg strength for open water'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'1100 m total',
+            note:'Wednesday is a second swim day — more volume, slightly less drill focus than Monday. Even splits across 8×100 is the goal.'
+          },
+          { type:'bike', title:'Zone 2 — Assault Bike',
+            sets:[
+              {label:'Warm-up',   target:'5 min',       desc:'Easy spin · let HR settle'},
+              {label:'Main',      target:'30 min',      desc:'Zone 2 · 65–75% MHR · nasal breathing only'},
+              {label:'Cool-down', target:'5 min',       desc:'Drop intensity · HR below 60%'},
+            ],
+            totals:'40 min · Zone 2',
+            note:'Nasal breathing is the Z2 test — if you have to mouth-breathe you\'re above Z2. Keep RPM comfortable, not grinding.'
+          },
+        ]
+      },
+      {
+        id:'thu', name:'Thursday', tags:['bike','run'],
+        sessions:[
+          { type:'bike', title:'Long Bike + Brick Run',
+            sets:[
+              {label:'Warm-up',   target:'10 min',      desc:'Easy assault bike or outdoor spin'},
+              {label:'Bike main', target:'60 min',      desc:'Zone 2 · 65–75% MHR · 85–90 rpm cadence'},
+              {label:'Cool-down', target:'5 min',       desc:'Easy spin'},
+              {label:'Brick run', target:'10 min',      desc:'Zone 2 immediately off the bike · no rest · expect heavy legs'},
+            ],
+            totals:'75 min bike · 10 min run',
+            note:'No gym today — Thursday is pure tri work. The brick run is short in Phase 1, just adapting the neuromuscular transition. The heavy-leg feeling in the first 2 km is normal and will improve across phases.'
+          },
+        ]
+      },
+      {
+        id:'fri', name:'Friday', tags:['str','sport'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine (second session)',
+            sets:[
+              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · push-focused'},
+            ],
+            note:'Push-focused upper session. Keep it to ~50 min — volleyball follows.'
+          },
+          { type:'sport', title:'Volleyball',
+            sets:[
+              {label:'Session',   target:'2 hr',        desc:'Light recreational play · no structured intensity'},
+              {label:'HR',        target:'Zone 1–2',    desc:'Incidental — don\'t chase it'},
+            ],
+            note:'Light work — treat as active recovery before Saturday\'s big day.'
+          },
+        ]
+      },
+      {
+        id:'sat', name:'Saturday', tags:['swim','bike','run'],
+        sessions:[
+          { type:'swim', title:'Swim — Third Session (short sharpener)',
+            sets:[
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free'},
+              {label:'Main set',  target:'5 × 100 m',   desc:'Zone 2 · 25 s rest · consistent effort'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'800 m total',
+            note:'Saturday swim is short — keep it sharp and efficient. Three swim sessions per week is the 70.3 minimum. Volume builds in Phase 2.'
+          },
+          { type:'bike', title:'Outdoor Long Ride — Zone 2 Endurance',
+            sets:[
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin · 70–75 rpm'},
+              {label:'Main',      target:'55 min',      desc:'Zone 2 · 65–75% MHR · 85–95 rpm · flat to rolling terrain'},
+              {label:'Cool-down', target:'10 min',      desc:'Easy spin'},
+            ],
+            totals:'~75 min · ~28–35 km',
+            note:'Phase 1 outdoor ride targets 60–75 min. Cadence discipline (85–95 rpm) matters more than speed. If HR climbs on hills, shift down and spin rather than grind.'
+          },
+          { type:'run', title:'Tempo Run — Zone 3',
+            sets:[
+              {label:'Warm-up',   target:'1 km',        desc:'Easy Zone 2 jog'},
+              {label:'Tempo',     target:'3 km',        desc:'Zone 3 · 76–85% MHR · comfortably hard · hold pace'},
+              {label:'Cool-down', target:'1 km',        desc:'Easy jog back to Z2'},
+            ],
+            totals:'5 km total',
+            note:'Run off the bike is deliberate — mimics race day. Even a short Zone 3 effort on fatigued legs builds the specific resilience needed for the 70.3 run leg.'
+          },
+        ]
+      },
+      {
+        id:'sun', name:'Sunday', tags:['rest'],
+        sessions:[
+          { type:'rest', title:'Full Rest',
+            sets:[
+              {label:'Training',  target:'None',         desc:'No structured sessions'},
+              {label:'Optional',  target:'Easy walk',    desc:'30 min max if you want to move'},
+              {label:'Focus',     target:'Recovery',     desc:'Sleep, nutrition, foam roll, stretch'},
+            ],
+            note:'Sunday rest is non-negotiable. Six training days produce adaptation only when the seventh allows repair. This is especially true with 3 swim sessions, 3 bike sessions and 2 runs in the week.'
+          },
+        ]
+      },
+    ]
+  },
 
-let workouts = loadWorkouts();
-let activeId = localStorage.getItem(ACTIVE_KEY) || workouts[0]?.id;
-if(!workouts.find(w=>w.id===activeId)) activeId = workouts[0]?.id;
+  2: {
+    note: '<strong>Phase 2 — Volume Build (7 Jul – 30 Aug · 8 weeks).</strong> Swim extends to 2000–2500 m per session. Outdoor ride builds to 60–75 km. Tuesday long run extends to 13–14 km (10 km Z2 plus tempo finish). Brick run on Thursday extends to 20 min. Start practising race nutrition on the bike.',
+    days: [
+      {
+        id:'mon', name:'Monday', tags:['swim','str'],
+        sessions:[
+          { type:'swim', title:'Swim — Volume Build',
+            sets:[
+              {label:'Warm-up',     target:'1 × 400 m',   desc:'Easy free · settle into rhythm'},
+              {label:'Drill',       target:'4 × 50 m',    desc:'Catch-up or fingertip drag · 15 s rest'},
+              {label:'Main set',    target:'10 × 100 m',  desc:'Zone 2 · 20 s rest · count strokes · aim for even splits'},
+              {label:'Threshold',   target:'4 × 50 m',    desc:'Zone 3–4 · hard effort · 20 s rest · builds speed reserve'},
+              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy backstroke or free'},
+            ],
+            totals:'2000 m total',
+            note:'10×100 is the core 70.3 swim set. Short rest teaches you to swim without full recovery — exactly what a 1.9 km race demands. Time yourself across the 10 reps — splits should be consistent.'
+          },
+          { type:'str', title:'Legs — Your Routine',
+            sets:[
+              {label:'Session',     target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+            ],
+            note:'Same structure as Phase 1. Strength volume holds steady — volume increase is in cardio only.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['str','run'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine',
+            sets:[
+              {label:'Session',     target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+            ],
+            note:'Upper session has minimal leg interference — Tuesday long run after is uncompromised.'
+          },
+          { type:'run', title:'Long Run with Tempo Finish',
+            sets:[
+              {label:'Easy',        target:'10 km',       desc:'Zone 2 — conversational · this is the aerobic base block'},
+              {label:'Tempo',       target:'2 km',        desc:'Zone 3 · 76–85% MHR · hold pace'},
+              {label:'Easy',        target:'1 km',        desc:'Cool-down'},
+            ],
+            totals:'13 km total',
+            note:'Easy portion extended from 5 to 10 km — this becomes the weekly long aerobic run. Tempo finish is preserved as race-specific top-end work. By week 6 of Phase 2, push the tempo block to 3 km (total 14 km).'
+          },
+        ]
+      },
+      {
+        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        sessions:[
+          { type:'swim', title:'Swim — Threshold & Volume',
+            sets:[
+              {label:'Warm-up',     target:'1 × 300 m',   desc:'Easy free'},
+              {label:'Main set A',  target:'6 × 200 m',   desc:'Zone 2–3 · 30 s rest · build pace across reps'},
+              {label:'Main set B',  target:'4 × 100 m',   desc:'Zone 3 · 20 s rest · harder effort'},
+              {label:'Kick',        target:'4 × 50 m',    desc:'Board kick · 20 s rest'},
+              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy'},
+            ],
+            totals:'2100 m total',
+            note:'200 m reps build the sustained effort needed for the 1.9 km race distance. Build pace across the 6 reps — first two conservative, last two at the top of Zone 3.'
+          },
+          { type:'bike', title:'Zone 2 — Assault Bike (extended)',
+            sets:[
+              {label:'Warm-up',     target:'5 min',       desc:'Easy spin'},
+              {label:'Main',        target:'40 min',      desc:'Zone 2 · 65–75% MHR · nasal breathing'},
+              {label:'Cool-down',   target:'5 min',       desc:'Easy'},
+            ],
+            totals:'50 min · Zone 2',
+            note:'5 min longer than Phase 1. Add 5 min every 2–3 weeks across Phase 2.'
+          },
+        ]
+      },
+      {
+        id:'thu', name:'Thursday', tags:['bike','run'],
+        sessions:[
+          { type:'bike', title:'Long Bike + Brick Run (extended)',
+            sets:[
+              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
+              {label:'Bike main',   target:'80 min',      desc:'Zone 2 · 65–75% MHR · 85–90 rpm'},
+              {label:'Cool-down',   target:'5 min',       desc:'Easy'},
+              {label:'Brick run',   target:'20 min',      desc:'Zone 2–3 · immediately off bike · no rest · hold pace despite heavy legs'},
+            ],
+            totals:'95 min bike · 20 min run',
+            note:'Brick run doubles from Phase 1. The first 5 min will feel terrible — that\'s the transition. Push through it, the legs come good. Practise with race nutrition: 1 gel per 30 min on the bike.'
+          },
+        ]
+      },
+      {
+        id:'fri', name:'Friday', tags:['str','sport'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine',
+            sets:[
+              {label:'Session',     target:'~50 min',     desc:'Follow your own programming · push-focused'},
+            ],
+            note:'Push-focused upper session. Keep it to ~50 min — volleyball follows.'
+          },
+          { type:'sport', title:'Volleyball',
+            sets:[
+              {label:'Session',     target:'2 hr',        desc:'Light recreational play · no structured intensity'},
+              {label:'HR',          target:'Zone 1–2',    desc:'Incidental — don\'t chase it'},
+            ],
+            note:'Light work — treat as active recovery before Saturday\'s big day. Don\'t go hard.'
+          },
+        ]
+      },
+      {
+        id:'sat', name:'Saturday', tags:['swim','bike','run'],
+        sessions:[
+          { type:'swim', title:'Swim — Race Pace Intro',
+            sets:[
+              {label:'Warm-up',     target:'1 × 300 m',   desc:'Easy free'},
+              {label:'Main set',    target:'6 × 100 m',   desc:'Race pace · 20 s rest · time yourself'},
+              {label:'Easy',        target:'4 × 50 m',    desc:'Zone 2 · flush lactic'},
+              {label:'Cool-down',   target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'1100 m total',
+            note:'First introduction of race-pace effort. Note your 100 m split — this is your baseline. Target sub-1:50/100 m for a comfortable race swim.'
+          },
+          { type:'bike', title:'Outdoor Long Ride — Building',
+            sets:[
+              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
+              {label:'Main',        target:'90 min',      desc:'Zone 2 · 65–75% MHR · 85–95 rpm · build to 55–60 km'},
+              {label:'Nutrition',   target:'Every 30 min',desc:'1 DIY gel (30 g carbs) + 250 ml electrolyte drink'},
+              {label:'Cool-down',   target:'10 min',      desc:'Easy'},
+            ],
+            totals:'~110 min · ~50–60 km',
+            note:'Start executing your full race nutrition plan on long rides. Note gut feel — any GI issues at this distance will compound to 90 km on race day.'
+          },
+          { type:'run', title:'Tempo Run — Building',
+            sets:[
+              {label:'Warm-up',     target:'1 km',        desc:'Easy Zone 2'},
+              {label:'Tempo',       target:'5 km',        desc:'Zone 3 · 76–85% MHR · hold pace'},
+              {label:'Easy',        target:'2 km',        desc:'Cool-down'},
+            ],
+            totals:'8 km total',
+            note:'Run off a 90 min bike ride. Legs will be fatigued — this is the whole point. Building to a half-marathon off the bike by end of Phase 3.'
+          },
+        ]
+      },
+      {
+        id:'sun', name:'Sunday', tags:['rest'],
+        sessions:[
+          { type:'rest', title:'Full Rest',
+            sets:[
+              {label:'Training',    target:'None',        desc:'No structured sessions'},
+              {label:'Optional',    target:'Easy walk',   desc:'30 min max'},
+            ],
+            note:'After a heavy Saturday (swim + 90 min ride + 8 km run), Sunday rest is essential.'
+          },
+        ]
+      },
+    ]
+  },
 
-let session = loadSession(TODAY);
-let sessionTimer = loadSessionTimer(); // {start, end} or null
+  3: {
+    note: '<strong>Phase 3 — Race Specific (31 Aug – 18 Oct · 7 weeks).</strong> Gym volume drops ~30% — maintaining strength, not building. Tuesday long run extends to 16–18 km with standalone 21 km benchmark in week 5. Complete race-distance swim (1.9 km), 90 km ride and half-marathon this phase. Execute your exact nutrition plan on every long session.',
+    days: [
+      {
+        id:'mon', name:'Monday', tags:['swim','str'],
+        sessions:[
+          { type:'swim', title:'Swim — Race Distance Build',
+            sets:[
+              {label:'Warm-up',     target:'1 × 400 m',   desc:'Easy free'},
+              {label:'Race pace',   target:'3 × 400 m',   desc:'Race-pace effort (Zone 3) · 40 s rest · this is your 70.3 swim pace'},
+              {label:'Threshold',   target:'4 × 100 m',   desc:'Zone 4 · hard · 20 s rest · builds speed reserve'},
+              {label:'Easy',        target:'4 × 100 m',   desc:'Zone 2 · 15 s rest · flush lactic'},
+              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy'},
+            ],
+            totals:'2400 m total',
+            note:'3×400 at race pace is the most specific set for 70.3 swim prep. Time each 400 — splits should tighten across the phase. Target sub-1:45/100 m for a sub-35 min swim split.'
+          },
+          { type:'str', title:'Legs — Your Routine (Maintenance)',
+            sets:[
+              {label:'Session',     target:'~30 min',     desc:'Reduced volume · maintenance intensity · heavier loads, fewer sets'},
+            ],
+            note:'Legs volume roughly halved this phase. Energy goes to race-specific cardio sessions. Strength is maintained, not accumulated.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['str','run'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine (Maintenance)',
+            sets:[
+              {label:'Session',     target:'~30 min',     desc:'Reduced volume · maintenance intensity · heavier loads, fewer sets'},
+            ],
+            note:'~30 min total. Maintaining stimulus without accumulating fatigue load. Don\'t skip face pulls or shoulder health work.'
+          },
+          { type:'run', title:'Long Run — Half Marathon Specific',
+            sets:[
+              {label:'Easy',        target:'10 km',       desc:'Zone 2 · conversational · core aerobic block'},
+              {label:'Tempo',       target:'4 km',        desc:'Zone 3 · 76–85% MHR · hold pace'},
+              {label:'Easy',        target:'2 km',        desc:'Cool-down'},
+            ],
+            totals:'16 km total · build to 18 km',
+            note:'Easy portion extended from 6 to 10 km. Build the easy block to 12 km by week 4 (total 18 km). In week 5 of Phase 3, complete a standalone 21 km run at Zone 2–3 pace as the confidence benchmark.'
+          },
+        ]
+      },
+      {
+        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        sessions:[
+          { type:'swim', title:'Swim — Full Race Distance',
+            sets:[
+              {label:'Warm-up',     target:'1 × 400 m',   desc:'Easy free'},
+              {label:'Main set',    target:'10 × 100 m',  desc:'Zone 2–3 · 15 s rest · minimal rest = race conditions'},
+              {label:'Race sim',    target:'1 × 500 m',   desc:'Continuous · race pace · no stopping · open water if possible'},
+              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy'},
+            ],
+            totals:'2100 m · builds to 1900 m continuous',
+            note:'Aim to complete a continuous 1900 m swim by week 5 of Phase 3. Open water is preferable — pool sighting drills differ significantly from ocean sighting.'
+          },
+          { type:'bike', title:'Threshold Bike Intervals',
+            sets:[
+              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
+              {label:'Intervals',   target:'3 × 10 min',  desc:'Zone 3–4 · 76–88% MHR · 4 min easy between · 85–95 rpm'},
+              {label:'Aerobic',     target:'15 min',      desc:'Zone 2 steady'},
+              {label:'Cool-down',   target:'5 min',       desc:'Easy'},
+            ],
+            totals:'~60 min',
+            note:'First threshold bike work. Zone 3–4 intervals build the sustained power needed for 90 km. Don\'t go Zone 5 — that\'s not what 70.3 demands.'
+          },
+        ]
+      },
+      {
+        id:'thu', name:'Thursday', tags:['bike','run'],
+        sessions:[
+          { type:'bike', title:'Race Simulation Brick',
+            sets:[
+              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
+              {label:'Bike main',   target:'2 hr',        desc:'Zone 2–3 · 70–82% MHR · 85–95 rpm · race simulation effort'},
+              {label:'Nutrition',   target:'Every 30 min',desc:'1 gel + 250 ml electrolyte · practise exact race plan'},
+              {label:'Transition',  target:'< 90 s',      desc:'Off bike · change shoes · practise speed'},
+              {label:'Brick run',   target:'30 min',      desc:'Zone 2–3 · hold pace · no walk breaks'},
+            ],
+            totals:'2 hr 10 min bike · 30 min run',
+            note:'Most important session of the week. The ability to run at pace off a 2 hr ride is the defining skill of a 70.3. Note your pace in the first 5 min vs the last 5 min of the run — the gap should narrow across the phase.'
+          },
+        ]
+      },
+      {
+        id:'fri', name:'Friday', tags:['str','sport'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine (Maintenance)',
+            sets:[
+              {label:'Session',     target:'15–20 min',   desc:'Minimal volume · heavy, low reps · CNS stimulus only'},
+            ],
+            note:'15–20 min only. Minimal volume before volleyball.'
+          },
+          { type:'sport', title:'Volleyball',
+            sets:[
+              {label:'Session',     target:'2 hr',        desc:'Light recreational play · active recovery'},
+              {label:'HR',          target:'Zone 1–2',    desc:'Incidental — don\'t chase it'},
+            ],
+            note:'Light work — after a big Thursday brick, Friday\'s only job is blood flow and mental reset.'
+          },
+        ]
+      },
+      {
+        id:'sat', name:'Saturday', tags:['swim','bike','run'],
+        sessions:[
+          { type:'swim', title:'Swim — Race Pace Sharpener',
+            sets:[
+              {label:'Warm-up',     target:'1 × 300 m',   desc:'Easy'},
+              {label:'Race pace',   target:'8 × 100 m',   desc:'Race pace · 20 s rest · time each rep'},
+              {label:'Cool-down',   target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'1200 m total',
+            note:'Sharp, not long. Race pace effort on fresh(ish) legs before the big ride.'
+          },
+          { type:'bike', title:'Long Outdoor Ride — Race Distance',
+            sets:[
+              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
+              {label:'Main',        target:'~3 hr',       desc:'Race pace · 70–80% MHR · 85–95 rpm · target 90 km'},
+              {label:'Nutrition',   target:'Every 30 min',desc:'1 gel + 250 ml electrolyte · note any GI issues'},
+              {label:'Cool-down',   target:'10 min',      desc:'Easy'},
+            ],
+            totals:'~90 km · ~3 hrs',
+            note:'This is your race-distance ride. Note how your legs feel at km 70–80 — that\'s where race day gets hard. If nutrition is dialled, it\'s manageable.'
+          },
+          { type:'run', title:'Tempo Run — Race Specific',
+            sets:[
+              {label:'Warm-up',     target:'1 km',        desc:'Easy · very easy — legs are fatigued'},
+              {label:'Tempo',       target:'6 km',        desc:'Zone 3 · hold race-run pace · this is hard and intentional'},
+              {label:'Cool-down',   target:'2 km',        desc:'Easy'},
+            ],
+            totals:'9 km total',
+            note:'Running 6 km at tempo off a 90 km bike ride is the hardest session in the plan. It directly simulates the back half of the race run. If you can do this, you\'re ready.'
+          },
+        ]
+      },
+      {
+        id:'sun', name:'Sunday', tags:['rest'],
+        sessions:[
+          { type:'rest', title:'Full Rest',
+            sets:[
+              {label:'Training',    target:'None',        desc:'Non-negotiable after Phase 3 Saturday'},
+            ],
+            note:'After a swim + 90 km ride + 9 km tempo run, Sunday is the training.'
+          },
+        ]
+      },
+    ]
+  },
 
-// Per-exercise rest timer state: {[exId]: {total, left, running, intervalId, finished}}
-const exTimers = {};
-
-// ════════════ UTIL ════════════
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function showToast(msg, ms=2000){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(()=>t.classList.remove('show'), ms);
-}
-function fmtDuration(s){
-  if(s<3600){
-    const m = Math.floor(s/60), sec = String(s%60).padStart(2,'0');
-    return `${m}:${sec}`;
+  4: {
+    note: '<strong>Taper (19 Oct – 8 Nov · 3 weeks).</strong> Volume drops 40–50%. Intensity maintained — short sharp sessions keep race fitness without accumulating fatigue. Do not add extra sessions "just in case." The fitness is built. Trust it.',
+    days: [
+      {
+        id:'mon', name:'Monday', tags:['swim','str'],
+        sessions:[
+          { type:'swim', title:'Swim — Sharpener',
+            sets:[
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy'},
+              {label:'Race pace', target:'6 × 100 m',   desc:'Race pace · 30 s rest · sharp and controlled'},
+              {label:'Easy',      target:'4 × 50 m',    desc:'Zone 2 · just feel the water'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'900 m total',
+            note:'Half the volume of Phase 3. Same intensity. Sharpening not building.'
+          },
+          { type:'str', title:'Legs — Your Routine (Minimal)',
+            sets:[
+              {label:'Session',   target:'10 min max',  desc:'CNS stimulus only · heavy, very low volume, full rest'},
+            ],
+            note:'10 min max. Stop there. Legs need to be fresh on race day.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['str','run'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine (Minimal)',
+            sets:[
+              {label:'Session',   target:'10 min',      desc:'CNS stimulus only · heavy, very low volume'},
+            ],
+            note:'10 min total. Stop.'
+          },
+          { type:'run', title:'Short Sharpener Run',
+            sets:[
+              {label:'Easy',      target:'3 km',        desc:'Zone 2'},
+              {label:'Strides',   target:'4 × 30 s',    desc:'Zone 4–5 · 90 s walk between · sharp not long'},
+              {label:'Easy',      target:'1 km',        desc:'Cool-down'},
+            ],
+            totals:'~5 km',
+            note:'Strides maintain leg turnover and neuromuscular sharpness without accumulating fatigue. Don\'t extend this.'
+          },
+        ]
+      },
+      {
+        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        sessions:[
+          { type:'swim', title:'Swim — Easy Technique',
+            sets:[
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy'},
+              {label:'Drill',     target:'4 × 50 m',    desc:'Catch-up · 20 s rest · technique focus'},
+              {label:'Easy',      target:'4 × 100 m',   desc:'Zone 2 · 30 s rest · no pressure'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'900 m total',
+            note:'Light and easy. Just staying in the water.'
+          },
+          { type:'bike', title:'Easy Z2 Spin',
+            sets:[
+              {label:'Total',     target:'25 min',      desc:'Zone 2 · easy · just keep legs moving'},
+            ],
+            note:'Don\'t think about fitness gains. Keep the legs loose.'
+          },
+        ]
+      },
+      {
+        id:'thu', name:'Thursday', tags:['bike','run'],
+        sessions:[
+          { type:'bike', title:'Short Race-Feel Brick',
+            sets:[
+              {label:'Warm-up',   target:'5 min',       desc:'Easy'},
+              {label:'Bike',      target:'25 min',      desc:'Zone 2–3 · 85–95 rpm · race feel'},
+              {label:'Brick run', target:'10 min',      desc:'Zone 2–3 immediately off bike'},
+            ],
+            totals:'35 min',
+            note:'Short brick keeps the bike–run transition feeling fresh without loading legs before race day. No gym today.'
+          },
+        ]
+      },
+      {
+        id:'fri', name:'Friday', tags:['rest'],
+        sessions:[
+          { type:'rest', title:'Rest',
+            sets:[
+              {label:'Training',  target:'None',        desc:'No structured session'},
+              {label:'Optional',  target:'20 min walk', desc:'Fresh air only'},
+            ],
+            note:'Gear check today. Lay out everything: wetsuit, helmet, bike shoes, run shoes, race belt, nutrition, electrolyte, sunscreen. Find what\'s missing now, not Sunday morning.'
+          },
+        ]
+      },
+      {
+        id:'sat', name:'Saturday', tags:['swim','bike'],
+        sessions:[
+          { type:'swim', title:'Open Water Swim — Familiarisation',
+            sets:[
+              {label:'Session',   target:'20 min',      desc:'Easy open water · practice sighting · no lap counting'},
+            ],
+            note:'If St Kilda Beach or any open water is accessible, get in. Sighting in open water is different from pool swimming and worth practising before race day.'
+          },
+          { type:'bike', title:'Leg Flush Spin',
+            sets:[
+              {label:'Total',     target:'25 min',      desc:'Zone 1 only · flat · keep legs loose'},
+            ],
+            note:'Last ride before race day. Keep it very easy. After this: rest until 8 Nov. 5 Nov = complete rest. 6 Nov = registration and briefings.'
+          },
+        ]
+      },
+      {
+        id:'sun', name:'Sunday', tags:['rest'],
+        sessions:[
+          { type:'rest', title:'Full Rest',
+            sets:[
+              {label:'Training',  target:'None',        desc:'No training'},
+              {label:'Sleep',     target:'8–9 hours',   desc:'Most important variable now'},
+              {label:'Eat',       target:'Normal meals', desc:'Don\'t carb-load aggressively — moderate increase only'},
+            ],
+            note:'You\'ve done the work. Nothing you do this week makes you fitter. Rest, sleep, eat normally, and trust the training.'
+          },
+        ]
+      },
+    ]
   }
-  const h = Math.floor(s/3600), m = String(Math.floor((s%3600)/60)).padStart(2,'0'), sec = String(s%60).padStart(2,'0');
-  return `${h}:${m}:${sec}`;
+};
+
+/* ── Render engine ──────────────────────────────────────────── */
+const typeMap = {
+  swim:  { sClass:'s-swim',  tClass:'t-swim'  },
+  bike:  { sClass:'s-bike',  tClass:'t-bike'  },
+  run:   { sClass:'s-run',   tClass:'t-run'   },
+  str:   { sClass:'s-str',   tClass:'t-str'   },
+  rest:  { sClass:'s-rest',  tClass:'t-rest'  },
+  sport: { sClass:'s-sport', tClass:'t-sport' },
+};
+const tagLabels = {
+  swim:'Swim', bike:'Bike', run:'Run',
+  str:'Strength', rest:'Rest', sport:'Volleyball'
+};
+const DOW = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+
+let openDays = new Set([DOW]);
+let currentPhase = 1;
+
+// Auto-detect phase from today's date
+const now = new Date();
+if      (now >= new Date('2026-10-19')) currentPhase = 4;
+else if (now >= new Date('2026-08-31')) currentPhase = 3;
+else if (now >= new Date('2026-07-07')) currentPhase = 2;
+else                                    currentPhase = 1;
+
+applyActivePhase();
+
+function setPhase(p){
+  currentPhase = p;
+  applyActivePhase();
+  openDays = new Set([DOW]);
+  render();
 }
 
-// ════════════ AUDIO & NOTIFICATIONS ════════════
-// Web Audio beep — works even in background tabs on most browsers.
-let _audioCtx = null;
-function getAudioCtx(){
-  if(!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return _audioCtx;
-}
-function playBeep(){
-  try{
-    const ctx = getAudioCtx();
-    if(ctx.state === 'suspended') ctx.resume();
-    // Two-tone beep: short high, short higher
-    [660, 880].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.value = 0.25;
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15 + i*0.2);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + i*0.2);
-      osc.stop(ctx.currentTime + 0.15 + i*0.2);
-    });
-  }catch(e){ /* audio not available */ }
-}
-// Request notification permission proactively (called on first timer start).
-function ensureNotifPermission(){
-  if('Notification' in window && Notification.permission === 'default'){
-    Notification.requestPermission();
-  }
-}
-// Fire a notification (works when app is backgrounded / screen off).
-function fireTimerNotification(title, body){
-  playBeep();
-  if('Notification' in window && Notification.permission === 'granted'){
-    try{ new Notification(title, { body, icon: 'icons/icon-192.png', tag: 'timer-done', renotify: true }); }
-    catch(e){ /* SW-only env, try via SW */ 
-      if(navigator.serviceWorker?.controller){
-        navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(title, { body, icon: 'icons/icon-192.png', tag: 'timer-done', renotify: true });
-        });
-      }
-    }
-  }
-}
-
-// ════════════ WEEK / STREAK (weekly) ════════════
-function getWeekStart(d){ // Monday as week start
-  const r = new Date(d); const dow = r.getDay(); const off = (dow+6)%7; r.setDate(r.getDate()-off); r.setHours(0,0,0,0); return r;
-}
-function getWeekDates(){
-  const start = getWeekStart(today);
-  return Array.from({length:7},(_,i)=>fmtDate(addDays(start,i)));
-}
-function loadSessionLog(){ try{ return JSON.parse(localStorage.getItem(SESSION_LOG_KEY))||[]; }catch(e){ return []; } }
-function saveSessionLog(l){ localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(l)); }
-
-function isWorkoutDoneOnDay(date){
-  // A day counts as "done" if any session was logged for that date
-  const log = loadSessionLog();
-  if(log.some(s=>s.date===date)) return true;
-  const completed = loadCompletedDays();
-  if(completed[date]) return true;
-  const s = loadSession(date);
-  return Object.keys(s).some(k=>k.endsWith('_done') && s[k]);
-}
-
-// Get the most recent set data for an exercise from prior sessions (for placeholders)
-function getLastSetsFor(exId){
-  const log = loadSessionLog();
-  // Look from most recent backwards, skip today's in-progress session
-  for(let i=log.length-1; i>=0; i--){
-    const entry = log[i];
-    const sets = entry.sets?.[exId];
-    if(sets && sets.length){
-      return sets.filter(s=>s.done).map(s=>({reps:s.reps, weight:s.weight, type:s.type}));
-    }
-  }
-  return [];
-}
-
-// Estimated 1RM via the Epley formula: w × (1 + r/30).
-// Reasonably accurate in the 1-10 rep range, less reliable above ~12 reps.
-function estimate1RM(weight, reps){
-  const w = parseFloat(weight);
-  const r = parseInt(reps);
-  if(!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) return 0;
-  if(r === 1) return w;
-  // Cap at 12 reps for 1RM estimation; beyond that the formula falls apart.
-  const cappedReps = Math.min(r, 12);
-  return w * (1 + cappedReps/30);
-}
-
-// Compute personal records for an exercise from the full session log.
-// Returns {bestSet:{weight,reps,date}, best1RM:{weight,reps,e1rm,date}, totalSessions, lastDate}
-// "Best set" = highest weight × reps. "Best 1RM" = highest estimated 1RM.
-// Warm-up sets and unset/empty values are excluded.
-function computePR(exId, opts={}){
-  const {excludeToday = false} = opts;
-  const log = loadSessionLog();
-  let bestSet = null;
-  let best1RM = null;
-  let totalSessions = 0;
-  let lastDate = null;
-
-  for(const entry of log){
-    if(excludeToday && entry.date === TODAY) continue;
-    const sets = entry.sets?.[exId];
-    if(!sets || !sets.length) continue;
-    let countedThisSession = false;
-    for(const s of sets){
-      if(!s.done) continue;
-      if(s.type === 'warmup') continue;
-      const w = parseFloat(s.weight);
-      const r = parseInt(s.reps);
-      if(!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) continue;
-      if(!countedThisSession){ totalSessions++; countedThisSession = true; }
-      lastDate = entry.date;
-      // Best top set: prefer higher weight; tiebreak on reps.
-      if(!bestSet || w > bestSet.weight || (w === bestSet.weight && r > bestSet.reps)){
-        bestSet = {weight:w, reps:r, date:entry.date};
-      }
-      const e1rm = estimate1RM(w, r);
-      if(!best1RM || e1rm > best1RM.e1rm){
-        best1RM = {weight:w, reps:r, e1rm, date:entry.date};
-      }
-    }
-  }
-  return {bestSet, best1RM, totalSessions, lastDate};
-}
-
-// Returns the best (weight, reps) of completed sets in the CURRENT session
-// for an exercise, used to detect whether the user has just hit a new PR.
-function bestCurrentSet(exId){
-  const sets = session[exId+'_sets'] || [];
-  let best = null;
-  for(const s of sets){
-    if(!s.done || s.type === 'warmup') continue;
-    const w = parseFloat(s.weight);
-    const r = parseInt(s.reps);
-    if(!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) continue;
-    if(!best || w > best.weight || (w === best.weight && r > best.reps)){
-      best = {weight:w, reps:r};
-    }
-  }
-  return best;
-}
-
-// Format a date string YYYY-MM-DD as "5 May" or "Today" / "Yesterday".
-function fmtPRDate(dateStr){
-  if(!dateStr) return '';
-  if(dateStr === TODAY) return 'today';
-  const [y,m,d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m-1, d);
-  const diffDays = Math.round((today - dt) / 86400000);
-  if(diffDays === 1) return 'yesterday';
-  if(diffDays < 7) return `${diffDays}d ago`;
-  if(diffDays < 30) return `${Math.round(diffDays/7)}w ago`;
-  return `${dt.getDate()} ${MON_SHORT[dt.getMonth()]}`;
-}
-
-// Update only the PR display for one exercise (live update during a session
-// when the user finishes a set) without re-rendering the whole workout view.
-function renderPRsFor(exId){
-  const el = document.getElementById('pr-'+exId);
-  if(!el) return;
-  const w = getActiveWorkout();
-  if(!w || w.kind === 'swim') return; // PRs don't make sense for swim
-  el.innerHTML = buildPRBadgeHTML(exId);
-}
-
-function buildPRBadgeHTML(exId){
-  const pr = computePR(exId, {excludeToday: true});
-  const cur = bestCurrentSet(exId);
-  if(!pr.bestSet){
-    // No prior data — just suggest tracking
-    if(!cur) return '<span class="pr-empty">No prior records yet. Log a set to start tracking PRs.</span>';
-    // No prior, but they've done a set today — show today's best
-    return `<span class="pr-row"><span class="pr-label">First session</span><span class="pr-val">${cur.weight} kg × ${cur.reps}</span></span>`;
-  }
-  // Detect if current session has a new PR (top set beats prior best top set)
-  let beatsPR = false;
-  if(cur){
-    if(cur.weight > pr.bestSet.weight) beatsPR = true;
-    else if(cur.weight === pr.bestSet.weight && cur.reps > pr.bestSet.reps) beatsPR = true;
-  }
-  const e1rm = Math.round(pr.best1RM.e1rm * 10) / 10;
-  const when = fmtPRDate(pr.bestSet.date);
-  const trophy = beatsPR ? '<span class="pr-new">🏆 New PR!</span>' : '';
-  return `
-    <span class="pr-row">
-      <span class="pr-label">Best</span>
-      <span class="pr-val">${pr.bestSet.weight} kg × ${pr.bestSet.reps}</span>
-      <span class="pr-sep">·</span>
-      <span class="pr-label">est. 1RM</span>
-      <span class="pr-val">${e1rm} kg</span>
-      <span class="pr-when">${when}</span>
-      ${trophy}
-    </span>`;
-}
-
-// Swim equivalent: instead of strength PRs, show total distance done in
-// the current session for this exercise plus totals from the last logged
-// session as a comparator.
-function buildSwimTotalsHTML(exId){
-  const curSets = session[exId+'_sets'] || [];
-  const curDist = curSets.reduce((sum, s) => {
-    if(!s.done) return sum;
-    const d = parseFloat(s.reps);
-    return sum + (isFinite(d) && d > 0 ? d : 0);
-  }, 0);
-
-  // Last session totals
-  const last = getLastSetsFor(exId);
-  const lastDist = last.reduce((sum, s) => {
-    const d = parseFloat(s.reps);
-    return sum + (isFinite(d) && d > 0 ? d : 0);
-  }, 0);
-  const lastDate = (() => {
-    const log = loadSessionLog();
-    for(let i=log.length-1; i>=0; i--){
-      if(log[i].sets?.[exId]) return log[i].date;
-    }
-    return null;
-  })();
-
-  if(!curDist && !lastDist) return '<span class="pr-empty">No swim data yet. Log a set to start tracking distance.</span>';
-
-  let html = '<span class="pr-row">';
-  if(curDist){
-    html += `<span class="pr-label">This session</span><span class="pr-val">${curDist} m</span>`;
-  }
-  if(lastDist){
-    if(curDist) html += '<span class="pr-sep">·</span>';
-    html += `<span class="pr-label">Last</span><span class="pr-val">${lastDist} m</span>`;
-    if(lastDate) html += `<span class="pr-when">${fmtPRDate(lastDate)}</span>`;
-  }
-  html += '</span>';
-  return html;
-}
-
-function getWeeklyStreak(){
-  // Count consecutive past weeks (including this one if done) with at least 1 workout
-  let streak = 0;
-  const start = getWeekStart(today);
-  for(let w=0; w<104; w++){
-    const ws = addDays(start, -7*w);
-    const dates = Array.from({length:7},(_,i)=>fmtDate(addDays(ws,i)));
-    const anyDone = dates.some(d=>isWorkoutDoneOnDay(d));
-    if(anyDone) streak++;
-    else if(w===0) continue; // current week: don't break if not done yet
-    else break;
-  }
-  return streak;
-}
-function getAllTimeCount(){
-  const completed = loadCompletedDays();
-  return Object.keys(completed).length;
-}
-
-// Track which day is selected in the week strip (null = today by default)
-let selectedWeekDate = null;
-
-function renderWeek(){
-  const dates = getWeekDates();
-  const labels = ['M','T','W','T','F','S','S'];
-  const todayIdx = dates.indexOf(TODAY);
-  let doneThisWeek = 0;
-
-  const cells = dates.map((d,i)=>{
-    const done = isWorkoutDoneOnDay(d);
-    if(done) doneThisWeek++;
-    const isToday = d===TODAY;
-    const isSelected = selectedWeekDate === d;
-    return {date:d, done, isToday, isSelected, label:labels[i], idx:i};
+function applyActivePhase(){
+  document.querySelectorAll('.phase-pill').forEach((el,i) => {
+    el.classList.toggle('active', i + 1 === currentPhase);
   });
-
-  const row = document.getElementById('week-prog-row');
-  row.innerHTML = cells.map(c=>`<div class="week-prog-cell"><div class="week-prog-fill" style="width:${c.done?'100':c.isToday?'30':'0'}%;background:${c.done?'var(--green)':c.isToday?'var(--acc)':'var(--border2)'}"></div></div>`).join('');
-
-  const dayRow = document.getElementById('week-day-row');
-  dayRow.innerHTML = cells.map(c=>{
-    let cls = c.isSelected ? 'selected-day' : c.done ? 'done-ind' : c.isToday ? 'today-ind' : '';
-    return `<span class="${cls}" onclick="switchToDay('${c.date}')">${c.label}</span>`;
-  }).join('');
-
-  document.getElementById('ws-done').textContent = doneThisWeek;
-  document.getElementById('ws-streak').textContent = getWeeklyStreak();
-  document.getElementById('ws-total').textContent = getAllTimeCount();
-  document.getElementById('week-meta').textContent = doneThisWeek>0 ? `${doneThisWeek} this week` : 'No sessions yet';
 }
 
-function switchToDay(dateStr){
-  // If tapping today (or the already-selected day), reset to current state
-  if(dateStr === TODAY || dateStr === selectedWeekDate){
-    selectedWeekDate = null;
-    // Restore today's active workout and session
-    activeId = localStorage.getItem(ACTIVE_KEY) || workouts[0]?.id;
-    session = loadSession(TODAY);
-    sessionTimer = loadSessionTimer();
-    renderWeek();
-    renderWorkoutList();
-    renderWorkout();
-    renderVolume();
-    return;
-  }
-
-  // Find which workout was logged on that day
-  const log = loadSessionLog();
-  const completed = loadCompletedDays();
-  let foundWorkoutId = null;
-
-  // Check session log first (most reliable — has the actual workout ID)
-  for(let i = log.length - 1; i >= 0; i--){
-    if(log[i].date === dateStr && log[i].workoutId){
-      foundWorkoutId = log[i].workoutId;
-      break;
-    }
-  }
-  // Fall back to completed days map
-  if(!foundWorkoutId && completed[dateStr]){
-    foundWorkoutId = completed[dateStr];
-  }
-
-  if(!foundWorkoutId){
-    showToast('No workout logged for that day');
-    return;
-  }
-
-  // Check the workout still exists
-  if(!workouts.find(w => w.id === foundWorkoutId)){
-    showToast('That workout has been deleted');
-    return;
-  }
-
-  selectedWeekDate = dateStr;
-  activeId = foundWorkoutId;
-
-  // Load that day's session data so exercises show the logged sets
-  session = loadSession(dateStr);
-
-  renderWeek();
-  renderWorkoutList();
-  renderWorkout();
-  renderVolume();
-
-  const w = workouts.find(w => w.id === foundWorkoutId);
-  showToast(`Viewing ${w?.name || 'workout'} — ${dateStr}`);
+function toggleDay(id){
+  if(openDays.has(id)) openDays.delete(id); else openDays.add(id);
+  render();
 }
 
-// ════════════ WORKOUT LIST ════════════
-function renderWorkoutList(){
-  const list = document.getElementById('workouts-list');
-  list.innerHTML = workouts.map(w=>`
-    <div class="wk-pill${w.id===activeId?' active':''}" onclick="setActiveWorkout('${esc(w.id)}')">
-      <div class="wk-pill-dot"></div>
-      <div style="flex:1;min-width:0">
-        <div class="wk-pill-name">${esc(w.name)}</div>
-        <div class="wk-pill-type">${esc(w.type)}</div>
-      </div>
-      <button class="wk-pill-edit" onclick="event.stopPropagation();openEditWorkout('${esc(w.id)}')" title="Edit">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>
-      </button>
-      <button class="wk-pill-del" onclick="event.stopPropagation();deleteWorkoutDirect('${esc(w.id)}','${esc(w.name)}')" title="Delete workout">
-        <svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h10M4 3V2h4v1M2 3l.8 9h6.4L10 3"/></svg>
-      </button>
+function sessionHTML(s){
+  const { sClass } = typeMap[s.type] || {};
+  const rows = s.sets.map(r =>
+    `<tr>
+      <td class="comp">${r.label}</td>
+      <td class="target">${r.target}</td>
+      <td class="note-cell">${r.desc}</td>
+    </tr>`
+  ).join('');
+  const totals = s.totals
+    ? `<div class="total-row">
+         <span class="total-label">Total</span>
+         <span class="total-val">${s.totals}</span>
+       </div>`
+    : '';
+  const note = s.note
+    ? `<div class="session-note">${s.note}</div>`
+    : '';
+  return `<div class="session-block ${sClass}">
+    <div class="session-title">${s.title}</div>
+    <div class="session-content">
+      <table class="set-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Target</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${totals}
+      ${note}
     </div>
-  `).join('');
+  </div>`;
 }
 
-function setActiveWorkout(id){
-  selectedWeekDate = null;
-  activeId = id;
-  localStorage.setItem(ACTIVE_KEY, id);
-  session = loadSession(TODAY);
-  renderWeek();
-  renderWorkoutList();
-  renderWorkout();
-}
-
-// ════════════ WORKOUT RENDER ════════════
-function getActiveWorkout(){ return workouts.find(w=>w.id===activeId) || workouts[0]; }
-function findEx(id){ const w = getActiveWorkout(); return w?.exercises.find(e=>e.id===id); }
-
-function renderWorkout(){
-  const w = getActiveWorkout();
-  if(!w){ document.getElementById('exercise-list').innerHTML = '<div style="color:var(--muted);font-size:13px">No workout selected.</div>'; return; }
-
-  // Auto-tag legacy swim workouts with kind:'swim' so the new UI renders.
-  // (Workouts created before this version don't have a kind property.)
-  if(!w.kind){
-    if(w.id === 'swim' || /swim/i.test(w.name||'')) w.kind = 'swim';
-    else if(w.type === 'Cardio') w.kind = 'cardio';
-    else w.kind = 'strength';
-    saveWorkouts(workouts);
-  }
-  const workoutKind = w.kind || 'strength';
-
-  document.getElementById('workout-badge').textContent = w.name;
-  document.getElementById('workout-title').textContent = w.name;
-  document.getElementById('workout-type-label').textContent = w.type;
-
-  // Show/hide past-day viewing banner
-  const pastBanner = document.getElementById('viewing-past-banner');
-  const isViewingPast = selectedWeekDate && selectedWeekDate !== TODAY;
-  if(pastBanner){
-    if(isViewingPast){
-      pastBanner.style.display = 'flex';
-      const d = new Date(selectedWeekDate + 'T00:00:00');
-      const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
-      document.getElementById('viewing-past-text').textContent = `Viewing ${dayName}'s session (${selectedWeekDate})`;
-    } else {
-      pastBanner.style.display = 'none';
-    }
-  }
-
-  const exs = w.exercises||[];
-  // Group by category
-  const groups = {};
-  exs.forEach(ex=>{ const g=ex.cat||'Other'; (groups[g]=groups[g]||[]).push(ex); });
-
-  const CHK = `<svg viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 3 5.5-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-  // Column header labels switch for swim sessions: distance + time/pace
-  // instead of reps + kg.
-  const isSwim = workoutKind === 'swim';
-  const colReps = isSwim ? 'Distance (m)' : 'Reps';
-  const colWeight = isSwim ? 'Time (mm:ss)' : 'Kg / Time';
-
-  let html = '';
-  Object.entries(groups).forEach(([cat, exList])=>{
-    html += `<div class="ex-section"><div class="ex-section-title">${esc(cat)}</div><div class="ex-list">`;
-    exList.forEach(ex=>{
-      const isDone = !!session[ex.id+'_done'];
-      const expanded = !isDone;
-      // Pull last session's data for placeholders
-      const lastSets = getLastSetsFor(ex.id);
-      const defaultTypes = ex.defaultTypes || [];
-      const setData = session[ex.id+'_sets'] || Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type: defaultTypes[i] || (lastSets[i]?.type) || 'normal',done:false}));
-      const setsDone = setData.filter(s=>s.done).length;
-      const totalSets = setData.length;
-      const restMin = Math.floor((ex.rest||0)/60);
-      const restSec = (ex.rest||0)%60;
-
-      // Build presets
-      const presets = [30,60,90,120,180];
-
-      // PR badge for non-swim workouts; swim gets a totals badge instead
-      const prHtml = isSwim
-        ? buildSwimTotalsHTML(ex.id)
-        : buildPRBadgeHTML(ex.id);
-
-      html += `<div class="ex-item${isDone?' done':''}${expanded?' expanded':''}" id="ex-${esc(ex.id)}">
-        <div class="ex-header" onclick="toggleEx('${esc(ex.id)}')">
-          <div class="ex-check">${CHK}</div>
-          <div class="ex-reorder-wrap" onclick="event.stopPropagation()">
-            <button class="ex-reorder-btn" title="Move up" onclick="moveExercise('${esc(ex.id)}',-1)" ${ex===exList[0]&&cat===Object.keys(groups)[0]?'disabled':''}>▲</button>
-            <button class="ex-reorder-btn" title="Move down" onclick="moveExercise('${esc(ex.id)}',1)" ${ex===exList[exList.length-1]&&cat===Object.keys(groups)[Object.keys(groups).length-1]?'disabled':''}>▼</button>
-          </div>
-          <div class="ex-drag" title="Drag to reorder" onmousedown="startDrag(event,'${esc(ex.id)}')" ontouchstart="startDrag(event,'${esc(ex.id)}')">
-            <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" style="opacity:.35"><circle cx="3" cy="2.5" r="1.5"/><circle cx="7" cy="2.5" r="1.5"/><circle cx="3" cy="7" r="1.5"/><circle cx="7" cy="7" r="1.5"/><circle cx="3" cy="11.5" r="1.5"/><circle cx="7" cy="11.5" r="1.5"/></svg>
-          </div>
-          <div class="ex-name" onclick="event.stopPropagation();openEditExercise('${esc(ex.id)}')" style="cursor:pointer" title="Edit exercise">${esc(ex.name)}</div>
-          <div class="ex-sets-summary">${setsDone}/${totalSets} · ${esc(ex.reps||'—')}</div>
-          <button class="ex-del-btn" onclick="event.stopPropagation();deleteExercise('${esc(ex.id)}')" title="Delete">✕</button>
-          <svg class="ex-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
-        </div>
-        <div class="ex-pr" id="pr-${esc(ex.id)}">${prHtml}</div>
-        <div class="ex-sets">
-          <div class="sets-row-head"><span>Set</span><span>${colReps}</span><span>${colWeight}</span><span>${isSwim?'Stroke':'Type'}</span><span></span></div>`;
-
-      setData.forEach((sd,i)=>{
-        const last = lastSets[i] || {};
-        const lastReps = (last.reps != null && last.reps !== '') ? String(last.reps) : '';
-        const lastWeight = (last.weight != null && last.weight !== '') ? String(last.weight) : '';
-        const curType = sd.type || (isSwim ? 'free' : 'normal');
-        const repsLabel = isSwim ? 'distance (m)' : (ex.reps || '—');
-        const weightLabel = isSwim ? 'mm:ss' : 'kg';
-        // Ghost values are last session's numbers, shown in muted text when input is empty.
-        // The data-last attribute lets us prefill on focus.
-        // For swim sessions, the "type" select holds the stroke instead of set type.
-        const typeSelect = isSwim
-          ? `<select class="set-input set-type-select set-stroke-${curType}" onchange="updateSet('${esc(ex.id)}',${i},'type',this.value)">
-              <option value="free"${curType==='free'?' selected':''}>Free</option>
-              <option value="back"${curType==='back'?' selected':''}>Back</option>
-              <option value="breast"${curType==='breast'?' selected':''}>Breast</option>
-              <option value="fly"${curType==='fly'?' selected':''}>Fly</option>
-              <option value="im"${curType==='im'?' selected':''}>IM</option>
-              <option value="kick"${curType==='kick'?' selected':''}>Kick</option>
-              <option value="pull"${curType==='pull'?' selected':''}>Pull</option>
-              <option value="drill"${curType==='drill'?' selected':''}>Drill</option>
-            </select>`
-          : `<select class="set-input set-type-select set-type-${curType}" onchange="updateSet('${esc(ex.id)}',${i},'type',this.value)">
-              <option value="normal"${curType==='normal'?' selected':''}>Normal</option>
-              <option value="warmup"${curType==='warmup'?' selected':''}>Warmup</option>
-              <option value="failure"${curType==='failure'?' selected':''}>Failure</option>
-              <option value="cardio"${curType==='cardio'?' selected':''}>Cardio</option>
-            </select>`;
-        const rowClass = isSwim ? '' : `type-${curType}`;
-        html += `<div class="set-row${sd.done?' set-done':''} ${rowClass}" id="sr-${esc(ex.id)}-${i}">
-          <div class="set-num">${i+1}</div>
-          <input class="set-input" type="text" inputmode="${isSwim?'numeric':'decimal'}" value="${esc(sd.reps||'')}"
-                 placeholder="${esc(lastReps || repsLabel)}"
-                 data-last="${esc(lastReps)}"
-                 data-field="reps"
-                 onfocus="ghostFocus(this)"
-                 onchange="updateSet('${esc(ex.id)}',${i},'reps',this.value)">
-          <input class="set-input" type="text" inputmode="${isSwim?'text':'decimal'}" value="${esc(sd.weight||'')}"
-                 placeholder="${esc(lastWeight || weightLabel)}"
-                 data-last="${esc(lastWeight)}"
-                 data-field="weight"
-                 onfocus="ghostFocus(this)"
-                 onchange="updateSet('${esc(ex.id)}',${i},'weight',this.value)">
-          ${typeSelect}
-          <button class="set-done-btn" onclick="toggleSetDone('${esc(ex.id)}',${i})">${sd.done?CHK:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8l3 3 5-5"/></svg>'}</button>
-        </div>`;
-      });
-
-      html += `<div class="ex-set-actions">
-          <button class="ex-add-set" onclick="addSet('${esc(ex.id)}')">+ Add set</button>
-          <button class="ex-add-set ex-remove-set${setData.length<=1?' ex-remove-disabled':''}" onclick="removeSet('${esc(ex.id)}')">− Remove last</button>
-        </div>
-
-        <div class="ex-rest-config">
-          <span class="ex-rest-config-label">Rest</span>
-          <div class="rest-time-input">
-            <input type="number" id="rest-min-${esc(ex.id)}" value="${restMin}" min="0" max="59" onchange="updateExRest('${esc(ex.id)}')"><span>m</span>
-            <input type="number" id="rest-sec-${esc(ex.id)}" value="${restSec}" min="0" max="59" onchange="updateExRest('${esc(ex.id)}')"><span>s</span>
-          </div>
-          <div class="preset-mini">
-            ${presets.map(p=>`<button class="${(ex.rest||0)===p?'sel':''}" onclick="setExRestPreset('${esc(ex.id)}',${p})">${p<60?p+'s':(p/60)+'m'}</button>`).join('')}
-          </div>
-        </div>
-
-        <div class="ex-rest" id="rest-${esc(ex.id)}">
-          <svg class="ex-rest-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="6"/><path d="M8 5v4l2 2"/><path d="M6 1h4"/></svg>
-          <div class="ex-rest-time" id="rest-time-${esc(ex.id)}">0:00</div>
-          <div class="ex-rest-bar"><div class="ex-rest-bar-fill" id="rest-fill-${esc(ex.id)}" style="width:100%"></div></div>
-          <button class="ex-rest-cancel" onclick="cancelExTimer('${esc(ex.id)}')">Skip</button>
-        </div>
-
-        </div>
-      </div>`;
-    });
-    html += `</div></div>`;
-  });
-
-  document.getElementById('exercise-list').innerHTML = html;
-
-  // Hide session controls when viewing a past day (read-only review mode)
-  const viewingPast = selectedWeekDate && selectedWeekDate !== TODAY;
-  const headerRight = document.querySelector('.header-right');
-  if(headerRight) headerRight.style.display = viewingPast ? 'none' : '';
-
-  // Notes - permanent, not tied to date or session
-  const notes = document.getElementById('workout-notes');
-  if(!notes._wired){
-    notes.value = localStorage.getItem(NOTES_KEY) || '';
-    notes.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notes.value));
-    notes._wired = true;
-  }
-}
-
-function toggleEx(id){
-  const el = document.getElementById('ex-'+id);
-  if(el) el.classList.toggle('expanded');
-}
-
-function deleteExercise(id){
-  if(!confirm('Delete this exercise from this workout?')) return;
-  const w = getActiveWorkout();
-  w.exercises = w.exercises.filter(e=>e.id!==id);
-  saveWorkouts(workouts);
-  delete session[id+'_done']; delete session[id+'_sets'];
-  saveSession(TODAY, session);
-  renderWorkout();
-}
-
-// Hevy-style ghost-value behaviour: when an input has a placeholder showing
-// the previous session's number, tapping it pre-fills the value so the user
-// can keep, tweak, or clear it. Only triggers if the field is empty.
-function ghostFocus(input){
-  if(input.value !== '' && input.value != null) return;
-  const last = input.dataset.last;
-  if(!last) return;
-  input.value = last;
-  // Trigger native change so updateSet runs
-  input.dispatchEvent(new Event('change', {bubbles:true}));
-  // Select all so the user can immediately overtype
-  setTimeout(()=>{ try{ input.select(); }catch(e){} }, 0);
-}
-
-function updateSet(exId, idx, field, val){
-  const w = getActiveWorkout(); if(!w) return;
-  const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
-  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},()=>({reps:'',weight:'',type:'normal',done:false}));
-  if(!session[exId+'_sets'][idx]) session[exId+'_sets'][idx]={};
-  session[exId+'_sets'][idx][field] = val;
-  saveSession(TODAY, session);
-
-  // Persist set type changes to the workout template so the choice
-  // (normal / warmup / failure / stroke) is the default next session.
-  if(field==='type'){
-    if(!ex.defaultTypes) ex.defaultTypes = [];
-    ex.defaultTypes[idx] = val;
-    saveWorkouts(workouts);
-  }
-
-  renderVolume();
-  renderHistory();
-  renderPRsFor(exId);
-  if(field==='type'){
-    // re-render to update color tag
-    renderWorkout();
-    Object.keys(exTimers).forEach(updateExTimerUI);
-  }
-}
-
-function toggleSetDone(exId, idx){
-  const ex = findEx(exId); if(!ex) return;
-  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},()=>({reps:'',weight:'',type:'normal',done:false}));
-  if(!session[exId+'_sets'][idx]) session[exId+'_sets'][idx]={};
-  const wasDone = session[exId+'_sets'][idx].done;
-
-  // PR detection: if we're marking a set DONE, capture the prior PR
-  // before mutating session, then check whether this set beats it.
-  let priorPR = null;
-  if(!wasDone){ priorPR = computePR(exId, {excludeToday: true}); }
-
-  session[exId+'_sets'][idx].done = !wasDone;
-
-  // Auto-mark exercise done if all sets done
-  const allDone = session[exId+'_sets'].every(s=>s.done);
-  if(allDone) session[exId+'_done'] = true;
-  else delete session[exId+'_done'];
-
-  saveSession(TODAY, session);
-
-  // Auto-start session if not already running
-  if(!wasDone && !sessionTimer){
-    sessionTimer = { start: Date.now(), end: null };
-    saveSessionTimer(sessionTimer);
-    document.getElementById('start-workout-btn').style.display = 'none';
-    document.getElementById('finish-workout-btn').style.display = 'inline-flex';
-    startSessionTick();
-    setSessionRunningClass();
-  }
-
-  // Auto-start that exercise's rest timer when a set is marked done
-  if(!wasDone && (ex.rest||0) > 0 && !allDone){
-    startExTimer(exId);
-  }
-
-  // PR check after toggling done. Only show toast if we just completed a set
-  // (not on un-toggle), and only for non-warmup sets with valid weight × reps.
-  if(!wasDone && priorPR && getActiveWorkout()?.kind !== 'swim'){
-    const sd = session[exId+'_sets'][idx];
-    if(sd.type !== 'warmup'){
-      const w = parseFloat(sd.weight), r = parseInt(sd.reps);
-      if(isFinite(w) && w > 0 && isFinite(r) && r > 0){
-        const beatsTopSet = !priorPR.bestSet
-          || w > priorPR.bestSet.weight
-          || (w === priorPR.bestSet.weight && r > priorPR.bestSet.reps);
-        const newE1RM = estimate1RM(w, r);
-        const beats1RM = !priorPR.best1RM || newE1RM > priorPR.best1RM.e1rm + 0.1;
-        if(beatsTopSet && priorPR.bestSet){
-          showToast(`🏆 New PR for ${ex.name}: ${w} kg × ${r}`, 4000);
-        } else if(beats1RM && priorPR.best1RM){
-          showToast(`📈 Estimated 1RM up to ${Math.round(newE1RM*10)/10} kg`, 3500);
-        }
-      }
-    }
-  }
-
-  renderWorkout();
-  // Re-show running timers
-  Object.keys(exTimers).forEach(updateExTimerUI);
-  renderVolume();
-  renderHistory();
-}
-
-function addSet(exId){
-  const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
-  // Ensure session sets array matches current ex.sets before adding
-  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type:(ex.defaultTypes||[])[i]||'normal',done:false}));
-  const newType = (ex.defaultTypes||[])[session[exId+'_sets'].length] || 'normal';
-  ex.sets = session[exId+'_sets'].length + 1;
-  session[exId+'_sets'].push({reps:'',weight:'',type:newType,done:false});
-  saveWorkouts(workouts);
-  saveSession(TODAY, session);
-  renderWorkout();
-  Object.keys(exTimers).forEach(updateExTimerUI);
-}
-
-function removeSet(exId){
-  const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
-  if(!session[exId+'_sets']) session[exId+'_sets'] = Array.from({length:ex.sets},(_,i)=>({reps:'',weight:'',type:(ex.defaultTypes||[])[i]||'normal',done:false}));
-  if(session[exId+'_sets'].length <= 1){ showToast('Need at least 1 set'); return; }
-  session[exId+'_sets'].pop();
-  if(ex.defaultTypes && ex.defaultTypes.length > session[exId+'_sets'].length){
-    ex.defaultTypes.length = session[exId+'_sets'].length;
-  }
-  ex.sets = session[exId+'_sets'].length;
-  saveWorkouts(workouts);
-  saveSession(TODAY, session);
-  renderWorkout();
-  Object.keys(exTimers).forEach(updateExTimerUI);
-}
-
-function updateExRest(exId){
-  const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
-  const m = parseInt(document.getElementById('rest-min-'+exId)?.value)||0;
-  const s = parseInt(document.getElementById('rest-sec-'+exId)?.value)||0;
-  ex.rest = m*60 + s;
-  saveWorkouts(workouts);
-  // Re-render the presets to update active state
-  renderWorkout();
-  Object.keys(exTimers).forEach(updateExTimerUI);
-}
-function setExRestPreset(exId, val){
-  const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===exId); if(!ex) return;
-  ex.rest = val;
-  saveWorkouts(workouts);
-  renderWorkout();
-  Object.keys(exTimers).forEach(updateExTimerUI);
-}
-
-// ════════════ EDIT EXERCISE MODAL ════════════
-let editingExId = null;
-function openEditExercise(exId){
-  const ex = findEx(exId); if(!ex) return;
-  editingExId = exId;
-  document.getElementById('edit-ex-name').value = ex.name;
-  document.getElementById('edit-ex-cat').value = ex.cat || 'Compound';
-  document.getElementById('edit-ex-reps').value = ex.reps || '';
-  document.getElementById('edit-ex-note').value = ex.note || '';
-  openModal('edit-ex-modal');
-}
-function saveEditExercise(){
-  if(!editingExId) return;
-  const w = getActiveWorkout(); const ex = w.exercises.find(e=>e.id===editingExId); if(!ex) return;
-  ex.name = document.getElementById('edit-ex-name').value.trim() || ex.name;
-  ex.cat = document.getElementById('edit-ex-cat').value;
-  ex.reps = document.getElementById('edit-ex-reps').value.trim();
-  ex.note = document.getElementById('edit-ex-note').value.trim();
-  saveWorkouts(workouts);
-  closeModal('edit-ex-modal');
-  renderWorkout();
-  Object.keys(exTimers).forEach(updateExTimerUI);
-  showToast('Exercise updated');
-}
-
-// ════════════ DRAG TO REORDER ════════════
-let dragId = null, dragOverId = null;
-function startDrag(e, exId){
-  e.stopPropagation();
-  dragId = exId;
-  const el = document.getElementById('ex-'+exId);
-  if(el) el.classList.add('dragging');
-  const onMove = ev=>{
-    const touch = ev.touches?.[0] || ev;
-    const target = document.elementFromPoint(touch.clientX, touch.clientY);
-    const item = target?.closest('.ex-item');
-    if(item && item.id !== 'ex-'+dragId){
-      const newOver = item.id.replace('ex-','');
-      if(newOver !== dragOverId){
-        document.querySelectorAll('.ex-item.drag-over').forEach(el=>el.classList.remove('drag-over'));
-        dragOverId = newOver;
-        item.classList.add('drag-over');
-      }
-    }
-  };
-  const onUp = ()=>{
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('touchend', onUp);
-    document.querySelectorAll('.ex-item.dragging,.ex-item.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
-    if(dragId && dragOverId && dragId !== dragOverId){
-      const w = getActiveWorkout();
-      const exs = w.exercises;
-      const fromIdx = exs.findIndex(e=>e.id===dragId);
-      const toIdx = exs.findIndex(e=>e.id===dragOverId);
-      if(fromIdx>-1 && toIdx>-1){
-        const [moved] = exs.splice(fromIdx,1);
-        exs.splice(toIdx,0,moved);
-        saveWorkouts(workouts);
-        renderWorkout();
-        Object.keys(exTimers).forEach(updateExTimerUI);
-      }
-    }
-    dragId = null; dragOverId = null;
-  };
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-  document.addEventListener('touchmove', onMove, {passive:true});
-  document.addEventListener('touchend', onUp);
-}
-
-// ════════════ PER-EXERCISE TIMER ════════════
-function startExTimer(exId){
-  const ex = findEx(exId); if(!ex) return;
-  // Cancel any other running timer
-  Object.keys(exTimers).forEach(id=>{ if(id!==exId) cancelExTimer(id); });
-
-  const total = ex.rest||0;
-  if(total<=0) return;
-
-  ensureNotifPermission();
-
-  // Store the wall-clock end time so the timer survives backgrounding.
-  const endAt = Date.now() + total * 1000;
-  exTimers[exId] = { total, endAt, finished: false, intervalId: null };
-  const t = exTimers[exId];
-
-  t.intervalId = setInterval(()=>{
-    const left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
-    t.left = left;
-    if(left <= 0){
-      clearInterval(t.intervalId);
-      t.finished = true;
-      t.left = 0;
-      updateExTimerUI(exId);
-      fireTimerNotification('Rest done', ex.name + ' — time to go');
-      showToast('⏱ Rest done — '+ex.name, 2500);
-      setTimeout(()=>{ if(exTimers[exId]?.finished) cancelExTimer(exId); }, 5000);
-      return;
-    }
-    updateExTimerUI(exId);
-  }, 250);
-
-  t.left = total;
-  updateExTimerUI(exId);
-}
-
-function cancelExTimer(exId){
-  const t = exTimers[exId]; if(!t) return;
-  if(t.intervalId) clearInterval(t.intervalId);
-  delete exTimers[exId];
-  const el = document.getElementById('rest-'+exId);
-  if(el){ el.classList.remove('active','done-state'); }
-}
-
-function updateExTimerUI(exId){
-  const t = exTimers[exId]; if(!t) return;
-  // Recompute from wall-clock if still running
-  if(!t.finished && t.endAt) t.left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
-  const el = document.getElementById('rest-'+exId); if(!el) return;
-  el.classList.add('active');
-  if(t.finished) el.classList.add('done-state');
-  const m = Math.floor(t.left/60), s = String(t.left%60).padStart(2,'0');
-  const timeEl = document.getElementById('rest-time-'+exId);
-  if(timeEl) timeEl.textContent = t.finished ? 'Done ✓' : `${m}:${s}`;
-  const fill = document.getElementById('rest-fill-'+exId);
-  if(fill) fill.style.width = (t.left/t.total*100)+'%';
-}
-
-// ════════════ SESSION (workout duration stopwatch) ════════════
-let sessionInterval = null;
-// Toggle body class so CSS can hide non-essential sidebar cards during a
-// running workout. Idempotent — safe to call multiple times.
-function setSessionRunningClass(){
-  const running = !!(sessionTimer && sessionTimer.start && !sessionTimer.end);
-  document.body.classList.toggle('session-running', running);
-}
-
-function startWorkout(){
-  // Snap back to today if viewing a past day
-  if(selectedWeekDate && selectedWeekDate !== TODAY){
-    selectedWeekDate = null;
-    activeId = localStorage.getItem(ACTIVE_KEY) || workouts[0]?.id;
-    session = loadSession(TODAY);
-  }
-  if(sessionTimer && !sessionTimer.end){ showToast('Workout already running'); return; }
-  sessionTimer = { start: Date.now(), end: null };
-  saveSessionTimer(sessionTimer);
-  document.getElementById('start-workout-btn').style.display = 'none';
-  document.getElementById('finish-workout-btn').style.display = 'inline-flex';
-  startSessionTick();
-  setSessionRunningClass();
-  showToast('🚀 Workout started — go!');
-}
-function finishWorkout(){
-  if(!sessionTimer){ showToast('No active workout'); return; }
-  sessionTimer.end = Date.now();
-  saveSessionTimer(sessionTimer);
-  if(sessionInterval) clearInterval(sessionInterval);
-
-  // Mark today as completed (latest workout)
-  const completed = loadCompletedDays();
-  completed[TODAY] = activeId;
-  saveCompletedDays(completed);
-
-  // Append to session log so future sessions can pull last-week data
-  const log = loadSessionLog();
-  // Snapshot the set data from current session
-  const setsSnapshot = {};
-  Object.keys(session).forEach(k=>{
-    if(k.endsWith('_sets')){
-      const exId = k.slice(0, -('_sets'.length));
-      setsSnapshot[exId] = session[k];
-    }
-  });
-  // Snapshot exercise names so log entries remain readable even if the
-  // workout's exercises are later renamed or deleted.
-  const exerciseNames = {};
-  const w = getActiveWorkout();
-  (w?.exercises||[]).forEach(ex => { exerciseNames[ex.id] = ex.name; });
-  log.push({
-    date: TODAY,
-    workoutId: activeId,
-    workoutName: w?.name || '',
-    workoutKind: w?.kind || 'strength',
-    start: sessionTimer.start,
-    end: sessionTimer.end,
-    sets: setsSnapshot,
-    exerciseNames,
-    notes: '' // notes are permanent now, not per-session
-  });
-  saveSessionLog(log);
-
-  // Toggle UI: show Continue + New buttons; hide Start/Finish
-  document.getElementById('start-workout-btn').style.display = 'none';
-  document.getElementById('finish-workout-btn').style.display = 'none';
-  document.getElementById('continue-workout-btn').style.display = 'inline-flex';
-  document.getElementById('new-session-btn').style.display = 'inline-flex';
-
-  const dur = Math.floor((sessionTimer.end - sessionTimer.start)/1000);
-  document.getElementById('duration-time').className = 'duration-time finished';
-  document.getElementById('duration-time').textContent = fmtDuration(dur);
-  document.getElementById('session-status').textContent = 'Finished';
-  document.getElementById('duration-label').textContent = 'Workout logged ✓ — continue or start a new one';
-
-  Object.keys(exTimers).forEach(cancelExTimer);
-  tsCleanup();
-
-  const setsDone = Object.keys(session).filter(k=>k.endsWith('_sets')).reduce((a,k)=>a+(session[k]||[]).filter(s=>s.done).length,0);
-  const banner = document.getElementById('complete-banner');
-  banner.classList.add('show');
-  document.getElementById('complete-sub').textContent = `${w?.name||''} · ${fmtDuration(dur)} · ${setsDone} sets`;
-
-  setSessionRunningClass();
-  renderWeek();
-  showToast('🏆 Workout logged!', 3000);
-}
-
-// Continue an already-finished session: re-open timer from where it ended.
-// Edge cases handled: missing timer, stale timer (different day), and the
-// just-logged entry being modified externally between finish and continue.
-function continueWorkout(){
-  if(!sessionTimer || !sessionTimer.end){ showToast('No finished session to continue'); return; }
-  if(timerIsStale(sessionTimer)){
-    showToast('That session was from a previous day. Start a new one.', 3500);
-    recoverStaleSession();
-    document.getElementById('start-workout-btn').style.display = 'inline-flex';
-    document.getElementById('continue-workout-btn').style.display = 'none';
-    document.getElementById('new-session-btn').style.display = 'none';
-    document.getElementById('finish-workout-btn').style.display = 'none';
-    document.getElementById('complete-banner').classList.remove('show');
-    document.getElementById('duration-time').className = 'duration-time idle';
-    document.getElementById('duration-time').textContent = '0:00';
-    document.getElementById('session-status').textContent = 'Not started';
-    document.getElementById('duration-label').textContent = 'Press start when ready';
-    setSessionRunningClass();
-    renderWorkout();
-    return;
-  }
-
-  // Remove the just-logged entry from session log (it'll be re-logged on next finish).
-  // Match by start time AND date (defensive — start times are timestamps so already
-  // unique, but the date check protects against Firestore round-trips creating a
-  // copy with a slightly different shape).
-  const log = loadSessionLog();
-  let removed = false;
-  for(let i=log.length-1; i>=0; i--){
-    if(log[i].date===TODAY && log[i].start===sessionTimer.start){
-      log.splice(i,1);
-      removed = true;
-      break;
-    }
-  }
-  if(removed) saveSessionLog(log);
-
-  // Resume timer: bump start so total elapsed duration stays continuous
-  const elapsed = sessionTimer.end - sessionTimer.start;
-  sessionTimer = { start: Date.now() - elapsed, end: null };
-  saveSessionTimer(sessionTimer);
-
-  document.getElementById('continue-workout-btn').style.display = 'none';
-  document.getElementById('new-session-btn').style.display = 'none';
-  document.getElementById('finish-workout-btn').style.display = 'inline-flex';
-  document.getElementById('complete-banner').classList.remove('show');
-  startSessionTick();
-  setSessionRunningClass();
-  showToast('▶ Session resumed');
-}
-
-function startNewSession(){
-  // Clear current session-in-progress state but keep prior logged sessions intact
-  session = {};
-  saveSession(TODAY, session);
-  sessionTimer = null;
-  saveSessionTimer(null);
-  Object.keys(exTimers).forEach(cancelExTimer);
-  tsCleanup();
-  document.getElementById('start-workout-btn').style.display = 'inline-flex';
-  document.getElementById('continue-workout-btn').style.display = 'none';
-  document.getElementById('new-session-btn').style.display = 'none';
-  document.getElementById('finish-workout-btn').style.display = 'none';
-  document.getElementById('complete-banner').classList.remove('show');
-  document.getElementById('duration-time').className = 'duration-time idle';
-  document.getElementById('duration-time').textContent = '0:00';
-  document.getElementById('session-status').textContent = 'Not started';
-  document.getElementById('duration-label').textContent = 'Press start when ready';
-  setSessionRunningClass();
-  renderWorkout();
-  renderVolume();
-  renderHistory();
-  renderWeek();
-}
-
-function startSessionTick(){
-  if(sessionInterval) clearInterval(sessionInterval);
-  sessionInterval = setInterval(updateSessionUI, 1000);
-  updateSessionUI();
-}
-
-function updateSessionUI(){
-  if(!sessionTimer) return;
-  const dur = Math.floor(((sessionTimer.end||Date.now()) - sessionTimer.start)/1000);
-  const el = document.getElementById('duration-time');
-  el.textContent = fmtDuration(dur);
-  if(!sessionTimer.end){
-    el.className = 'duration-time running';
-    document.getElementById('session-status').textContent = 'Running';
-    document.getElementById('duration-label').textContent = 'In progress — keep going';
-  }
-}
-
-// ════════════ TIMER & STOPWATCH WIDGET ════════════
-// ── Tab switching ──
-function tsSetTab(tab){
-  document.getElementById('ts-tab-sw').classList.toggle('active', tab==='sw');
-  document.getElementById('ts-tab-ct').classList.toggle('active', tab==='ct');
-  document.getElementById('ts-panel-sw').classList.toggle('active', tab==='sw');
-  document.getElementById('ts-panel-ct').classList.toggle('active', tab==='ct');
-}
-
-// ── STOPWATCH (count up) ──
-let swState = 'idle'; // idle | running | paused
-let swStartTime = 0;  // epoch when started (adjusted for pauses)
-let swElapsed = 0;     // accumulated seconds when paused
-let swInterval = null;
-
-function swFmtTime(totalMs){
-  const totalSec = Math.floor(totalMs / 1000);
-  const ms = Math.floor((totalMs % 1000) / 10);
-  if(totalSec < 3600){
-    const m = Math.floor(totalSec / 60);
-    const s = String(totalSec % 60).padStart(2,'0');
-    return `${m}:${s}<span style="font-size:18px;color:var(--muted);margin-left:2px">.${String(ms).padStart(2,'0')}</span>`;
-  }
-  const h = Math.floor(totalSec / 3600);
-  const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2,'0');
-  const s = String(totalSec % 60).padStart(2,'0');
-  return `${h}:${m}:${s}`;
-}
-
-function swUpdateDisplay(){
-  const display = document.getElementById('sw-display');
-  if(swState === 'running'){
-    const ms = Date.now() - swStartTime;
-    display.innerHTML = swFmtTime(ms);
-    display.className = 'ts-time-display sw-running';
-  } else if(swState === 'paused'){
-    display.innerHTML = swFmtTime(swElapsed);
-    display.className = 'ts-time-display sw-paused';
-  } else {
-    display.innerHTML = '0:00';
-    display.className = 'ts-time-display sw-zero';
-  }
-}
-
-function swStart(){
-  swState = 'running';
-  swStartTime = Date.now();
-  swElapsed = 0;
-  swInterval = setInterval(swUpdateDisplay, 50);
-  swUpdateDisplay();
-  document.getElementById('sw-start-btn').style.display = 'none';
-  document.getElementById('sw-pause-btn').style.display = 'inline-flex';
-  document.getElementById('sw-resume-btn').style.display = 'none';
-  document.getElementById('sw-reset-btn').style.display = 'inline-flex';
-  document.getElementById('sw-sub').textContent = '';
-}
-
-function swPause(){
-  swState = 'paused';
-  swElapsed = Date.now() - swStartTime;
-  if(swInterval){ clearInterval(swInterval); swInterval = null; }
-  swUpdateDisplay();
-  document.getElementById('sw-pause-btn').style.display = 'none';
-  document.getElementById('sw-resume-btn').style.display = 'inline-flex';
-  document.getElementById('sw-sub').textContent = 'Paused';
-}
-
-function swResume(){
-  swState = 'running';
-  swStartTime = Date.now() - swElapsed;
-  swInterval = setInterval(swUpdateDisplay, 50);
-  swUpdateDisplay();
-  document.getElementById('sw-resume-btn').style.display = 'none';
-  document.getElementById('sw-pause-btn').style.display = 'inline-flex';
-  document.getElementById('sw-sub').textContent = '';
-}
-
-function swReset(){
-  swState = 'idle';
-  swElapsed = 0;
-  if(swInterval){ clearInterval(swInterval); swInterval = null; }
-  swUpdateDisplay();
-  document.getElementById('sw-start-btn').style.display = 'inline-flex';
-  document.getElementById('sw-pause-btn').style.display = 'none';
-  document.getElementById('sw-resume-btn').style.display = 'none';
-  document.getElementById('sw-reset-btn').style.display = 'none';
-  document.getElementById('sw-sub').textContent = '';
-}
-
-// ── COUNTDOWN TIMER ──
-let ctState = 'idle'; // idle | running | paused | done
-let ctTotal = 60;     // total seconds for current timer
-let ctLeft = 60;      // seconds remaining
-let ctEndAt = 0;      // wall-clock timestamp when timer should finish
-let ctPausedLeft = 0; // seconds remaining when paused
-let ctInterval = null;
-const CT_RING_CIRC = 2 * Math.PI * 62; // ~389.56
-
-function ctFmtTime(sec){
-  if(sec < 0) sec = 0;
-  if(sec < 3600){
-    const m = Math.floor(sec / 60);
-    const s = String(sec % 60).padStart(2,'0');
-    return `${m}:${s}`;
-  }
-  const h = Math.floor(sec / 3600);
-  const m = String(Math.floor((sec % 3600) / 60)).padStart(2,'0');
-  const s = String(sec % 60).padStart(2,'0');
-  return `${h}:${m}:${s}`;
-}
-
-function ctUpdateDisplay(){
-  const display = document.getElementById('ct-display');
-  const ring = document.getElementById('ct-ring');
-  display.textContent = ctFmtTime(ctLeft);
-
-  // Progress ring
-  const progress = ctTotal > 0 ? ctLeft / ctTotal : 0;
-  const offset = CT_RING_CIRC * (1 - progress);
-  ring.style.strokeDashoffset = offset;
-
-  if(ctState === 'done'){
-    display.className = 'ts-time-display ct-done';
-    ring.classList.add('done');
-  } else if(ctState === 'running'){
-    display.className = 'ts-time-display ct-running';
-    ring.classList.remove('done');
-  } else {
-    display.className = 'ts-time-display ct-idle';
-    ring.classList.remove('done');
-  }
-}
-
-function ctSetPreset(sec){
-  if(ctState === 'running' || ctState === 'paused') return; // don't change during active timer
-  ctTotal = sec;
-  ctLeft = sec;
-  // Update custom inputs
-  document.getElementById('ct-custom-min').value = Math.floor(sec / 60);
-  document.getElementById('ct-custom-sec').value = sec % 60;
-  // Highlight active preset
-  document.querySelectorAll('#ct-presets .ts-preset').forEach(btn => {
-    const val = parseInt(btn.textContent.split(':')[0]) * 60 + parseInt(btn.textContent.split(':')[1]);
-    btn.classList.toggle('sel', val === sec);
-  });
-  ctUpdateDisplay();
-}
-
-function ctCustomChanged(){
-  if(ctState === 'running' || ctState === 'paused') return;
-  const m = parseInt(document.getElementById('ct-custom-min').value) || 0;
-  const s = parseInt(document.getElementById('ct-custom-sec').value) || 0;
-  ctTotal = Math.max(1, m * 60 + s);
-  ctLeft = ctTotal;
-  // Clear preset highlights
-  document.querySelectorAll('#ct-presets .ts-preset').forEach(btn => btn.classList.remove('sel'));
-  ctUpdateDisplay();
-}
-
-function ctStart(){
-  if(ctTotal <= 0) return;
-  ensureNotifPermission();
-  ctState = 'running';
-  ctLeft = ctTotal;
-  ctEndAt = Date.now() + ctTotal * 1000;
-  ctInterval = setInterval(() => {
-    ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
-    if(ctLeft <= 0){
-      ctLeft = 0;
-      ctState = 'done';
-      if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
-      ctUpdateDisplay();
-      fireTimerNotification('Timer done', ctFmtTime(ctTotal) + ' countdown complete');
-      showToast('⏱ Timer done!', 3000);
-      document.getElementById('ct-sub').textContent = 'Finished';
-      document.getElementById('ct-pause-btn').style.display = 'none';
-      document.getElementById('ct-reset-btn').style.display = 'inline-flex';
-      return;
-    }
-    ctUpdateDisplay();
-  }, 250);
-  ctUpdateDisplay();
-  document.getElementById('ct-start-btn').style.display = 'none';
-  document.getElementById('ct-pause-btn').style.display = 'inline-flex';
-  document.getElementById('ct-resume-btn').style.display = 'none';
-  document.getElementById('ct-reset-btn').style.display = 'inline-flex';
-  document.getElementById('ct-presets').style.opacity = '0.4';
-  document.getElementById('ct-presets').style.pointerEvents = 'none';
-  document.getElementById('ct-custom-row').style.opacity = '0.4';
-  document.getElementById('ct-custom-row').style.pointerEvents = 'none';
-  document.getElementById('ct-sub').textContent = '';
-}
-
-function ctPause(){
-  ctState = 'paused';
-  ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
-  ctPausedLeft = ctLeft;
-  if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
-  document.getElementById('ct-pause-btn').style.display = 'none';
-  document.getElementById('ct-resume-btn').style.display = 'inline-flex';
-  document.getElementById('ct-sub').textContent = 'Paused';
-}
-
-function ctResume(){
-  ctState = 'running';
-  ctEndAt = Date.now() + ctPausedLeft * 1000;
-  ctInterval = setInterval(() => {
-    ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
-    if(ctLeft <= 0){
-      ctLeft = 0;
-      ctState = 'done';
-      if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
-      ctUpdateDisplay();
-      fireTimerNotification('Timer done', ctFmtTime(ctTotal) + ' countdown complete');
-      showToast('⏱ Timer done!', 3000);
-      document.getElementById('ct-sub').textContent = 'Finished';
-      document.getElementById('ct-pause-btn').style.display = 'none';
-      document.getElementById('ct-resume-btn').style.display = 'none';
-      return;
-    }
-    ctUpdateDisplay();
-  }, 250);
-  document.getElementById('ct-resume-btn').style.display = 'none';
-  document.getElementById('ct-pause-btn').style.display = 'inline-flex';
-  document.getElementById('ct-sub').textContent = '';
-}
-
-function ctReset(){
-  ctState = 'idle';
-  ctLeft = ctTotal;
-  if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
-  ctUpdateDisplay();
-  document.getElementById('ct-start-btn').style.display = 'inline-flex';
-  document.getElementById('ct-pause-btn').style.display = 'none';
-  document.getElementById('ct-resume-btn').style.display = 'none';
-  document.getElementById('ct-reset-btn').style.display = 'none';
-  document.getElementById('ct-presets').style.opacity = '';
-  document.getElementById('ct-presets').style.pointerEvents = '';
-  document.getElementById('ct-custom-row').style.opacity = '';
-  document.getElementById('ct-custom-row').style.pointerEvents = '';
-  document.getElementById('ct-sub').textContent = '';
-}
-
-// Clean up timers when session ends or resets
-function tsCleanup(){
-  swReset();
-  ctReset();
-}
-
-// ════════════ IMPORT FROM PAST SESSION ════════════
-function openImportSession(){
-  const w = getActiveWorkout();
-  if(!w){ showToast('No workout selected'); return; }
-  const log = loadSessionLog();
-  // Find sessions for the current workout, most recent first
-  const sessions = [];
-  for(let i = log.length - 1; i >= 0; i--){
-    const entry = log[i];
-    if(entry.workoutId !== w.id) continue;
-    sessions.push({ idx: i, entry });
-    if(sessions.length >= 10) break; // show up to 10
-  }
-
-  const body = document.getElementById('import-body');
-  if(!sessions.length){
-    body.innerHTML = '<div class="imp-empty">No past sessions found for this workout.<br>Complete a workout first, then you can import from it.</div>';
-    openModal('import-modal');
-    return;
-  }
-
-  let html = '';
-  sessions.forEach(({ idx, entry }) => {
-    const d = new Date(entry.start);
-    const dayName = DAY_NAMES[d.getDay()];
-    const dateStr = `${d.getDate()} ${MON_SHORT[d.getMonth()]} ${d.getFullYear()}`;
-    const durSec = entry.end ? Math.floor((entry.end - entry.start)/1000) : 0;
-    const durStr = durSec > 0 ? fmtDuration(durSec) : '—';
-
-    // Build diff: compare session data vs current workout template
-    const diffs = buildImportDiff(w, entry);
-
-    html += `<div class="imp-card">
-      <div class="imp-card-head">
-        <span class="imp-card-date">${dayName}, ${dateStr}</span>
-        <span class="imp-card-meta">${durStr}</span>
+function render(){
+  const plan = PLAN[currentPhase];
+  const container = document.getElementById('week-container');
+  let html = `<div class="phase-note">${plan.note}</div>`;
+
+  plan.days.forEach(day => {
+    const isOpen  = openDays.has(day.id);
+    const isToday = day.id === DOW;
+
+    const tagsHTML = day.tags.map(t => {
+      const cls = typeMap[t]?.tClass || '';
+      return `<span class="tag ${cls}">${tagLabels[t] || t}</span>`;
+    }).join('');
+
+    const sessHTML = day.sessions.map(sessionHTML).join('');
+
+    html += `
+    <div class="day-card${isToday ? ' today' : ''}${isOpen ? ' open' : ''}">
+      <div class="day-header" onclick="toggleDay('${day.id}')">
+        <span class="day-pip"></span>
+        <span class="day-name">${day.name}</span>
+        <div class="day-tags">${tagsHTML}</div>
+        <span class="chevron">▼</span>
       </div>
-      <div class="imp-diff">
-        ${diffs.length ? diffs.map(d => `<div class="imp-diff-item">
-          <span class="imp-diff-label">${esc(d.label)}</span>
-          <span class="imp-diff-old">${esc(d.from)}</span>
-          <span class="imp-diff-arrow">→</span>
-          <span class="imp-diff-new">${esc(d.to)}</span>
-        </div>`).join('') : '<div class="imp-no-diff">No differences — workout matches this session</div>'}
-      </div>
-      ${diffs.length ? `<button class="imp-apply-btn" onclick="applyImportSession(${idx})">Apply ${diffs.length} change${diffs.length>1?'s':''}</button>` : ''}
+      <div class="day-body">${sessHTML}</div>
     </div>`;
   });
 
-  body.innerHTML = html;
-  openModal('import-modal');
+  container.innerHTML = html;
 }
 
-function buildImportDiff(workout, logEntry){
-  const diffs = [];
-  const exercises = workout.exercises || [];
-  const sessionSets = logEntry.sets || {};
-  const sessionNames = logEntry.exerciseNames || {};
-
-  exercises.forEach(ex => {
-    // Name change
-    const logName = sessionNames[ex.id];
-    if(logName && logName !== ex.name){
-      diffs.push({ label: ex.name, field: 'name', exId: ex.id, from: ex.name, to: logName });
-    }
-
-    // Set count change
-    const logSets = sessionSets[ex.id];
-    if(logSets && logSets.length !== ex.sets){
-      diffs.push({ label: logName || ex.name, field: 'sets', exId: ex.id, from: ex.sets + ' sets', to: logSets.length + ' sets' });
-    }
-
-    // Default type changes
-    if(logSets){
-      logSets.forEach((s, i) => {
-        const currentType = (ex.defaultTypes || [])[i] || 'normal';
-        if(s.type && s.type !== currentType){
-          diffs.push({ label: (logName || ex.name) + ' set ' + (i+1), field: 'type', exId: ex.id, setIdx: i, from: currentType, to: s.type });
-        }
-      });
-    }
-  });
-
-  return diffs;
-}
-
-function applyImportSession(logIdx){
-  const log = loadSessionLog();
-  const entry = log[logIdx];
-  if(!entry){ showToast('Session not found'); return; }
-
-  const w = getActiveWorkout();
-  if(!w){ showToast('No workout selected'); return; }
-
-  const sessionSets = entry.sets || {};
-  const sessionNames = entry.exerciseNames || {};
-  let changes = 0;
-
-  w.exercises.forEach(ex => {
-    // Apply name
-    const logName = sessionNames[ex.id];
-    if(logName && logName !== ex.name){
-      ex.name = logName;
-      changes++;
-    }
-
-    // Apply set count
-    const logSets = sessionSets[ex.id];
-    if(logSets && logSets.length !== ex.sets){
-      ex.sets = logSets.length;
-      changes++;
-    }
-
-    // Apply default types
-    if(logSets){
-      if(!ex.defaultTypes) ex.defaultTypes = [];
-      logSets.forEach((s, i) => {
-        if(s.type){
-          if(ex.defaultTypes[i] !== s.type){
-            ex.defaultTypes[i] = s.type;
-            changes++;
-          }
-        }
-      });
-    }
-  });
-
-  saveWorkouts(workouts);
-  closeModal('import-modal');
-  renderWorkout();
-  renderWorkoutList();
-  Object.keys(exTimers).forEach(updateExTimerUI);
-  showToast(`✅ Applied ${changes} change${changes!==1?'s':''} from ${entry.date}`, 3000);
-}
-
-// ════════════ VOLUME ════════════
-function renderVolume(){
-  const w = getActiveWorkout();
-  const isSwim = (w?.kind === 'swim');
-  let sets=0, repsOrDist=0, kg=0;
-  Object.keys(session).forEach(k=>{
-    if(k.endsWith('_sets')){
-      (session[k]||[]).forEach(s=>{
-        if(!s.done) return;
-        sets++;
-        const r = parseFloat(s.reps)||0; // reps OR distance for swim
-        const wt = parseFloat(s.weight)||0;
-        repsOrDist += r;
-        if(!isSwim) kg += r*wt;
-      });
-    }
-  });
-  document.getElementById('vol-sets').textContent = sets;
-  document.getElementById('vol-reps').textContent = isSwim ? Math.round(repsOrDist) : repsOrDist;
-  document.getElementById('vol-kg').textContent = isSwim ? '—' : Math.round(kg);
-  // Update labels too
-  const repsLbl = document.querySelector('#volume-card .vol-stat:nth-child(2) .vol-stat-lbl');
-  const kgLbl = document.querySelector('#volume-card .vol-stat:nth-child(3) .vol-stat-lbl');
-  if(repsLbl) repsLbl.textContent = isSwim ? 'Distance (m)' : 'Reps';
-  if(kgLbl) kgLbl.textContent = isSwim ? '' : 'Total kg';
-  document.getElementById('volume-card').style.display = sets>0 ? 'block' : 'none';
-}
-
-// ════════════ HISTORY ════════════
-// Sessions are stored permanently in wt_session_log (synced to Firestore).
-// The side panel shows the last 30 days by default with a "Show all" toggle.
-let historyShowAll = false;
-
-// Find an exercise by id across ALL workouts (not just the active one).
-// This is needed because log entries can reference exercises that were
-// renamed/deleted from the workout definition since the session was logged.
-// As a third fallback, look at the exerciseNames snapshot stored on each
-// log entry (newer feature).
-function findExAnywhere(exId, fallbackEntry){
-  for(const w of workouts){
-    const ex = w.exercises?.find(e=>e.id===exId);
-    if(ex) return ex;
-  }
-  if(fallbackEntry?.exerciseNames?.[exId]){
-    return {id: exId, name: fallbackEntry.exerciseNames[exId], cat: ''};
-  }
-  return null;
-}
-
-function fmtSessionDate(dateStr){
-  // dateStr is YYYY-MM-DD
-  const [y,m,d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m-1, d);
-  const today = new Date(); today.setHours(0,0,0,0);
-  const yest = new Date(today); yest.setDate(yest.getDate()-1);
-  const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-  if(sameDay(dt, today)) return 'Today';
-  if(sameDay(dt, yest)) return 'Yesterday';
-  // Within the last week — show day name
-  const diff = Math.round((today - dt) / 86400000);
-  if(diff>0 && diff<7) return DAY_NAMES[dt.getDay()];
-  return `${dt.getDate()} ${MON_SHORT[dt.getMonth()]}`;
-}
-
-function summariseSession(entry){
-  // Returns {setsDone, totalReps, totalKg, totalDistance, isSwim}
-  // For strength sessions, totalKg = sum of weight × reps; for swim, totalDistance = sum of reps (which holds metres).
-  const isSwim = (entry.workoutKind === 'swim');
-  let setsDone=0, totalReps=0, totalKg=0, totalDistance=0;
-  const sets = entry.sets || {};
-  Object.keys(sets).forEach(exId=>{
-    (sets[exId]||[]).forEach(s=>{
-      if(!s.done) return;
-      setsDone++;
-      const r = parseFloat(s.reps)||0;
-      const wt = parseFloat(s.weight)||0;
-      if(isSwim){
-        totalDistance += r;
-      } else {
-        totalReps += r;
-        totalKg += r*wt;
-      }
-    });
-  });
-  return {setsDone, totalReps, totalKg, totalDistance, isSwim};
-}
-
-function renderHistory(){
-  const log = loadSessionLog();
-  const card = document.getElementById('history-card');
-  const list = document.getElementById('hist-list');
-  const allBtn = document.getElementById('hist-all-btn');
-  const countLbl = document.getElementById('history-count');
-
-  if(!log.length){
-    card.style.display = 'none';
-    return;
-  }
-  card.style.display = 'block';
-
-  // Newest first. Stable sort: prefer end-time, fall back to start, then date.
-  const sorted = [...log].sort((a,b) => (b.end||b.start||0) - (a.end||a.start||0));
-
-  // Default: last 30 days. "Show all": everything stored.
-  const cutoff = Date.now() - 30*86400000;
-  const recent = sorted.filter(e => (e.end || e.start || 0) >= cutoff);
-  const visible = historyShowAll ? sorted : recent;
-  const olderCount = sorted.length - recent.length;
-
-  countLbl.textContent = historyShowAll
-    ? `${sorted.length} logged`
-    : `${visible.length} in last 30 days`;
-  allBtn.style.display = olderCount > 0 ? 'inline-block' : 'none';
-  allBtn.textContent = historyShowAll ? 'Recent only' : `Show all (${sorted.length})`;
-
-  if(!visible.length){
-    list.innerHTML = '<div class="hist-empty">No completed sessions yet</div>';
-    return;
-  }
-
-  list.innerHTML = visible.map((entry) => {
-    const idx = log.indexOf(entry); // stable index in the underlying log
-    const {setsDone, totalKg, totalDistance, isSwim} = summariseSession(entry);
-    const dur = (entry.end && entry.start) ? Math.floor((entry.end-entry.start)/1000) : 0;
-    const durStr = dur>0 ? fmtDuration(dur) : '';
-    const dateStr = fmtSessionDate(entry.date);
-    const meta = [dateStr, `${setsDone} sets`, durStr].filter(Boolean).join(' · ');
-    const stat = isSwim
-      ? (totalDistance > 0 ? `${Math.round(totalDistance)} m` : '')
-      : (totalKg > 0 ? `${Math.round(totalKg)} kg` : '');
-    return `
-      <div class="hist-item" onclick="openSessionModal(${idx})" role="button" tabindex="0">
-        <div class="hist-item-left">
-          <div class="hist-item-name">${escapeHtml(entry.workoutName || 'Workout')}</div>
-          <div class="hist-item-meta">${escapeHtml(meta)}</div>
-        </div>
-        ${stat ? `<div class="hist-item-stat">${stat}</div>` : ''}
-      </div>`;
-  }).join('');
-}
-
-function toggleHistoryAll(){
-  historyShowAll = !historyShowAll;
-  renderHistory();
-}
-
-function escapeHtml(s){
-  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-let activeSessionIdx = -1;
-
-function openSessionModal(idx){
-  const log = loadSessionLog();
-  const entry = log[idx];
-  if(!entry){ showToast('Session not found'); return; }
-  activeSessionIdx = idx;
-
-  document.getElementById('sm-title').textContent = entry.workoutName || 'Workout';
-
-  const {setsDone, totalReps, totalKg, totalDistance, isSwim} = summariseSession(entry);
-  const dur = (entry.end && entry.start) ? Math.floor((entry.end-entry.start)/1000) : 0;
-  const fullDate = (() => {
-    const [y,m,d] = entry.date.split('-').map(Number);
-    const dt = new Date(y, m-1, d);
-    return `${DAY_NAMES[dt.getDay()]}, ${dt.getDate()} ${MON_SHORT[dt.getMonth()]} ${dt.getFullYear()}`;
-  })();
-  document.getElementById('sm-sub').textContent = fullDate;
-
-  // Body: meta pills + per-exercise set listing
-  const body = document.getElementById('sm-body');
-  let html = '<div class="sess-meta-row">';
-  if(dur>0) html += `<div class="sess-meta-pill">Duration <strong>${fmtDuration(dur)}</strong></div>`;
-  html += `<div class="sess-meta-pill">Sets <strong>${setsDone}</strong></div>`;
-  if(isSwim){
-    if(totalDistance>0) html += `<div class="sess-meta-pill">Distance <strong>${Math.round(totalDistance)} m</strong></div>`;
-  } else {
-    html += `<div class="sess-meta-pill">Reps <strong>${totalReps}</strong></div>`;
-    if(totalKg>0) html += `<div class="sess-meta-pill">Volume <strong>${Math.round(totalKg)} kg</strong></div>`;
-  }
-  html += '</div>';
-
-  const sets = entry.sets || {};
-  const exIds = Object.keys(sets);
-  if(!exIds.length){
-    html += '<div class="sess-no-data">No set data was recorded for this session.</div>';
-  } else {
-    exIds.forEach(exId => {
-      const exSets = (sets[exId]||[]).filter(s=>s.done);
-      if(!exSets.length) return;
-      const ex = findExAnywhere(exId, entry);
-      const name = ex?.name || entry.exerciseNames?.[exId] || exId;
-      const cat = ex?.cat || '';
-      const isSwimEntry = (entry.workoutKind === 'swim');
-      html += '<div class="sess-ex">';
-      html += `<div class="sess-ex-head"><div class="sess-ex-name">${escapeHtml(name)}</div>`;
-      if(cat) html += `<div class="sess-ex-meta">${escapeHtml(cat)}</div>`;
-      html += '</div>';
-      exSets.forEach((s, i) => {
-        const reps = (s.reps !== '' && s.reps != null) ? s.reps : '—';
-        const wt = (s.weight !== '' && s.weight != null && s.weight !== 0) ? s.weight : '';
-        let tag = '';
-        if(isSwimEntry && s.type){
-          const strokeName = {free:'Freestyle',back:'Back',breast:'Breast',fly:'Fly',im:'IM',kick:'Kick',pull:'Pull',drill:'Drill'}[s.type] || s.type;
-          tag = `<span class="sess-set-tag">${escapeHtml(strokeName)}</span>`;
-        } else if(s.type === 'warmup'){
-          tag = '<span class="sess-set-tag">Warm-up</span>';
-        }
-        const repsUnit = isSwimEntry ? 'm' : 'reps';
-        const wtUnit = isSwimEntry ? '' : 'kg';
-        html += '<div class="sess-set-row">';
-        html += `<div class="sess-set-num">Set ${i+1}</div>`;
-        html += `<div class="sess-set-val">${escapeHtml(String(reps))}<small>${repsUnit}</small></div>`;
-        html += `<div class="sess-set-val">${wt!==''?escapeHtml(String(wt))+(wtUnit?'<small>'+wtUnit+'</small>':''):'<span style="color:var(--muted)">—</span>'}</div>`;
-        html += `<div>${tag}</div>`;
-        html += '</div>';
-      });
-      html += '</div>';
-    });
-  }
-  body.innerHTML = html;
-
-  document.getElementById('session-modal').classList.add('open');
-}
-
-function deleteSessionFromModal(){
-  if(activeSessionIdx < 0) return;
-  if(!confirm('Delete this session entry? This cannot be undone.')) return;
-  const log = loadSessionLog();
-  if(activeSessionIdx >= log.length){ closeModal('session-modal'); return; }
-  log.splice(activeSessionIdx, 1);
-  saveSessionLog(log);
-  closeModal('session-modal');
-  renderHistory();
-  renderWeek?.();
-  showToast('Session deleted');
-}
-
-// ════════════ ADD EXERCISE ════════════
-function openAddExercise(){
-  ['new-ex-name','new-ex-reps','new-ex-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('new-ex-sets').value='3';
-  document.getElementById('new-ex-rest-min').value='1';
-  document.getElementById('new-ex-rest-sec').value='30';
-  openModal('add-ex-modal');
-}
-function addCustomExercise(){
-  const name = document.getElementById('new-ex-name').value.trim();
-  if(!name){ showToast('Enter an exercise name'); return; }
-  const cat = document.getElementById('new-ex-cat').value;
-  const sets = Math.max(1, parseInt(document.getElementById('new-ex-sets').value)||3);
-  const reps = document.getElementById('new-ex-reps').value.trim()||'—';
-  const restM = parseInt(document.getElementById('new-ex-rest-min').value)||0;
-  const restS = parseInt(document.getElementById('new-ex-rest-sec').value)||0;
-  const note = document.getElementById('new-ex-notes').value.trim();
-  const id = 'custom_'+Date.now();
-  const ex = {id, name, cat, sets, reps, rest: restM*60+restS, note};
-  const w = getActiveWorkout();
-  if(!w){ showToast('No active workout'); return; }
-  w.exercises.push(ex);
-  saveWorkouts(workouts);
-  closeModal('add-ex-modal');
-  renderWorkout();
-  showToast('Exercise added');
-}
-
-
-// ════════════ EXERCISE REORDER ════════════
-
-function deleteWorkoutDirect(id, name){
-  if(workouts.length <= 1){ showToast('Cannot delete — need at least one workout'); return; }
-  if(!confirm('Delete "' + name + '"? This cannot be undone.')) return;
-  workouts = workouts.filter(w => w.id !== id);
-  if(activeId === id) activeId = workouts[0].id;
-  localStorage.setItem(ACTIVE_KEY, activeId);
-  saveWorkouts(workouts);
-  renderWorkoutList();
-  renderWorkout();
-  showToast('Workout deleted');
-}
-function moveExercise(exId, delta){
-  const w = getActiveWorkout(); if(!w) return;
-  const exs = w.exercises;
-  const idx = exs.findIndex(e=>e.id===exId); if(idx<0) return;
-  const newIdx = idx + delta;
-  if(newIdx < 0 || newIdx >= exs.length) return;
-  [exs[idx], exs[newIdx]] = [exs[newIdx], exs[idx]];
-  saveWorkouts(workouts);
-  renderWorkout();
-}
-
-// ════════════ ADD/EDIT WORKOUT ════════════
-let editingWorkoutId = null;
-function openAddWorkout(){
-  editingWorkoutId = null;
-  document.getElementById('wm-title').textContent = 'New workout';
-  document.getElementById('wm-sub').textContent = 'Create a custom workout type';
-  document.getElementById('wm-name').value='';
-  document.getElementById('wm-type').value='';
-  document.getElementById('wm-delete').style.display='none';
-  openModal('workout-modal');
-}
-function openEditWorkout(id){
-  const w = workouts.find(x=>x.id===id); if(!w) return;
-  editingWorkoutId = id;
-  document.getElementById('wm-title').textContent = 'Edit workout';
-  document.getElementById('wm-sub').textContent = w.name;
-  document.getElementById('wm-name').value = w.name;
-  document.getElementById('wm-type').value = w.type;
-  document.getElementById('wm-delete').style.display = workouts.length>1 ? 'inline-flex' : 'none';
-  openModal('workout-modal');
-}
-function saveWorkout(){
-  const name = document.getElementById('wm-name').value.trim();
-  const type = document.getElementById('wm-type').value.trim() || 'Custom';
-  if(!name){ showToast('Enter a workout name'); return; }
-  if(editingWorkoutId){
-    const w = workouts.find(x=>x.id===editingWorkoutId);
-    w.name = name; w.type = type;
-  } else {
-    const id = 'wk_'+Date.now();
-    workouts.push({id, name, type, exercises:[]});
-    activeId = id;
-    localStorage.setItem(ACTIVE_KEY, id);
-  }
-  saveWorkouts(workouts);
-  closeModal('workout-modal');
-  renderWorkoutList();
-  renderWorkout();
-  showToast(editingWorkoutId ? 'Workout updated' : 'Workout created');
-}
-function deleteWorkout(){
-  if(!editingWorkoutId || workouts.length<=1) return;
-  if(!confirm('Delete this workout?')) return;
-  workouts = workouts.filter(w=>w.id!==editingWorkoutId);
-  if(activeId===editingWorkoutId) activeId = workouts[0].id;
-  localStorage.setItem(ACTIVE_KEY, activeId);
-  saveWorkouts(workouts);
-  closeModal('workout-modal');
-  renderWorkoutList();
-  renderWorkout();
-  showToast('Workout deleted');
-}
-
-// ════════════ MODAL HELPERS ════════════
-function openModal(id){ document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-function handleModalClick(e,id){ if(e.target===document.getElementById(id)) closeModal(id); }
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); document.body.style.overflow=''; } });
-
-// ════════════ STATE RECOVERY ════════════
-// Helper: is a timer's start (or end) on a different calendar day from today?
-function timerIsStale(timer){
-  if(!timer) return false;
-  const ref = timer.end || timer.start;
-  if(!ref) return false;
-  const d = new Date(ref);
-  return fmtDate(d) !== TODAY;
-}
-
-// If there's a left-over running timer from a previous day (e.g. user opened
-// the app, marked a set, then closed without finishing), auto-finalise it as
-// a logged session for that prior day rather than letting it leak into today.
-// If a finished timer is from a previous day, just clear it: the session is
-// already logged, today should start fresh.
-function recoverStaleSession(){
-  if(!sessionTimer || !timerIsStale(sessionTimer)) return false;
-
-  if(sessionTimer.end){
-    // Already finished, just from a prior day. Clear and start clean.
-    sessionTimer = null;
-    saveSessionTimer(null);
-    return true;
-  }
-
-  // Running timer from a prior day — auto-finalise so we don't lose the data.
-  // Use the timer's date (not today) and compute end as start + elapsed (cap
-  // at 4 hours because long-running orphaned timers are almost certainly an
-  // unfinished session, not a real 12-hour workout).
-  const startDate = fmtDate(new Date(sessionTimer.start));
-  const cappedEnd = Math.min(sessionTimer.start + 4*3600*1000, Date.now());
-  const sessionForThatDay = (() => {
-    try{ return JSON.parse(localStorage.getItem(SESSION_KEY(startDate))) || {}; }
-    catch(e){ return {}; }
-  })();
-
-  // Snapshot any sets that were entered for that day
-  const setsSnapshot = {};
-  let anySets = false;
-  Object.keys(sessionForThatDay).forEach(k => {
-    if(k.endsWith('_sets')){
-      const exId = k.slice(0, -('_sets'.length));
-      const arr = sessionForThatDay[k] || [];
-      // Only log if at least one set was marked done
-      if(arr.some(s => s.done)){
-        setsSnapshot[exId] = arr;
-        anySets = true;
-      }
-    }
-  });
-
-  if(anySets){
-    // Persist as a completed session for that day
-    const log = loadSessionLog();
-    // Avoid duplicating if a finalisation entry already exists for the same start time
-    const exists = log.some(e => e.start === sessionTimer.start);
-    if(!exists){
-      log.push({
-        date: startDate,
-        workoutId: activeId,
-        workoutName: getActiveWorkout()?.name || '',
-        start: sessionTimer.start,
-        end: cappedEnd,
-        sets: setsSnapshot,
-        notes: '',
-        autoFinalised: true,
-      });
-      saveSessionLog(log);
-      const completed = loadCompletedDays();
-      if(!completed[startDate]){
-        completed[startDate] = activeId;
-        saveCompletedDays(completed);
-      }
-      showToast(`⏱ Recovered unfinished session from ${fmtPRDate(startDate)}`, 4000);
-    }
-  }
-
-  sessionTimer = null;
-  saveSessionTimer(null);
-  return true;
-}
-
-// ════════════ INIT ════════════
-function init(){
-  // Intercept sync.js remote changes — re-render instead of reloading the page.
-  // This prevents losing in-progress timers and scroll position when logging exercises.
-  window.addEventListener('sync:remote-change', (ev) => {
-    ev.markHandled();
-    // Re-read SESSION state from localStorage (sync.js already wrote the new values).
-    // But do NOT reload workouts — our in-memory workout template is the
-    // authoritative copy. The sync snapshot can arrive with stale Firestore
-    // data before our push completes, which would silently revert structural
-    // changes the user just made (exercise names, set counts, rest times).
-    // Instead, re-save the in-memory workouts back to localStorage so any
-    // stale sync overwrite is immediately corrected.
-    session = loadSession(TODAY);
-    sessionTimer = loadSessionTimer();
-    saveWorkouts(workouts);   // re-assert our truth over stale sync data
-    renderWorkout();
-    renderVolume();
-    renderHistory();
-    renderWeek();
-    renderWorkoutList();
-    // Restore session timer UI
-    if(sessionTimer){
-      if(sessionTimer.end){
-        const dur = Math.floor((sessionTimer.end-sessionTimer.start)/1000);
-        document.getElementById('duration-time').className = 'duration-time finished';
-        document.getElementById('duration-time').textContent = fmtDuration(dur);
-        document.getElementById('session-status').textContent = 'Finished';
-      } else if(!sessionInterval){
-        startSessionTick();
-      }
-    }
-    setSessionRunningClass();
-  });
-
-  // Run state recovery BEFORE first render so renderWorkout sees a clean state.
-  recoverStaleSession();
-
-  renderWorkoutList();
-  renderWorkout();
-  renderVolume();
-  renderHistory();
-  renderWeek();
-
-  // Restore session timer (only valid if not stale, which recovery already handled)
-  if(sessionTimer){
-    if(sessionTimer.end){
-      const dur = Math.floor((sessionTimer.end-sessionTimer.start)/1000);
-      document.getElementById('duration-time').className = 'duration-time finished';
-      document.getElementById('duration-time').textContent = fmtDuration(dur);
-      document.getElementById('session-status').textContent = 'Finished';
-      document.getElementById('duration-label').textContent = 'Workout logged ✓ — continue or start a new one';
-      document.getElementById('start-workout-btn').style.display = 'none';
-      document.getElementById('continue-workout-btn').style.display = 'inline-flex';
-      document.getElementById('new-session-btn').style.display = 'inline-flex';
-    } else {
-      document.getElementById('start-workout-btn').style.display = 'none';
-      document.getElementById('finish-workout-btn').style.display = 'inline-flex';
-      startSessionTick();
-    }
-  }
-  setSessionRunningClass();
-
-  // Watch for the page becoming visible again after being hidden for a while
-  // (e.g. phone went to sleep mid-rest). Re-run recovery if a day boundary
-  // was crossed while we were away.
-  document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState !== 'visible') return;
-
-    // Re-assert the in-memory workout template to localStorage.
-    // While we were in the background, sync may have overwritten
-    // our local changes with stale Firestore data.
-    saveWorkouts(workouts);
-
-    // ── Catch up all timers after returning from background ──
-    // Per-exercise rest timers
-    Object.keys(exTimers).forEach(exId => {
-      const t = exTimers[exId];
-      if(!t || t.finished) return;
-      const left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
-      t.left = left;
-      if(left <= 0){
-        if(t.intervalId) clearInterval(t.intervalId);
-        t.finished = true;
-        t.left = 0;
-        updateExTimerUI(exId);
-        const ex = findEx(exId);
-        fireTimerNotification('Rest done', (ex?.name||'Exercise') + ' — time to go');
-        showToast('⏱ Rest done — '+(ex?.name||''), 2500);
-        setTimeout(()=>{ if(exTimers[exId]?.finished) cancelExTimer(exId); }, 5000);
-      } else {
-        updateExTimerUI(exId);
-      }
-    });
-    // Countdown timer
-    if(ctState === 'running'){
-      ctLeft = Math.max(0, Math.ceil((ctEndAt - Date.now()) / 1000));
-      if(ctLeft <= 0){
-        ctLeft = 0;
-        ctState = 'done';
-        if(ctInterval){ clearInterval(ctInterval); ctInterval = null; }
-        ctUpdateDisplay();
-        fireTimerNotification('Timer done', ctFmtTime(ctTotal) + ' countdown complete');
-        showToast('⏱ Timer done!', 3000);
-        document.getElementById('ct-sub').textContent = 'Finished';
-        document.getElementById('ct-pause-btn').style.display = 'none';
-        document.getElementById('ct-reset-btn').style.display = 'inline-flex';
-      } else {
-        ctUpdateDisplay();
-      }
-    }
-    // Stopwatch display catch-up (already timestamp-based, just refresh)
-    if(swState === 'running') swUpdateDisplay();
-
-    // Midnight rollover: if the calendar day changed while we were hidden,
-    // reload so TODAY and everything dependent on it re-initialises.
-    if(fmtDate(new Date()) !== TODAY){
-      window.location.reload();
-      return;
-    }
-    // If a finished session timer is suddenly stale, gently reset to today.
-    if(sessionTimer && timerIsStale(sessionTimer)){
-      recoverStaleSession();
-      // Reset UI to fresh-day state
-      document.getElementById('start-workout-btn').style.display = 'inline-flex';
-      document.getElementById('continue-workout-btn').style.display = 'none';
-      document.getElementById('new-session-btn').style.display = 'none';
-      document.getElementById('finish-workout-btn').style.display = 'none';
-      document.getElementById('complete-banner').classList.remove('show');
-      document.getElementById('duration-time').className = 'duration-time idle';
-      document.getElementById('duration-time').textContent = '0:00';
-      document.getElementById('session-status').textContent = 'Not started';
-      document.getElementById('duration-label').textContent = 'Press start when ready';
-      setSessionRunningClass();
-      renderWorkout();
-    }
-  });
-
-  // Active rollover: schedule a check at the next local midnight.
-  // Reloads the page if a session isn't actively running (so we don't
-  // disrupt mid-workout). If a session IS running at midnight, we let
-  // it continue and the rollover will happen on next visibilitychange
-  // or when the user finishes.
-  (function scheduleRollover(){
-
-  // Ensure the latest workout template is in localStorage before the
-  // page unloads (navigation, refresh, tab close). Without this, a
-  // sync snapshot that arrived after our last save could leave stale
-  // data in localStorage for the next page load.
-  window.addEventListener('beforeunload', () => {
-    saveWorkouts(workouts);
-  });
-    const now = new Date();
-    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 5);
-    setTimeout(() => {
-      if(fmtDate(new Date()) !== TODAY){
-        if(!sessionTimer || sessionTimer.end){
-          window.location.reload();
-        }
-      }
-    }, next.getTime() - now.getTime());
-  })();
-}
-init();
+render();
 </script>
 </body>
 </html>
