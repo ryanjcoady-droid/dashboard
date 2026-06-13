@@ -165,9 +165,9 @@ body{padding:28px 24px}
 <div class="overlay" id="settings-overlay" onclick="overlayClick(event)">
   <div class="overlay-panel">
     <button class="overlay-close" onclick="closeSettings()">✕</button>
-    <div class="overlay-title">Anthropic API key</div>
-    <div class="overlay-sub">Your key is stored only in your browser's localStorage and sent only to Anthropic's API. Get yours at <strong>console.anthropic.com</strong> → API Keys.</div>
-    <input class="field-input" id="stg-key" type="password" placeholder="sk-ant-api03-...">
+    <div class="overlay-title">Gemini API key</div>
+    <div class="overlay-sub">Your key is stored only in your browser's localStorage and sent only to Google's API. Get yours free at <strong>aistudio.google.com</strong> → Get API key. No credit card required.</div>
+    <input class="field-input" id="stg-key" type="password" placeholder="AIza...">
     <div class="overlay-row">
       <button class="ghost-btn btn-swim" onclick="saveKey()" style="flex:1;justify-content:center">Save key</button>
       <button class="ghost-btn" onclick="clearKey()" style="color:var(--run)">Clear</button>
@@ -300,24 +300,21 @@ async function runAnalysis(){
     : `Based on the current training phase and today being ${DAYS[new Date().getDay()]}, give specific actionable coaching recommendations for this week.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key': key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body: JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1200,
-        system: buildPrompt(),
-        messages:[{role:'user',content:userMsg}]
-      })
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          system_instruction:{parts:[{text: buildPrompt()}]},
+          contents:[{role:'user',parts:[{text:userMsg}]}],
+          generationConfig:{maxOutputTokens:1200,temperature:0.3}
+        })
+      }
+    );
     if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
     const raw = await res.json();
-    const txt = (raw.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const txt = raw.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const m = txt.match(/\{[\s\S]*\}/);
     if(!m) throw new Error('No structured data in response — try again.');
     renderResults(JSON.parse(m[0]), custom);
@@ -344,14 +341,14 @@ function renderError(msg, custom){
 function setupScreen(){
   document.getElementById('app').innerHTML = `<div class="setup-wrap">
     <div class="setup-title">Set up your coach</div>
-    <div class="setup-sub">This page uses the Anthropic API to generate personalised training recommendations based on your 70.3 plan. You need an API key from your Anthropic account — it costs a few cents per analysis.</div>
+    <div class="setup-sub">This page uses Google's Gemini API to generate personalised training recommendations. The free tier gives you 1,500 requests/day — no credit card required.</div>
     <div class="setup-steps">
-      <div class="setup-step"><span class="setup-step-num">1.</span><span>Go to <strong>console.anthropic.com</strong> and sign in</span></div>
-      <div class="setup-step"><span class="setup-step-num">2.</span><span>Open <strong>API Keys</strong> and create a new key</span></div>
-      <div class="setup-step"><span class="setup-step-num">3.</span><span>Paste it below — saved only in this browser</span></div>
+      <div class="setup-step"><span class="setup-step-num">1.</span><span>Go to <strong>aistudio.google.com</strong> and sign in with your Google account</span></div>
+      <div class="setup-step"><span class="setup-step-num">2.</span><span>Click <strong>Get API key</strong> → Create API key in new project</span></div>
+      <div class="setup-step"><span class="setup-step-num">3.</span><span>Paste it below — saved only in this browser, never shared</span></div>
       <div class="setup-step"><span class="setup-step-num">4.</span><span>Optionally describe recent training for more specific advice</span></div>
     </div>
-    <input class="field-input" id="setup-key" type="password" placeholder="sk-ant-api03-...">
+    <input class="field-input" id="setup-key" type="password" placeholder="AIza...">
     <button class="ghost-btn btn-swim" onclick="setupSave()" style="width:100%;justify-content:center;padding:11px;margin-bottom:4px">Save key and generate analysis</button>
     <div id="setup-status" style="font-size:12px;margin-top:6px;min-height:16px;color:var(--run)"></div>
   </div>`;
