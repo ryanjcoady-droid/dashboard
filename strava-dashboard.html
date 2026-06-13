@@ -308,15 +308,27 @@ async function runAnalysis(){
         body: JSON.stringify({
           system_instruction:{parts:[{text: buildPrompt()}]},
           contents:[{role:'user',parts:[{text:userMsg}]}],
-          generationConfig:{maxOutputTokens:1200,temperature:0.3}
+          generationConfig:{
+            maxOutputTokens:8000,
+            temperature:0.3,
+            responseMimeType:'application/json',
+            thinkingConfig:{thinkingBudget:0}
+          }
         })
       }
     );
-    if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
     const raw = await res.json();
-    const txt = raw.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if(!res.ok){ throw new Error(raw.error?.message || `HTTP ${res.status}`); }
+    // Surface non-STOP finish reasons (e.g. MAX_TOKENS, SAFETY) clearly
+    const cand = raw.candidates?.[0];
+    if(!cand){ throw new Error('Gemini returned no candidates. Check your API key and try again.'); }
+    if(cand.finishReason && cand.finishReason !== 'STOP'){
+      throw new Error(`Response cut off (${cand.finishReason}). Try regenerating.`);
+    }
+    const txt = (cand.content?.parts || []).map(p=>p.text||'').join('').trim();
+    if(!txt){ throw new Error('Gemini returned an empty response — try again.'); }
     const m = txt.match(/\{[\s\S]*\}/);
-    if(!m) throw new Error('No structured data in response — try again.');
+    if(!m) throw new Error('Could not parse the response. Tap Regenerate to retry.');
     renderResults(JSON.parse(m[0]), custom);
   } catch(e){
     renderError(e.message, custom);
