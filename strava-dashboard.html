@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Training Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D0D0B;--card:#161614;--card2:#1C1C19;
+  --border:#272522;--border2:#2F2D2A;
+  --text:#F5F3EF;--muted:#C0BBB2;--muted2:#9B978F;
+  --swim:#38BDF8;--swim-bg:#061520;--swim-bd:#0D2F45;
+  --bike:#F59E0B;--bike-bg:#1A1000;--bike-bd:#3D2500;
+  --run:#F87171;--run-bg:#1A0808;--run-bd:#3D1010;
+  --strength:#A78BFA;--strength-bg:#100A1F;--strength-bd:#261A45;
+  --rest:#4ADE80;--rest-bg:#071A0F;--rest-bd:#134D22;
+  --warn:#FCD34D;--warn-bg:#1A1500;--warn-bd:#3D3000;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+*{touch-action:manipulation}
+body{padding:28px 24px}
+
+@media(max-width:720px){body{padding:16px 14px}}
+@media(max-width:600px){
+  body{
+    padding-top:max(12px,env(safe-area-inset-top));
+    padding-left:max(12px,env(safe-area-inset-left));
+    padding-right:max(12px,env(safe-area-inset-right));
+    padding-bottom:max(20px,env(safe-area-inset-bottom));
+  }
+}
+@media(max-width:900px){
+  input,textarea,select{font-size:16px !important}
+}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+.title-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.title-main{font-family:'Outfit',sans-serif;font-size:42px;font-weight:400;line-height:1}
+.title-sub{font-family:'Outfit',sans-serif;font-size:17px;color:var(--muted);margin-top:4px}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+@media(max-width:600px){.title-main{font-size:28px}.title-sub{font-size:13px}}
+
+/* Buttons */
+.ghost-btn{display:inline-flex;align-items:center;gap:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:8px 14px;border-radius:9px;background:var(--card);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all .12s}
+.ghost-btn:hover{background:var(--card2);border-color:var(--border2)}
+.ghost-btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-swim{background:var(--swim-bg);border-color:var(--swim-bd);color:var(--swim)}
+.btn-swim:hover:not(:disabled){background:var(--swim-bd)}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+.card:last-child{margin-bottom:0}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:6px;border:1px solid}
+
+/* Setup */
+.setup-wrap{max-width:480px;margin:0 auto;padding-top:32px}
+.setup-title{font-family:'Outfit',sans-serif;font-size:28px;font-weight:400;margin-bottom:8px}
+.setup-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6}
+.setup-steps{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px}
+.setup-step{font-size:12.5px;color:var(--text);padding:3px 0;display:flex;gap:8px;align-items:baseline}
+.setup-step-num{color:var(--swim);font-weight:600;font-size:11px;flex-shrink:0;min-width:16px}
+.field-input{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:12px}
+.field-input:focus{border-color:var(--swim-bd)}
+.field-input::placeholder{color:var(--muted2)}
+
+/* Phase banner */
+.phase-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:16px}
+.phase-dot{width:8px;height:8px;border-radius:50%;animation:blink 2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.phase-name{font-size:12px;font-weight:600}
+.phase-dates{font-size:11px;color:var(--muted);margin-left:auto}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+@media(max-width:560px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--card2);border-radius:9px;padding:10px 12px}
+.stat-icon{font-size:17px;margin-bottom:5px}
+.stat-val{font-family:'Outfit',sans-serif;font-size:21px;font-weight:400;line-height:1}
+.stat-unit{font-size:13px;color:var(--muted)}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+/* Compliance */
+.comp-row{display:grid;grid-template-columns:76px 1fr 18px;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.comp-row:last-child{border-bottom:none}
+.comp-day{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text)}
+.comp-today{color:var(--swim)}
+.comp-tags{display:flex;gap:4px;flex-wrap:wrap}
+.comp-tag{font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid;font-weight:500}
+.tag-done{color:var(--rest);background:var(--rest-bg);border-color:var(--rest-bd)}
+.tag-miss{color:var(--run);background:var(--run-bg);border-color:var(--run-bd)}
+.tag-upcoming{color:var(--muted);background:var(--card2);border-color:var(--border2)}
+.tag-rest{color:var(--muted2);background:var(--card2);border-color:var(--border)}
+.comp-icon{font-size:13px;text-align:right}
+
+/* Zone note */
+.zone-note{display:flex;align-items:flex-start;gap:9px;padding:10px 13px;border-radius:9px;font-size:12px;line-height:1.5;margin-bottom:14px}
+
+/* Recommendations */
+.rec-list{display:flex;flex-direction:column;gap:8px}
+.rec-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start}
+.rec-icon{font-size:17px;margin-top:2px}
+.rec-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.rec-detail{font-size:12px;color:var(--muted);line-height:1.5}
+.pri-badge{font-size:9px;font-weight:600;padding:3px 7px;border-radius:5px;border:1px solid;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;flex-shrink:0}
+.pri-high{color:var(--run);background:var(--run-bg);border-color:var(--run-bd)}
+.pri-medium{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bd)}
+.pri-low{color:var(--rest);background:var(--rest-bg);border-color:var(--rest-bd)}
+
+/* Next session */
+.next-card{background:var(--rest-bg);border:1px solid var(--rest-bd);border-radius:10px;padding:14px;margin-bottom:14px}
+.next-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rest);margin-bottom:6px}
+.next-text{font-size:13px;color:var(--text);line-height:1.6}
+
+/* Custom input */
+.custom-label{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.custom-textarea{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;transition:border-color .15s;line-height:1.5}
+.custom-textarea:focus{border-color:var(--swim-bd)}
+.custom-textarea::placeholder{color:var(--muted2)}
+
+/* Loading */
+.loading-wrap{text-align:center;padding:60px 20px}
+.spinner{width:26px;height:26px;border:2px solid var(--border2);border-top-color:var(--swim);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:400;margin-bottom:6px}
+.loading-sub{font-size:13px;color:var(--muted)}
+
+/* Error */
+.err-card{background:var(--run-bg);border:1px solid var(--run-bd);border-radius:10px;padding:14px;margin-bottom:14px}
+.err-title{font-size:13px;font-weight:600;color:var(--run);margin-bottom:4px}
+.err-msg{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Settings overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.overlay-panel{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:24px;max-width:460px;width:100%;position:relative}
+.overlay-close{position:absolute;top:14px;right:14px;background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.overlay-close:hover{background:var(--card2);color:var(--text)}
+.overlay-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:400;margin-bottom:6px}
+.overlay-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.overlay-row{display:flex;gap:8px}
+.overlay-status{font-size:12px;margin-top:8px;min-height:16px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="title-label">AI Coach</div>
+    <div class="title-main">Training Coach</div>
+    <div class="title-sub">Ironman 70.3 Melbourne · 8 Nov 2026</div>
+  </div>
+  <div class="header-right">
+    <button class="ghost-btn" onclick="openSettings()">⚙ API Key</button>
+    <button class="ghost-btn btn-swim" id="refresh-btn" onclick="runAnalysis()" disabled>↺ Analyse</button>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<div class="overlay" id="settings-overlay" onclick="overlayClick(event)">
+  <div class="overlay-panel">
+    <button class="overlay-close" onclick="closeSettings()">✕</button>
+    <div class="overlay-title">Anthropic API key</div>
+    <div class="overlay-sub">Your key is stored only in your browser's localStorage and sent only to Anthropic's API. Get yours at <strong>console.anthropic.com</strong> → API Keys.</div>
+    <input class="field-input" id="stg-key" type="password" placeholder="sk-ant-api03-...">
+    <div class="overlay-row">
+      <button class="ghost-btn btn-swim" onclick="saveKey()" style="flex:1;justify-content:center">Save key</button>
+      <button class="ghost-btn" onclick="clearKey()" style="color:var(--run)">Clear</button>
+    </div>
+    <div class="overlay-status" id="stg-status"></div>
+  </div>
+</div>
+
+<script>
+const KEY_LS  = 'coach_api_key';
+const CTX_LS  = 'coach_custom_ctx';
+const RACE    = new Date('2026-11-08T06:00:00+11:00');
+const DAYS    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const PHASES = [
+  {name:'Phase 1 — Base Building', start:'2026-05-11', end:'2026-07-06', c:'var(--swim)', bg:'var(--swim-bg)', bd:'var(--swim-bd)'},
+  {name:'Phase 2 — Volume Build',  start:'2026-07-07', end:'2026-08-30', c:'var(--bike)', bg:'var(--bike-bg)', bd:'var(--bike-bd)'},
+  {name:'Phase 3 — Race Specific', start:'2026-08-31', end:'2026-10-18', c:'var(--run)',  bg:'var(--run-bg)',  bd:'var(--run-bd)'},
+  {name:'Taper',                   start:'2026-10-19', end:'2026-11-08', c:'var(--strength)', bg:'var(--strength-bg)', bd:'var(--strength-bd)'},
+];
+
+const WEEK = {
+  Monday:    {expected:['Swim','Legs'],          target:'Swim 1100 m + legs strength session'},
+  Tuesday:   {expected:['Upper','Run'],           target:'Upper strength + 5 km easy Zone 2 run'},
+  Wednesday: {expected:['Swim','Bike'],           target:'Swim 1100 m + 40 min Zone 2 bike'},
+  Thursday:  {expected:['Bike','Brick run'],      target:'60–75 min Zone 2 bike + 10 min brick run (no gym)'},
+  Friday:    {expected:['Upper','Volleyball'],    target:'Upper strength + volleyball (recreational)'},
+  Saturday:  {expected:['Swim','Bike','Run'],     target:'Swim 800 m + outdoor ride 60–75 min + 5 km tempo run'},
+  Sunday:    {expected:['Rest'],                  target:'Full rest'},
+};
+
+const CAT_ICON = {swim:'🏊',bike:'🚴',run:'🏃',strength:'💪',recovery:'❤️',nutrition:'⚡'};
+const PRI_CLS  = {high:'pri-high',medium:'pri-medium',low:'pri-low'};
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function getKey(){ return localStorage.getItem(KEY_LS)||''; }
+function daysToRace(){ return Math.max(0,Math.floor((RACE-new Date())/86400000)); }
+function currentPhase(){
+  const now = new Date();
+  return PHASES.find(p=>now>=new Date(p.start)&&now<=new Date(p.end))||null;
+}
+
+function openSettings(){
+  document.getElementById('stg-key').value = getKey();
+  document.getElementById('stg-status').textContent='';
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings(){ document.getElementById('settings-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===document.getElementById('settings-overlay')) closeSettings(); }
+function saveKey(){
+  const v = document.getElementById('stg-key').value.trim();
+  if(!v){ document.getElementById('stg-status').style.color='var(--run)'; document.getElementById('stg-status').textContent='Enter a key first.'; return; }
+  localStorage.setItem(KEY_LS, v);
+  document.getElementById('stg-status').style.color='var(--rest)';
+  document.getElementById('stg-status').textContent='✓ Saved.';
+  setTimeout(()=>{ closeSettings(); document.getElementById('refresh-btn').disabled=false; runAnalysis(); }, 600);
+}
+function clearKey(){
+  localStorage.removeItem(KEY_LS);
+  document.getElementById('stg-key').value='';
+  document.getElementById('stg-status').style.color='var(--muted)';
+  document.getElementById('stg-status').textContent='Key cleared.';
+}
+
+function buildPrompt(){
+  const phase = currentPhase();
+  const now = new Date();
+  const tod = DAYS[now.getDay()];
+  const todPlan = WEEK[tod];
+  const d = daysToRace();
+  return `You are an expert triathlon coach for an athlete preparing for Ironman 70.3 Melbourne on 8 November 2026 (${d} days away).
+
+Athlete profile: weight 60 kg · max HR 201 bpm · Zone 2: 131–151 bpm (ceiling ~141) · Zone 3: 141–155 bpm · Zone 4: 156–176 bpm.
+Current benchmarks: Zone 2 run ~8 km/h · swim ~2250 m per session · outdoor bike ~24 km/h.
+Background: primarily anaerobic/strength-focused athlete building aerobic base.
+
+Training phases:
+Phase 1 Base Building: 11 May – 6 Jul 2026
+Phase 2 Volume Build: 7 Jul – 30 Aug 2026
+Phase 3 Race Specific: 31 Aug – 18 Oct 2026
+Taper: 19 Oct – 8 Nov 2026
+Current phase: ${phase?phase.name:'Pre-training or post-taper'}
+
+Correct weekly structure:
+Monday:    Swim (1100 m) + Legs strength
+Tuesday:   Upper strength + 5 km easy Zone 2 run
+Wednesday: Swim (1100 m) + 40 min Zone 2 assault bike
+Thursday:  Long bike (60–75 min Zone 2) + 10 min brick run immediately after. No gym.
+Friday:    Upper strength + Volleyball (recreational, not cardio)
+Saturday:  Swim (800 m) + Outdoor bike ride (60–75 min) + 5 km tempo run (Zone 3)
+Sunday:    Full rest
+
+Today is ${tod}. Today's planned session: ${todPlan?todPlan.target:'Rest or unknown'}.
+
+Key principles:
+- Insufficient run volume is the #1 70.3 risk — standalone long Zone 2 runs are essential
+- Phase 1 all cardio in Zone 2. No HIIT/VO2max until Phase 3.
+- Brick runs train bike-to-run neuromuscular transition
+- Race day bike: Zone 3 (141–155 bpm) to preserve run
+- Cadence target: 85–95 rpm
+- Race nutrition: 60–90 g carbs/hr, DIY maltodextrin:fructose ~1.3:1
+- Electrolytes: ~980 mg/L sodium, ~210 mg/L potassium
+- Three swim sessions per week minimum (Mon + Wed + Sat)
+- Zone 2 on heavy legs (e.g. bike after legs on Thursday) builds fatigue resistance
+
+Respond ONLY with raw JSON — no markdown, no explanation, just the JSON object:
+{
+  "currentPhase": string,
+  "daysToRace": number,
+  "weekSummary": {"swimCount": number,"swimTotalM": number,"bikeCount": number,"bikeTotalKm": number,"runCount": number,"runTotalKm": number,"strengthCount": number},
+  "compliance": [{"day": string,"expected": [string],"completed": [string],"status": "complete"|"partial"|"missed"|"rest"|"upcoming"}],
+  "recommendations": [{"priority": "high"|"medium"|"low","category": "swim"|"bike"|"run"|"strength"|"recovery"|"nutrition","title": string,"detail": string}],
+  "zoneNote": string,
+  "nextSession": string
+}`;
+}
+
+async function runAnalysis(){
+  const key = getKey();
+  if(!key){ openSettings(); return; }
+
+  const custom = (document.getElementById('custom-input')||{}).value||localStorage.getItem(CTX_LS)||'';
+  localStorage.setItem(CTX_LS, custom);
+
+  setLoading();
+  document.getElementById('refresh-btn').disabled = true;
+
+  const userMsg = custom
+    ? `Analyse my current training phase and give specific coaching recommendations.\n\nRecent training context:\n${custom}`
+    : `Based on the current training phase and today being ${DAYS[new Date().getDay()]}, give specific actionable coaching recommendations for this week.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1200,
+        system: buildPrompt(),
+        messages:[{role:'user',content:userMsg}]
+      })
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
+    const raw = await res.json();
+    const txt = (raw.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const m = txt.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error('No structured data in response — try again.');
+    renderResults(JSON.parse(m[0]), custom);
+  } catch(e){
+    renderError(e.message, custom);
+  }
+  document.getElementById('refresh-btn').disabled = false;
+}
+
+function setLoading(){
+  document.getElementById('app').innerHTML = `<div class="loading-wrap">
+    <div class="spinner"></div>
+    <div class="loading-title">Generating your coaching report…</div>
+    <div class="loading-sub">Analysing Phase 1 targets and building recommendations</div>
+  </div>`;
+}
+
+function renderError(msg, custom){
+  document.getElementById('app').innerHTML = `
+    <div class="err-card"><div class="err-title">Analysis failed</div><div class="err-msg">${esc(msg)}</div></div>
+    ${customInputBlock(custom)}`;
+}
+
+function setupScreen(){
+  document.getElementById('app').innerHTML = `<div class="setup-wrap">
+    <div class="setup-title">Set up your coach</div>
+    <div class="setup-sub">This page uses the Anthropic API to generate personalised training recommendations based on your 70.3 plan. You need an API key from your Anthropic account — it costs a few cents per analysis.</div>
+    <div class="setup-steps">
+      <div class="setup-step"><span class="setup-step-num">1.</span><span>Go to <strong>console.anthropic.com</strong> and sign in</span></div>
+      <div class="setup-step"><span class="setup-step-num">2.</span><span>Open <strong>API Keys</strong> and create a new key</span></div>
+      <div class="setup-step"><span class="setup-step-num">3.</span><span>Paste it below — saved only in this browser</span></div>
+      <div class="setup-step"><span class="setup-step-num">4.</span><span>Optionally describe recent training for more specific advice</span></div>
+    </div>
+    <input class="field-input" id="setup-key" type="password" placeholder="sk-ant-api03-...">
+    <button class="ghost-btn btn-swim" onclick="setupSave()" style="width:100%;justify-content:center;padding:11px;margin-bottom:4px">Save key and generate analysis</button>
+    <div id="setup-status" style="font-size:12px;margin-top:6px;min-height:16px;color:var(--run)"></div>
+  </div>`;
+}
+
+function setupSave(){
+  const v = (document.getElementById('setup-key')||{}).value?.trim();
+  if(!v){ document.getElementById('setup-status').textContent='Enter your API key first.'; return; }
+  localStorage.setItem(KEY_LS, v);
+  document.getElementById('refresh-btn').disabled = false;
+  runAnalysis();
+}
+
+function customInputBlock(val=''){
+  return `<div class="card">
+    <label class="custom-label" for="custom-input">Describe recent training <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional — for more specific advice)</span></label>
+    <textarea class="custom-textarea" id="custom-input" placeholder="e.g. Did Monday swim and legs. Missed Wednesday bike. Saturday ride was 45 min, HR sat at 138. Zone 2 feeling more comfortable this week.">${esc(val)}</textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button class="ghost-btn btn-swim" onclick="runAnalysis()">↺ Regenerate</button>
+    </div>
+  </div>`;
+}
+
+function renderResults(d, custom=''){
+  const phase = currentPhase();
+  const d2r = daysToRace();
+  const wks = Math.floor(d2r/7);
+  const drem = d2r % 7;
+
+  const statusIcon = {complete:'✓',partial:'~',missed:'✗',rest:'—',upcoming:'·'};
+  const statusCol  = {complete:'var(--rest)',partial:'var(--warn)',missed:'var(--run)',rest:'var(--muted2)',upcoming:'var(--muted2)'};
+
+  const todayName = DAYS[new Date().getDay()];
+
+  const compRows = (d.compliance||[]).map(row=>{
+    const isRest = row.status==='rest';
+    const isToday = row.day===todayName;
+    const tags = isRest
+      ? `<span class="comp-tag tag-rest">Rest</span>`
+      : (row.expected||[]).map(s=>{
+          const done = (row.completed||[]).includes(s);
+          const up = row.status==='upcoming';
+          return `<span class="comp-tag ${done?'tag-done':up?'tag-upcoming':'tag-miss'}">${esc(s)}</span>`;
+        }).join('');
+    return `<div class="comp-row">
+      <div class="comp-day ${isToday?'comp-today':''}">${esc(row.day)}</div>
+      <div class="comp-tags">${tags}</div>
+      <div class="comp-icon" style="color:${statusCol[row.status]||'var(--muted2)'}">${statusIcon[row.status]||'·'}</div>
+    </div>`;
+  }).join('');
+
+  const recHTML = (d.recommendations||[]).map(r=>`
+    <div class="rec-item">
+      <div class="rec-icon">${CAT_ICON[r.category]||'•'}</div>
+      <div>
+        <div class="rec-title">${esc(r.title)}</div>
+        <div class="rec-detail">${esc(r.detail)}</div>
+      </div>
+      <span class="pri-badge ${PRI_CLS[r.priority]||'pri-low'}">${esc(r.priority)}</span>
+    </div>`).join('');
+
+  const ws = d.weekSummary||{};
+  const phBg = phase?phase.bg:'var(--swim-bg)';
+  const phBd = phase?phase.bd:'var(--swim-bd)';
+  const phC  = phase?phase.c:'var(--swim)';
+
+  document.getElementById('app').innerHTML = `
+    <div class="phase-banner" style="background:${phBg};border:1px solid ${phBd}">
+      <div class="phase-dot" style="background:${phC}"></div>
+      <div class="phase-name" style="color:${phC}">${esc(d.currentPhase||'')}</div>
+      <div class="phase-dates">${wks}w ${drem}d to race</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🏊</div>
+        <div class="stat-val">${((ws.swimTotalM||0)/1000).toFixed(1)}<span class="stat-unit"> km</span></div>
+        <div class="stat-lbl">Swim · ${ws.swimCount||0} sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🚴</div>
+        <div class="stat-val">${Math.round(ws.bikeTotalKm||0)}<span class="stat-unit"> km</span></div>
+        <div class="stat-lbl">Bike · ${ws.bikeCount||0} sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏃</div>
+        <div class="stat-val">${(ws.runTotalKm||0).toFixed(1)}<span class="stat-unit"> km</span></div>
+        <div class="stat-lbl">Run · ${ws.runCount||0} sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💪</div>
+        <div class="stat-val">${ws.strengthCount||0}</div>
+        <div class="stat-lbl">Strength sessions</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="badge" style="color:var(--muted);background:var(--card2);border-color:var(--border2)">Week compliance</span>
+      </div>
+      ${compRows}
+    </div>
+
+    ${d.zoneNote?`<div class="zone-note" style="background:var(--swim-bg);border:1px solid var(--swim-bd);color:var(--swim)"><span>⚡</span><span>${esc(d.zoneNote)}</span></div>`:''}
+
+    <div class="card">
+      <div class="card-head">
+        <span class="badge" style="color:var(--swim);background:var(--swim-bg);border-color:var(--swim-bd)">Recommendations</span>
+      </div>
+      <div class="rec-list">${recHTML}</div>
+    </div>
+
+    ${d.nextSession?`<div class="next-card"><div class="next-label">Next session</div><div class="next-text">${esc(d.nextSession)}</div></div>`:''}
+
+    ${customInputBlock(custom)}`;
+}
+
+function init(){
+  if(!getKey()){
+    setupScreen();
+  } else {
+    document.getElementById('refresh-btn').disabled = false;
+    const ctx = localStorage.getItem(CTX_LS)||'';
+    document.getElementById('app').innerHTML = customInputBlock(ctx);
+    runAnalysis();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
