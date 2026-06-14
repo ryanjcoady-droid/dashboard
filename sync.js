@@ -20,6 +20,8 @@
   const SYNCED = [
     /^dash_/,                   // per-day completion state
     /^wt_/,                     // workout tracker (all keys: wt_workouts_v2, wt_session_*, wt_notes_*, wt_session_log, wt_active_workout, wt_session_timer, wt_completed_days)
+    /^training_plan$/,          // editable race title, race date, phases, weekly sport split
+    /^training_plan_full$/,     // full editable plan incl. all session content (workout dashboard)
     /^routine_overrides$/,
     /^workout_schedule_overrides$/, // weekly recurring workout name edits
     /^recurring_events$/,

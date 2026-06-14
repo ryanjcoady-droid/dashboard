@@ -43,6 +43,7 @@ window.__FIREBASE_CONFIG__ = {
   const SYNCED = [
     /^dash_/,                   // per-day completion state
     /^wt_/,                     // workout tracker (all keys: wt_workouts_v2, wt_session_*, wt_notes_*, wt_session_log, wt_active_workout, wt_session_timer, wt_completed_days)
+    /^training_plan$/,          // editable race title, race date, phases, weekly sport split
     /^routine_overrides$/,
     /^workout_schedule_overrides$/, // weekly recurring workout name edits
     /^recurring_events$/,
@@ -241,6 +242,70 @@ window.__FIREBASE_CONFIG__ = {
 })();
 
 </script>
+<script>
+/* training-plan.js — single source of truth for the editable training plan. */
+(function () {
+  'use strict';
+  const PLAN_KEY = 'training_plan';
+  const SPORTS = {
+    swim:     { label: 'Swim',     c: '#38BDF8', bg: '#061520', bd: '#0D2F45' },
+    bike:     { label: 'Bike',     c: '#F59E0B', bg: '#1A1000', bd: '#3D2500' },
+    run:      { label: 'Run',      c: '#F87171', bg: '#1A0808', bd: '#3D1010' },
+    strength: { label: 'Strength', c: '#A78BFA', bg: '#100A1F', bd: '#261A45' },
+    sport:    { label: 'Sport',    c: '#94A3B8', bg: '#111827', bd: '#1F2D40' },
+    rest:     { label: 'Rest',     c: '#4ADE80', bg: '#071A0F', bd: '#134D22' },
+  };
+  const DEFAULT_PLAN = {
+    raceTitle: 'Ironman 70.3 Melbourne',
+    raceDate:  '2026-11-08',
+    phases: [
+      { id: 'p1', name: 'Base Building', start: '2026-05-11', end: '2026-07-06' },
+      { id: 'p2', name: 'Volume Build',  start: '2026-07-07', end: '2026-08-30' },
+      { id: 'p3', name: 'Race Specific', start: '2026-08-31', end: '2026-10-18' },
+      { id: 'p4', name: 'Taper',         start: '2026-10-19', end: '2026-11-08' },
+    ],
+    weekSplit: {
+      Mon: ['swim', 'strength'], Tue: ['strength', 'run'], Wed: ['swim', 'bike'],
+      Thu: ['bike', 'run'], Fri: ['strength', 'sport'], Sat: ['swim', 'bike', 'run'], Sun: ['rest'],
+    },
+  };
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function load() {
+    try {
+      const raw = localStorage.getItem(PLAN_KEY);
+      if (!raw) return clone(DEFAULT_PLAN);
+      const p = JSON.parse(raw);
+      if (!p.raceTitle) p.raceTitle = DEFAULT_PLAN.raceTitle;
+      if (!p.raceDate)  p.raceDate  = DEFAULT_PLAN.raceDate;
+      if (!Array.isArray(p.phases) || !p.phases.length) p.phases = clone(DEFAULT_PLAN.phases);
+      if (!p.weekSplit) p.weekSplit = clone(DEFAULT_PLAN.weekSplit);
+      ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+        if (!Array.isArray(p.weekSplit[d])) p.weekSplit[d] = clone(DEFAULT_PLAN.weekSplit[d] || []);
+      });
+      return p;
+    } catch (e) { return clone(DEFAULT_PLAN); }
+  }
+  function save(plan) { localStorage.setItem(PLAN_KEY, JSON.stringify(plan)); }
+  function currentPhase(plan, when) {
+    const now = when ? new Date(when) : new Date();
+    now.setHours(12, 0, 0, 0);
+    return (plan.phases || []).find(ph => {
+      const s = new Date(ph.start + 'T00:00:00');
+      const e = new Date(ph.end + 'T23:59:59');
+      return now >= s && now <= e;
+    }) || null;
+  }
+  function daysToRace(plan) {
+    const race = new Date(plan.raceDate + 'T06:00:00');
+    return Math.max(0, Math.floor((race - new Date()) / 86400000));
+  }
+  function sportsForDay(plan, dayShort) {
+    return (plan.weekSplit && plan.weekSplit[dayShort]) || [];
+  }
+  window.TrainingPlan = { PLAN_KEY, SPORTS, DEFAULT_PLAN, load, save, clone, currentPhase, daysToRace, sportsForDay };
+})();
+
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -323,6 +388,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cal-evt-time{font-size:10px;opacity:.7;margin-bottom:1px}
 .cal-evt-title{font-weight:500;line-height:1.3}
 .custom-pill{font-size:10px;padding:3px 7px;border-radius:5px;background:var(--custom-bg);border:1px solid var(--custom-bd);color:var(--custom-c);margin-top:2px}
+.sport-tag-row{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}
+.sport-tag{font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;border:1px solid}
 .day-progress{height:2px;background:var(--border2);border-radius:99px;margin-top:8px;overflow:hidden}
 .day-progress-fill{height:100%;border-radius:99px;background:#4ADE80;transition:width .3s}
 .day-empty{font-size:11px;color:var(--muted2);padding:2px 0}
@@ -1976,12 +2043,25 @@ function populateWeekDay(date, calEvts){
   if(!el)return;
   const custom=getCustom(date);
   const recur=getRecurForDate(date);
+  // Sport tags derived from the editable training plan (single source of truth).
+  let sportTags='';
+  try{
+    const plan=TrainingPlan.load();
+    const dk=DAY_SHORT[dateFromStr(date).getDay()];
+    const sports=TrainingPlan.sportsForDay(plan,dk);
+    if(sports.length){
+      sportTags='<div class="sport-tag-row">'+sports.map(s=>{
+        const sp=TrainingPlan.SPORTS[s]||TrainingPlan.SPORTS.sport;
+        return `<span class="sport-tag" style="background:${sp.bg};border-color:${sp.bd};color:${sp.c}">${sp.label}</span>`;
+      }).join('')+'</div>';
+    }
+  }catch(e){}
   const parts=[
     ...recur.map(r=>{const p=recurPal(r.color);return `<div class="recur-pill" style="background:${p.bg};border-color:${p.bd};color:${p.c}">&#9679; ${r.name}${r.time?' · '+r.time:''}</div>`;}),
     ...calEvts.map(e=>`<div class="cal-evt"><div class="cal-evt-time">${e.time}</div><div class="cal-evt-title">${e.title}</div></div>`),
     ...custom.map(t=>`<div class="custom-pill">&#9679; ${t.label}</div>`),
   ];
-  el.innerHTML=parts.length?parts.join(''):'<span class="day-empty">No events</span>';
+  el.innerHTML=sportTags+(parts.length?parts.join(''):(sportTags?'':'<span class="day-empty">No events</span>'));
 }
 
 // ═══════════════════════════════════════════════════
@@ -2008,7 +2088,18 @@ function renderMonthView(){
     const{done,total}=getDayProgress(ds);
     const pct=total?Math.round(done/total*100):0;
     const recur=getRecurForDate(ds);
+    // Sport dots from the editable training plan
+    let sportDots=[];
+    try{
+      const plan=TrainingPlan.load();
+      const dk=DAY_SHORT[cellD.getDay()];
+      sportDots=TrainingPlan.sportsForDay(plan,dk).map(s=>{
+        const sp=TrainingPlan.SPORTS[s]||TrainingPlan.SPORTS.sport;
+        return `<span class="month-dot" style="background:${sp.c}"></span>`;
+      });
+    }catch(e){}
     const dots=[
+      ...sportDots,
       ...recur.slice(0,2).map(r=>{const p=recurPal(r.color);return `<span class="month-dot recur" style="background:${p.c}"></span>`;}),
       ...calEvts.slice(0,2).map(()=>`<span class="month-dot cal"></span>`),
       ...custom.slice(0,2).map(()=>`<span class="month-dot custom"></span>`),

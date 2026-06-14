@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Training Coach</title>
+<script src="firebase-config.js"></script>
+<script src="sync.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -152,7 +154,7 @@ body{padding:28px 24px}
   <div>
     <div class="title-label">AI Coach</div>
     <div class="title-main">Training Coach</div>
-    <div class="title-sub">Ironman 70.3 Melbourne · 8 Nov 2026</div>
+    <div class="title-sub" id="coach-subtitle">—</div>
   </div>
   <div class="header-right">
     <button class="ghost-btn" onclick="openSettings()">⚙ API Key</button>
@@ -179,35 +181,59 @@ body{padding:28px 24px}
 <script>
 const KEY_LS  = 'coach_api_key';
 const CTX_LS  = 'coach_custom_ctx';
-const RACE    = new Date('2026-11-08T06:00:00+11:00');
 const DAYS    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-const PHASES = [
-  {name:'Phase 1 — Base Building', start:'2026-05-11', end:'2026-07-06', c:'var(--swim)', bg:'var(--swim-bg)', bd:'var(--swim-bd)'},
-  {name:'Phase 2 — Volume Build',  start:'2026-07-07', end:'2026-08-30', c:'var(--bike)', bg:'var(--bike-bg)', bd:'var(--bike-bd)'},
-  {name:'Phase 3 — Race Specific', start:'2026-08-31', end:'2026-10-18', c:'var(--run)',  bg:'var(--run-bg)',  bd:'var(--run-bd)'},
-  {name:'Taper',                   start:'2026-10-19', end:'2026-11-08', c:'var(--strength)', bg:'var(--strength-bg)', bd:'var(--strength-bd)'},
+// Phase accent colours, cycled in order
+const PHASE_COLORS = [
+  {c:'var(--swim)',     bg:'var(--swim-bg)',     bd:'var(--swim-bd)'},
+  {c:'var(--bike)',     bg:'var(--bike-bg)',     bd:'var(--bike-bd)'},
+  {c:'var(--run)',      bg:'var(--run-bg)',      bd:'var(--run-bd)'},
+  {c:'var(--strength)', bg:'var(--strength-bg)', bd:'var(--strength-bd)'},
 ];
 
-const WEEK = {
-  Monday:    {expected:['Swim','Legs'],          target:'Swim 1100 m + legs strength session'},
-  Tuesday:   {expected:['Upper','Run'],           target:'Upper strength + 5 km easy Zone 2 run'},
-  Wednesday: {expected:['Swim','Bike'],           target:'Swim 1100 m + 40 min Zone 2 bike'},
-  Thursday:  {expected:['Bike','Brick run'],      target:'60–75 min Zone 2 bike + 10 min brick run (no gym)'},
-  Friday:    {expected:['Upper','Volleyball'],    target:'Upper strength + volleyball (recreational)'},
-  Saturday:  {expected:['Swim','Bike','Run'],     target:'Swim 800 m + outdoor ride 60–75 min + 5 km tempo run'},
-  Sunday:    {expected:['Rest'],                  target:'Full rest'},
-};
+// Read the shared, editable training plan (written by the workout dashboard).
+// Falls back to a minimal default if nothing has synced yet.
+function loadPlan(){
+  try{
+    const raw = localStorage.getItem('training_plan');
+    if(raw){
+      const p = JSON.parse(raw);
+      if(p && p.phases && p.phases.length) return p;
+    }
+  }catch(e){}
+  return {
+    raceTitle:'(set your race in the Workout tab)',
+    raceSubtitle:'',
+    raceDate:'2026-11-08',
+    phases:[],
+    weekSplit:{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[],Sat:[],Sun:[]},
+  };
+}
+
+const SPORT_LABELS = {swim:'Swim',bike:'Bike',run:'Run',strength:'Strength',sport:'Volleyball',rest:'Rest'};
 
 const CAT_ICON = {swim:'🏊',bike:'🚴',run:'🏃',strength:'💪',recovery:'❤️',nutrition:'⚡'};
 const PRI_CLS  = {high:'pri-high',medium:'pri-medium',low:'pri-low'};
 
 function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function getKey(){ return localStorage.getItem(KEY_LS)||''; }
-function daysToRace(){ return Math.max(0,Math.floor((RACE-new Date())/86400000)); }
+function daysToRace(){
+  const plan = loadPlan();
+  const race = new Date((plan.raceDate||'2026-11-08')+'T06:00:00');
+  return Math.max(0,Math.floor((race-new Date())/86400000));
+}
 function currentPhase(){
-  const now = new Date();
-  return PHASES.find(p=>now>=new Date(p.start)&&now<=new Date(p.end))||null;
+  const plan = loadPlan();
+  const now = new Date(); now.setHours(12,0,0,0);
+  const idx = (plan.phases||[]).findIndex(p=>{
+    const s=new Date(p.start+'T00:00:00'), e=new Date(p.end+'T23:59:59');
+    return now>=s && now<=e;
+  });
+  if(idx<0) return null;
+  const p = plan.phases[idx];
+  const col = PHASE_COLORS[idx % PHASE_COLORS.length];
+  return {name:p.name, start:p.start, end:p.end, ...col};
 }
 
 function openSettings(){
@@ -233,47 +259,52 @@ function clearKey(){
 }
 
 function buildPrompt(){
+  const plan = loadPlan();
   const phase = currentPhase();
   const now = new Date();
   const tod = DAYS[now.getDay()];
-  const todPlan = WEEK[tod];
+  const todShort = DAY_SHORT[now.getDay()];
   const d = daysToRace();
-  return `You are an expert triathlon coach for an athlete preparing for Ironman 70.3 Melbourne on 8 November 2026 (${d} days away).
+
+  // Build phase list from the editable plan
+  const fmtD = s => { const dt=new Date(s+'T00:00:00'); const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return dt.getDate()+' '+M[dt.getMonth()]+' '+dt.getFullYear(); };
+  const phaseList = (plan.phases||[]).map(p=>`${p.name}: ${fmtD(p.start)} – ${fmtD(p.end)}`).join('\n') || '(none set)';
+
+  // Build the weekly split from the editable plan
+  const split = plan.weekSplit||{};
+  const weekList = DAY_SHORT.slice(1).concat('Sun').map(sh=>{
+    const sports = (split[sh]||[]).map(s=>SPORT_LABELS[s]||s).join(' + ') || 'Rest';
+    const full = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'}[sh];
+    return `${full}: ${sports}`;
+  }).join('\n');
+  const todSports = (split[todShort]||[]).map(s=>SPORT_LABELS[s]||s).join(' + ') || 'Rest';
+
+  return `You are an expert triathlon coach. The athlete is training for: ${plan.raceTitle}${plan.raceSubtitle?(' ('+plan.raceSubtitle+')'):''}, race date ${plan.raceDate} (${d} days away). Infer the event type and distances from the race title.
 
 Athlete profile: weight 60 kg · max HR 201 bpm · Zone 2: 131–151 bpm (ceiling ~141) · Zone 3: 141–155 bpm · Zone 4: 156–176 bpm.
 Current benchmarks: Zone 2 run ~8 km/h · swim ~2250 m per session · outdoor bike ~24 km/h.
 Background: primarily anaerobic/strength-focused athlete building aerobic base.
 
-Training phases:
-Phase 1 Base Building: 11 May – 6 Jul 2026
-Phase 2 Volume Build: 7 Jul – 30 Aug 2026
-Phase 3 Race Specific: 31 Aug – 18 Oct 2026
-Taper: 19 Oct – 8 Nov 2026
+Training phases (athlete-defined):
+${phaseList}
 Current phase: ${phase?phase.name:'Pre-training or post-taper'}
 
-Correct weekly structure:
-Monday:    Swim (1100 m) + Legs strength
-Tuesday:   Upper strength + 5 km easy Zone 2 run
-Wednesday: Swim (1100 m) + 40 min Zone 2 assault bike
-Thursday:  Long bike (60–75 min Zone 2) + 10 min brick run immediately after. No gym.
-Friday:    Upper strength + Volleyball (recreational, not cardio)
-Saturday:  Swim (800 m) + Outdoor bike ride (60–75 min) + 5 km tempo run (Zone 3)
-Sunday:    Full rest
+Weekly training structure (athlete-defined sport split):
+${weekList}
 
-Today is ${tod}. Today's planned session: ${todPlan?todPlan.target:'Rest or unknown'}.
+Today is ${tod}. Today's planned sports: ${todSports}.
 
-Key principles:
-- Insufficient run volume is the #1 70.3 risk — standalone long Zone 2 runs are essential
-- Phase 1 all cardio in Zone 2. No HIIT/VO2max until Phase 3.
-- Brick runs train bike-to-run neuromuscular transition
-- Race day bike: Zone 3 (141–155 bpm) to preserve run
+Key coaching principles:
+- Insufficient run volume is the #1 long-course triathlon risk — standalone long Zone 2 runs are essential
+- Early phases: keep cardio in Zone 2. Defer HIIT/VO2max work to the race-specific phase.
+- Brick sessions train the bike-to-run neuromuscular transition
+- Race day bike effort: Zone 3 (141–155 bpm) to preserve the run
 - Cadence target: 85–95 rpm
-- Race nutrition: 60–90 g carbs/hr, DIY maltodextrin:fructose ~1.3:1
-- Electrolytes: ~980 mg/L sodium, ~210 mg/L potassium
-- Three swim sessions per week minimum (Mon + Wed + Sat)
-- Zone 2 on heavy legs (e.g. bike after legs on Thursday) builds fatigue resistance
+- Race nutrition: 60–90 g carbs/hr; commercial electrolyte powder mixed to the athlete's bottle
+- Aim for three swim sessions per week
+- Zone 2 on pre-fatigued legs builds fatigue resistance
 
-Respond ONLY with raw JSON — no markdown, no explanation, just the JSON object:
+Use the most recent Strava activity data available to assess the last 7–14 days. Respond ONLY with raw JSON — no markdown, no explanation, just the JSON object:
 {
   "currentPhase": string,
   "daysToRace": number,
@@ -282,7 +313,9 @@ Respond ONLY with raw JSON — no markdown, no explanation, just the JSON object
   "recommendations": [{"priority": "high"|"medium"|"low","category": "swim"|"bike"|"run"|"strength"|"recovery"|"nutrition","title": string,"detail": string}],
   "zoneNote": string,
   "nextSession": string
-}`;
+}
+
+For the compliance array, use the athlete's weekly sport split above as the "expected" sports for each day.`;
 }
 
 async function runAnalysis(){
@@ -478,7 +511,17 @@ function renderResults(d, custom=''){
     ${customInputBlock(custom)}`;
 }
 
+function updateSubtitle(){
+  const plan = loadPlan();
+  const d = new Date((plan.raceDate||'2026-11-08')+'T06:00:00');
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+  const el = document.getElementById('coach-subtitle');
+  if(el) el.textContent = `${plan.raceTitle} · ${dateStr}`;
+}
+
 function init(){
+  updateSubtitle();
   if(!getKey()){
     setupScreen();
   } else {
@@ -488,6 +531,12 @@ function init(){
     runAnalysis();
   }
 }
+
+// Re-read plan when it syncs in from another device / the workout tab
+window.addEventListener('sync:remote-change', (ev)=>{
+  ev.markHandled();
+  updateSubtitle();
+});
 
 init();
 </script>

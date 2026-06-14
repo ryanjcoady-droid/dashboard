@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Ironman 70.3 Training</title>
+<script src="firebase-config.js"></script>
+<script src="sync.js"></script>
+<script src="training-plan.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -368,6 +371,42 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
   .day-card{border-radius:11px}
   .day-header{padding:10px 12px}
 }
+/* ── Plan editor ─────────────────────────────────────────────── */
+.edit-plan-btn{margin-top:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:#cbd5e1;font-family:inherit;font-size:11px;font-weight:500;padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .15s}
+.edit-plan-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.pe-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:300;display:none;align-items:center;justify-content:center;padding:18px}
+.pe-overlay.open{display:flex}
+.pe-panel{background:#12161d;border:1px solid #232a35;border-radius:18px;width:min(640px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.pe-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #232a35;flex-shrink:0}
+.pe-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.03em;color:#e8edf5}
+.pe-close{width:30px;height:30px;border-radius:8px;border:1px solid #2a323e;background:none;color:#8892a4;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.pe-close:hover{background:#1a2029;color:#e8edf5}
+.pe-body{padding:18px 20px;overflow-y:auto;flex:1}
+.pe-body::-webkit-scrollbar{width:5px}.pe-body::-webkit-scrollbar-thumb{background:#2a323e;border-radius:99px}
+.pe-section{margin-bottom:22px}
+.pe-section:last-child{margin-bottom:0}
+.pe-label{display:block;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8892a4;margin-bottom:8px}
+.pe-input{width:100%;background:#0d1117;border:1px solid #2a323e;border-radius:8px;padding:10px 12px;font-size:14px;color:#e8edf5;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:10px}
+.pe-input:focus{border-color:#38BDF8}
+.pe-phase{display:grid;grid-template-columns:1fr 120px 120px 32px;gap:8px;align-items:center;margin-bottom:8px}
+.pe-phase input{background:#0d1117;border:1px solid #2a323e;border-radius:7px;padding:8px 10px;font-size:13px;color:#e8edf5;font-family:'DM Sans',sans-serif;outline:none;width:100%}
+.pe-phase input:focus{border-color:#38BDF8}
+.pe-phase-del{width:30px;height:34px;border-radius:7px;border:1px solid #3D1010;background:#1A0808;color:#F87171;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.pe-phase-del:hover{background:#3D1010;color:#fff}
+.pe-add-btn{width:100%;padding:9px;border-radius:8px;border:1px dashed #2a323e;background:none;color:#8892a4;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:2px}
+.pe-add-btn:hover{border-color:#3a4351;color:#e8edf5;background:#161b22}
+.pe-day{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.pe-day-name{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#cbd5e1;min-width:42px;flex-shrink:0}
+.pe-day-sports{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.pe-sport-toggle{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:6px;border:1px solid #2a323e;background:none;color:#5a6478;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.pe-sport-toggle.on{font-weight:600}
+.pe-foot{display:flex;gap:8px;justify-content:flex-end;padding:16px 20px;border-top:1px solid #232a35;flex-shrink:0}
+.pe-btn{padding:10px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid;transition:all .12s}
+.pe-btn-cancel{background:none;border-color:#2a323e;color:#8892a4}
+.pe-btn-cancel:hover{color:#e8edf5;background:#1a2029}
+.pe-btn-save{background:#06304a;border-color:#0D2F45;color:#38BDF8}
+.pe-btn-save:hover{background:#0D2F45;color:#fff}
+.pe-hint{font-size:11px;color:#5a6478;line-height:1.5;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -376,31 +415,19 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 <div class="header">
   <div>
     <div class="race-eyebrow">Training Plan</div>
-    <div class="race-title">Ironman <span class="hl">70.3</span> Melbourne</div>
-    <div class="race-sub">St Kilda Beach &middot; Sunday 8 November 2026</div>
+    <div class="race-title" id="race-title">Ironman <span class="hl">70.3</span> Melbourne</div>
+    <div class="race-sub" id="race-sub">&mdash;</div>
   </div>
   <div class="countdown">
     <div class="countdown-label">Race day</div>
     <div class="countdown-num" id="cd-nums">&mdash;</div>
     <div class="countdown-sub">to go</div>
+    <button class="edit-plan-btn" onclick="openPlanEditor()">&#9998; Edit plan</button>
   </div>
 </div>
 
 <!-- ── Phase Nav ──────────────────────────────────────────────── -->
-<div class="phase-nav">
-  <button class="phase-pill p1" onclick="setPhase(1)">
-    Phase 1<span class="phase-pill-sub">Base &middot; 11 May&ndash;6 Jul</span>
-  </button>
-  <button class="phase-pill p2" onclick="setPhase(2)">
-    Phase 2<span class="phase-pill-sub">Volume &middot; 7 Jul&ndash;30 Aug</span>
-  </button>
-  <button class="phase-pill p3" onclick="setPhase(3)">
-    Phase 3<span class="phase-pill-sub">Race Specific &middot; 31 Aug&ndash;18 Oct</span>
-  </button>
-  <button class="phase-pill p4" onclick="setPhase(4)">
-    Taper<span class="phase-pill-sub">19 Oct&ndash;8 Nov</span>
-  </button>
-</div>
+<div class="phase-nav" id="phase-nav"></div>
 
 <!-- ── Week Container ────────────────────────────────────────── -->
 <div class="week" id="week-container"></div>
@@ -474,60 +501,188 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     </ol>
   </div>
 
-  <!-- DIY electrolyte drink -->
+  <!-- Electrolyte: commercial powder -->
   <div class="fuel-card elec">
     <div class="fuel-head">
       <svg class="fuel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2.5c3 4 6 7 6 11a6 6 0 1 1-12 0c0-4 3-7 6-11z"/>
       </svg>
-      <span class="fuel-name">DIY Electrolyte Drink</span>
-      <span class="fuel-pill">Race strength</span>
+      <span class="fuel-name">Electrolyte Drink</span>
+      <span class="fuel-pill">Commercial powder</span>
     </div>
-    <div class="fuel-sub">Sodium and potassium, scaled to your bottle</div>
+    <div class="fuel-sub">Mix your bought electrolyte powder per its label</div>
+    <div class="fuel-meta">Target on race day: ~500–800 mg sodium per hour. Check your product's per-serve sodium and dose to hit that range across your fluid intake.</div>
+  </div>
+</div>
 
-    <div class="fuel-slider-row">
-      <span class="fuel-slider-label">Volume</span>
-      <input type="range" class="fuel-slider" min="500" max="2000" value="1000" step="100" id="elec-vol">
-      <span class="fuel-slider-out"><span id="elec-vol-out">1000</span> ml</span>
+<!-- ── Plan Editor Modal ─────────────────────────────────────── -->
+<div class="pe-overlay" id="pe-overlay" onclick="if(event.target===this)closePlanEditor()">
+  <div class="pe-panel">
+    <div class="pe-head">
+      <div class="pe-title">Edit training plan</div>
+      <button class="pe-close" onclick="closePlanEditor()">&#10005;</button>
     </div>
+    <div class="pe-body">
+      <div class="pe-section">
+        <label class="pe-label">Race title</label>
+        <input class="pe-input" id="pe-title" placeholder="e.g. Ironman 70.3 Melbourne">
+        <label class="pe-label">Race subtitle (optional)</label>
+        <input class="pe-input" id="pe-subtitle" placeholder="e.g. St Kilda Beach">
+        <label class="pe-label">Race date</label>
+        <input class="pe-input" id="pe-date" type="date">
+      </div>
 
-    <table class="fuel-table">
-      <tr>
-        <td>Table salt (NaCl)</td>
-        <td class="qty"><span class="num elec-scale" data-base="2.5">2.5</span> g</td>
-      </tr>
-      <tr>
-        <td>Potassium chloride (pure)</td>
-        <td class="qty"><span class="num elec-scale" data-base="0.4">0.4</span> g</td>
-      </tr>
-      <tr>
-        <td>Citric acid</td>
-        <td class="qty"><span class="num elec-scale" data-base="0.75">0.75</span> g</td>
-      </tr>
-      <tr>
-        <td>Freeze-dried fruit powder</td>
-        <td class="qty"><span class="num elec-scale" data-base="2">2</span> g</td>
-      </tr>
-      <tr>
-        <td>Malto / fructose mix <span class="optional">(optional carbs)</span></td>
-        <td class="qty"><span class="num elec-scale" data-base="40">40</span> g</td>
-      </tr>
-    </table>
+      <div class="pe-section">
+        <label class="pe-label">Phases</label>
+        <div class="pe-hint">Name and date range for each training phase. The current phase is detected automatically from today's date.</div>
+        <div id="pe-phases"></div>
+        <button class="pe-add-btn" onclick="peAddPhase()">+ Add phase</button>
+      </div>
 
-    <div class="fuel-meta">Per litre: ~980 mg sodium &middot; ~210 mg potassium. Dissolve the KCl in warm water first to avoid grit.</div>
+      <div class="pe-section">
+        <label class="pe-label">Weekly sport split</label>
+        <div class="pe-hint">Tap sports to toggle them for each day. These tags drive the 7-day schedule on the daily dashboard and tell the coach what you train each day.</div>
+        <div id="pe-week"></div>
+      </div>
+    </div>
+    <div class="pe-foot">
+      <button class="pe-btn pe-btn-cancel" onclick="closePlanEditor()">Cancel</button>
+      <button class="pe-btn pe-btn-save" onclick="savePlanEditor()">Save plan</button>
+    </div>
   </div>
 </div>
 
 <script>
+
+/* ── Editable training plan integration ─────────────────────── */
+let PLAN_CFG = (window.TrainingPlan ? TrainingPlan.load() : {
+  raceTitle:'Ironman 70.3 Melbourne', subtitle:'', raceDate:'2026-11-08',
+  phases:[{id:'p1',name:'Base Building',start:'2026-05-11',end:'2026-07-06'},
+          {id:'p2',name:'Volume Build',start:'2026-07-07',end:'2026-08-30'},
+          {id:'p3',name:'Race Specific',start:'2026-08-31',end:'2026-10-18'},
+          {id:'p4',name:'Taper',start:'2026-10-19',end:'2026-11-08'}],
+  weekSplit:{Mon:['swim','strength'],Tue:['strength','run'],Wed:['swim','bike'],Thu:['bike','run'],Fri:['strength','sport'],Sat:['swim','bike','run'],Sun:['rest']}
+});
+
+function esc0(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function planRaceDate(){ return new Date(PLAN_CFG.raceDate + 'T06:00:00'); }
+
 /* ── Countdown ──────────────────────────────────────────────── */
-const RACE = new Date('2026-11-08T06:00:00+11:00');
 function updateCD(){
-  const diff = RACE - Date.now();
+  const diff = planRaceDate() - Date.now();
   if(diff <= 0){ document.getElementById('cd-nums').textContent = 'Race day!'; return; }
   const d = Math.floor(diff / 86400000);
   document.getElementById('cd-nums').textContent = Math.floor(d/7)+'w '+d%7+'d';
 }
+
+/* ── Header (title + subtitle) ──────────────────────────────── */
+function renderHeader(){
+  const t = PLAN_CFG.raceTitle || 'Training Plan';
+  let html = esc0(t);
+  const m = t.match(/\b(70\.3|140\.6|Ironman|Marathon|Half)\b/i);
+  if(m){ html = esc0(t).replace(m[0], '<span class="hl">'+esc0(m[0])+'</span>'); }
+  document.getElementById('race-title').innerHTML = html;
+  const sub = PLAN_CFG.subtitle || '';
+  const dt = planRaceDate();
+  const dstr = dt.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('race-sub').innerHTML = (sub ? esc0(sub)+' &middot; ' : '') + dstr;
+}
+
+/* ── Phase nav (built from plan) ────────────────────────────── */
+const PHASE_CLASSES = ['p1','p2','p3','p4','p1','p2','p3','p4'];
+function fmtPhaseDates(s,e){
+  const f = d => { const dt=new Date(d+'T12:00:00'); return dt.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()]; };
+  return f(s)+'\u2013'+f(e);
+}
+function detectCurrentPhaseIndex(){
+  const now = new Date(); now.setHours(12,0,0,0);
+  return (PLAN_CFG.phases||[]).findIndex(ph=>{
+    const s=new Date(ph.start+'T00:00:00'), e=new Date(ph.end+'T23:59:59');
+    return now>=s && now<=e;
+  });
+}
+function renderPhaseNav(){
+  const nav = document.getElementById('phase-nav');
+  if(!nav) return;
+  nav.innerHTML = (PLAN_CFG.phases||[]).map((ph,i)=>
+    `<button class="phase-pill ${PHASE_CLASSES[i]||'p1'}" onclick="setPhase(${i+1})">${esc0(ph.name)}<span class="phase-pill-sub">${fmtPhaseDates(ph.start,ph.end)}</span></button>`
+  ).join('');
+}
+
+/* ── Plan editor modal ──────────────────────────────────────── */
+const PE_SPORTS = ['swim','bike','run','strength','sport','rest'];
+const PE_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let peDraft = null;
+
+function openPlanEditor(){
+  peDraft = JSON.parse(JSON.stringify(PLAN_CFG));
+  if(!peDraft.weekSplit) peDraft.weekSplit = {};
+  document.getElementById('pe-title').value = peDraft.raceTitle || '';
+  document.getElementById('pe-subtitle').value = peDraft.subtitle || '';
+  document.getElementById('pe-date').value = peDraft.raceDate || '';
+  renderPePhases();
+  renderPeWeek();
+  document.getElementById('pe-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePlanEditor(){
+  document.getElementById('pe-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  peDraft = null;
+}
+function renderPePhases(){
+  document.getElementById('pe-phases').innerHTML = (peDraft.phases||[]).map((ph,i)=>
+    `<div class="pe-phase">
+      <input value="${esc0(ph.name)}" oninput="peDraft.phases[${i}].name=this.value" placeholder="Phase name">
+      <input type="date" value="${ph.start||''}" oninput="peDraft.phases[${i}].start=this.value">
+      <input type="date" value="${ph.end||''}" oninput="peDraft.phases[${i}].end=this.value">
+      <button class="pe-phase-del" onclick="peDelPhase(${i})" title="Delete phase">&#10005;</button>
+    </div>`
+  ).join('');
+}
+function peAddPhase(){
+  peDraft.phases = peDraft.phases || [];
+  peDraft.phases.push({id:'p'+Date.now(),name:'New phase',start:peDraft.raceDate,end:peDraft.raceDate});
+  renderPePhases();
+}
+function peDelPhase(i){ peDraft.phases.splice(i,1); renderPePhases(); }
+function renderPeWeek(){
+  const sportMeta = (window.TrainingPlan ? TrainingPlan.SPORTS : null);
+  document.getElementById('pe-week').innerHTML = PE_DAYS.map(d=>{
+    const active = peDraft.weekSplit[d] || [];
+    const toggles = PE_SPORTS.map(s=>{
+      const on = active.includes(s);
+      const meta = sportMeta && sportMeta[s];
+      const style = on && meta ? `background:${meta.bg};border-color:${meta.bd};color:${meta.c}` : '';
+      const label = meta ? meta.label : s;
+      return `<button class="pe-sport-toggle${on?' on':''}" style="${style}" onclick="peToggle('${d}','${s}')">${label}</button>`;
+    }).join('');
+    return `<div class="pe-day"><span class="pe-day-name">${d}</span><div class="pe-day-sports">${toggles}</div></div>`;
+  }).join('');
+}
+function peToggle(day,sport){
+  const arr = peDraft.weekSplit[day] || (peDraft.weekSplit[day]=[]);
+  const i = arr.indexOf(sport);
+  if(i>=0) arr.splice(i,1); else arr.push(sport);
+  renderPeWeek();
+}
+function savePlanEditor(){
+  peDraft.raceTitle = document.getElementById('pe-title').value.trim() || 'Training Plan';
+  peDraft.subtitle  = document.getElementById('pe-subtitle').value.trim();
+  peDraft.raceDate  = document.getElementById('pe-date').value || peDraft.raceDate;
+  PLAN_CFG = peDraft;
+  if(window.TrainingPlan) TrainingPlan.save(PLAN_CFG);
+  else localStorage.setItem('training_plan', JSON.stringify(PLAN_CFG));
+  closePlanEditor();
+  updateCD(); renderHeader(); renderPhaseNav();
+  const di = detectCurrentPhaseIndex();
+  currentPhase = di >= 0 ? di+1 : 1;
+  applyActivePhase();
+  render();
+}
+
 updateCD();
+renderHeader();
 
 /* ── Training data ──────────────────────────────────────────── */
 const PLAN = {
@@ -1128,12 +1283,10 @@ const DOW = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
 let openDays = new Set([DOW]);
 let currentPhase = 1;
 
-// Auto-detect phase from today's date
-const now = new Date();
-if      (now >= new Date('2026-10-19')) currentPhase = 4;
-else if (now >= new Date('2026-08-31')) currentPhase = 3;
-else if (now >= new Date('2026-07-07')) currentPhase = 2;
-else                                    currentPhase = 1;
+// Build the phase nav from the plan, then auto-detect the active phase
+renderPhaseNav();
+const _di = detectCurrentPhaseIndex();
+currentPhase = _di >= 0 ? _di + 1 : 1;
 
 applyActivePhase();
 
@@ -1195,6 +1348,11 @@ function sessionHTML(s){
 function render(){
   const plan = PLAN[currentPhase];
   const container = document.getElementById('week-container');
+  if(!plan){
+    const ph = (PLAN_CFG.phases||[])[currentPhase-1];
+    container.innerHTML = `<div class="phase-note">No detailed session breakdown saved for <strong>${esc0(ph?ph.name:'this phase')}</strong> yet. The weekly structure still applies — edit the plan to set sessions, or follow your saved routine for each day.</div>`;
+    return;
+  }
   let html = `<div class="phase-note">${plan.note}</div>`;
 
   plan.days.forEach(day => {
@@ -1239,16 +1397,18 @@ function updateGels(){
 }
 gelSlider.addEventListener('input', updateGels);
 
-const elecSlider = document.getElementById('elec-vol');
-const elecOut    = document.getElementById('elec-vol-out');
-function updateElec(){
-  const v = parseInt(elecSlider.value);
-  elecOut.textContent = v;
-  document.querySelectorAll('.elec-scale').forEach(el => {
-    el.textContent = fmt(parseFloat(el.dataset.base) * v / 1000);
-  });
-}
-elecSlider.addEventListener('input', updateElec);
+/* ── Live sync: refresh plan when another device edits it ──────── */
+window.addEventListener('sync:remote-change', (ev)=>{
+  if(window.TrainingPlan){
+    ev.markHandled();
+    PLAN_CFG = TrainingPlan.load();
+    updateCD(); renderHeader(); renderPhaseNav();
+    const di = detectCurrentPhaseIndex();
+    currentPhase = di >= 0 ? di+1 : currentPhase;
+    applyActivePhase();
+    render();
+  }
+});
 </script>
 </body>
 </html>
