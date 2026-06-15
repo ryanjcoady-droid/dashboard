@@ -193,22 +193,35 @@ const PHASE_COLORS = [
 ];
 
 // Read the shared, editable training plan (written by the workout dashboard).
-// Falls back to a minimal default if nothing has synced yet.
+// Falls back to a minimal default if nothing has synced yet, and backfills
+// any individual missing fields so a partially-saved plan still displays.
 function loadPlan(){
+  const DEFAULTS = {
+    raceTitle:'Ironman 70.3 Melbourne',
+    subtitle:'St Kilda Beach',
+    raceDate:'2026-11-08',
+    phases:[
+      {id:'p1',name:'Base Building',start:'2026-05-11',end:'2026-07-06'},
+      {id:'p2',name:'Volume Build',start:'2026-07-07',end:'2026-08-30'},
+      {id:'p3',name:'Race Specific',start:'2026-08-31',end:'2026-10-18'},
+      {id:'p4',name:'Taper',start:'2026-10-19',end:'2026-11-08'},
+    ],
+    weekSplit:{Mon:['swim','strength'],Tue:['strength','run'],Wed:['swim','bike'],Thu:['bike','run'],Fri:['strength','sport'],Sat:['swim','bike','run'],Sun:['rest']},
+  };
   try{
     const raw = localStorage.getItem('training_plan');
     if(raw){
-      const p = JSON.parse(raw);
-      if(p && p.phases && p.phases.length) return p;
+      const p = JSON.parse(raw) || {};
+      // Backfill any missing top-level fields from defaults
+      if(!p.raceTitle) p.raceTitle = DEFAULTS.raceTitle;
+      if(!p.raceDate)  p.raceDate  = DEFAULTS.raceDate;
+      if(p.subtitle == null) p.subtitle = '';
+      if(!Array.isArray(p.phases) || !p.phases.length) p.phases = DEFAULTS.phases;
+      if(!p.weekSplit) p.weekSplit = DEFAULTS.weekSplit;
+      return p;
     }
   }catch(e){}
-  return {
-    raceTitle:'(set your race in the Workout tab)',
-    raceSubtitle:'',
-    raceDate:'2026-11-08',
-    phases:[],
-    weekSplit:{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[],Sat:[],Sun:[]},
-  };
+  return DEFAULTS;
 }
 
 const SPORT_LABELS = {swim:'Swim',bike:'Bike',run:'Run',strength:'Strength',sport:'Volleyball',rest:'Rest'};
@@ -279,7 +292,7 @@ function buildPrompt(){
   }).join('\n');
   const todSports = (split[todShort]||[]).map(s=>SPORT_LABELS[s]||s).join(' + ') || 'Rest';
 
-  return `You are an expert triathlon coach. The athlete is training for: ${plan.raceTitle}${plan.raceSubtitle?(' ('+plan.raceSubtitle+')'):''}, race date ${plan.raceDate} (${d} days away). Infer the event type and distances from the race title.
+  return `You are an expert triathlon coach. The athlete is training for: ${plan.raceTitle}${plan.subtitle?(' ('+plan.subtitle+')'):''}, race date ${plan.raceDate} (${d} days away). Infer the event type and distances from the race title.
 
 Athlete profile: weight 60 kg · max HR 201 bpm · Zone 2: 131–151 bpm (ceiling ~141) · Zone 3: 141–155 bpm · Zone 4: 156–176 bpm.
 Current benchmarks: Zone 2 run ~8 km/h · swim ~2250 m per session · outdoor bike ~24 km/h.
