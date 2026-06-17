@@ -157,6 +157,7 @@ body{padding:28px 24px}
     <div class="title-sub" id="coach-subtitle">—</div>
   </div>
   <div class="header-right">
+    <button class="ghost-btn" onclick="openStravaSettings()">🔗 Strava</button>
     <button class="ghost-btn" onclick="openSettings()">⚙ API Key</button>
     <button class="ghost-btn btn-swim" id="refresh-btn" onclick="runAnalysis()" disabled>↺ Analyse</button>
   </div>
@@ -175,6 +176,36 @@ body{padding:28px 24px}
       <button class="ghost-btn" onclick="clearKey()" style="color:var(--run)">Clear</button>
     </div>
     <div class="overlay-status" id="stg-status"></div>
+  </div>
+</div>
+
+<div class="overlay" id="strava-overlay" onclick="if(event.target===this)closeStravaSettings()">
+  <div class="overlay-panel">
+    <button class="overlay-close" onclick="closeStravaSettings()">✕</button>
+    <div class="overlay-title">Connect Strava</div>
+    <div class="overlay-sub">A one-time setup so the coach can read your activities automatically. Everything is stored only in this browser. <strong>Heads-up:</strong> your client secret lives in browser storage — fine for a personal app in single-player mode, and you can rotate it anytime at strava.com/settings/api.</div>
+
+    <div id="strava-step1">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 1 — Your app credentials</div>
+      <div style="font-size:12px;color:var(--muted2);margin-bottom:10px;line-height:1.5">Go to <strong>strava.com/settings/api</strong>, create an app (Authorization Callback Domain: your GitHub Pages domain, e.g. <code>username.github.io</code>). Copy the Client ID and Client Secret here.</div>
+      <input class="field-input" id="strava-cid" placeholder="Client ID (e.g. 123456)" autocomplete="off">
+      <input class="field-input" id="strava-secret" type="password" placeholder="Client Secret" autocomplete="off">
+      <button class="ghost-btn btn-swim" onclick="stravaBeginAuth()" style="width:100%;justify-content:center;padding:11px">Authorise with Strava →</button>
+    </div>
+
+    <div id="strava-step2" style="display:none">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 2 — Paste the code</div>
+      <div style="font-size:12px;color:var(--muted2);margin-bottom:10px;line-height:1.5">After you approve access, Strava sends you back here with a <code>code</code> in the address bar. If it didn't auto-fill, copy the value of <code>code=</code> from the URL and paste it below.</div>
+      <input class="field-input" id="strava-code" placeholder="Authorisation code" autocomplete="off">
+      <button class="ghost-btn btn-swim" onclick="stravaExchangeCode()" style="width:100%;justify-content:center;padding:11px">Finish connection</button>
+    </div>
+
+    <div id="strava-connected" style="display:none">
+      <div style="background:var(--rest-bg);border:1px solid var(--rest-bd);border-radius:9px;padding:12px;font-size:13px;color:var(--rest);margin-bottom:12px">✓ Strava connected. Your recent activities will be pulled automatically on each analysis.</div>
+      <button class="ghost-btn" onclick="stravaDisconnect()" style="color:var(--run)">Disconnect Strava</button>
+    </div>
+
+    <div class="overlay-status" id="strava-status"></div>
   </div>
 </div>
 
@@ -271,6 +302,144 @@ function clearKey(){
   document.getElementById('stg-status').textContent='Key cleared.';
 }
 
+/* ── Strava integration ─────────────────────────────────────── */
+const ST_CID    = 'strava_client_id';
+const ST_SECRET = 'strava_client_secret';
+const ST_REFRESH= 'strava_refresh_token';
+const ST_ACCESS = 'strava_access_token';
+const ST_EXPIRY = 'strava_token_expiry';
+
+function stravaConnected(){ return !!localStorage.getItem(ST_REFRESH); }
+
+function openStravaSettings(){
+  document.getElementById('strava-cid').value = localStorage.getItem(ST_CID) || '';
+  document.getElementById('strava-secret').value = localStorage.getItem(ST_SECRET) || '';
+  document.getElementById('strava-status').textContent = '';
+  // Show the right step
+  const connected = stravaConnected();
+  document.getElementById('strava-step1').style.display = connected ? 'none' : 'block';
+  document.getElementById('strava-step2').style.display = 'none';
+  document.getElementById('strava-connected').style.display = connected ? 'block' : 'none';
+  document.getElementById('strava-overlay').classList.add('open');
+}
+function closeStravaSettings(){ document.getElementById('strava-overlay').classList.remove('open'); }
+
+function stravaBeginAuth(){
+  const cid = document.getElementById('strava-cid').value.trim();
+  const secret = document.getElementById('strava-secret').value.trim();
+  const st = document.getElementById('strava-status');
+  if(!cid || !secret){ st.style.color='var(--run)'; st.textContent='Enter both Client ID and Secret first.'; return; }
+  localStorage.setItem(ST_CID, cid);
+  localStorage.setItem(ST_SECRET, secret);
+  // Redirect URI must be this page on your registered callback domain.
+  // Use the coach page's own URL (works whether framed or standalone).
+  const here = (window.top === window.self) ? window.location.href : (document.location.href);
+  const redirect = here.split('?')[0].split('#')[0];
+  const url = 'https://www.strava.com/oauth/authorize'
+    + '?client_id=' + encodeURIComponent(cid)
+    + '&response_type=code'
+    + '&redirect_uri=' + encodeURIComponent(redirect)
+    + '&approval_prompt=auto'
+    + '&scope=read,activity:read_all';
+  // Break out of the dashboard iframe so Strava returns to a clean top-level page.
+  try { window.top.location.href = url; } catch(e) { window.location.href = url; }
+}
+
+async function stravaExchangeCode(){
+  const code = document.getElementById('strava-code').value.trim();
+  const st = document.getElementById('strava-status');
+  if(!code){ st.style.color='var(--run)'; st.textContent='Paste the authorisation code first.'; return; }
+  const cid = localStorage.getItem(ST_CID), secret = localStorage.getItem(ST_SECRET);
+  st.style.color='var(--muted)'; st.textContent='Connecting…';
+  try{
+    const res = await fetch('https://www.strava.com/api/v3/oauth/token',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({client_id:cid, client_secret:secret, code, grant_type:'authorization_code'})
+    });
+    const data = await res.json();
+    if(!res.ok || !data.refresh_token){ throw new Error(data.message || 'Token exchange failed'); }
+    localStorage.setItem(ST_REFRESH, data.refresh_token);
+    localStorage.setItem(ST_ACCESS, data.access_token);
+    localStorage.setItem(ST_EXPIRY, String(data.expires_at));
+    st.style.color='var(--rest)'; st.textContent='✓ Connected!';
+    // Clean the ?code= from the URL
+    history.replaceState({}, '', window.location.origin + window.location.pathname);
+    // If we're running standalone (loaded via the OAuth redirect, i.e. not in
+    // the dashboard iframe), guide the user back into the app.
+    const standalone = (window.top === window.self);
+    if(standalone){
+      document.getElementById('strava-step2').style.display = 'none';
+      document.getElementById('strava-connected').style.display = 'block';
+      st.style.color='var(--rest)';
+      st.innerHTML = '✓ Strava connected. You can close this tab and return to your dashboard — the Coach tab will now pull your activities automatically.';
+    } else {
+      setTimeout(()=>{ closeStravaSettings(); runAnalysis(); }, 700);
+    }
+  }catch(e){
+    st.style.color='var(--run)'; st.textContent='Failed: ' + e.message;
+  }
+}
+
+function stravaDisconnect(){
+  [ST_REFRESH, ST_ACCESS, ST_EXPIRY].forEach(k=>localStorage.removeItem(k));
+  document.getElementById('strava-status').style.color='var(--muted)';
+  document.getElementById('strava-status').textContent='Disconnected.';
+  openStravaSettings();
+}
+
+// Get a valid access token, refreshing if expired.
+async function stravaAccessToken(){
+  const now = Math.floor(Date.now()/1000);
+  const exp = parseInt(localStorage.getItem(ST_EXPIRY)||'0');
+  const cached = localStorage.getItem(ST_ACCESS);
+  if(cached && exp > now + 60) return cached;  // still valid (60s buffer)
+  // Refresh
+  const cid = localStorage.getItem(ST_CID), secret = localStorage.getItem(ST_SECRET), refresh = localStorage.getItem(ST_REFRESH);
+  if(!refresh) throw new Error('Strava not connected');
+  const res = await fetch('https://www.strava.com/api/v3/oauth/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({client_id:cid, client_secret:secret, refresh_token:refresh, grant_type:'refresh_token'})
+  });
+  const data = await res.json();
+  if(!res.ok || !data.access_token) throw new Error(data.message || 'Token refresh failed');
+  localStorage.setItem(ST_ACCESS, data.access_token);
+  localStorage.setItem(ST_EXPIRY, String(data.expires_at));
+  if(data.refresh_token) localStorage.setItem(ST_REFRESH, data.refresh_token); // Strava may rotate it
+  return data.access_token;
+}
+
+// Fetch activities from the last `days` days, summarised for the model.
+async function stravaFetchActivities(days){
+  const token = await stravaAccessToken();
+  const after = Math.floor((Date.now() - days*86400000)/1000);
+  const res = await fetch(`https://www.strava.com/api/v3/athlete/activities?after=${after}&per_page=100`,{
+    headers:{ 'Authorization':'Bearer ' + token }
+  });
+  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.message || ('Strava HTTP '+res.status)); }
+  const acts = await res.json();
+  // Map Strava sport types to our sport keys
+  const typeMap = {
+    Swim:'swim', Ride:'bike', VirtualRide:'bike', EBikeRide:'bike',
+    Run:'run', TrailRun:'run', VirtualRun:'run',
+    WeightTraining:'strength', Workout:'strength', Crossfit:'strength',
+    Walk:'walk', Hike:'walk', Yoga:'yoga'
+  };
+  return acts.map(a=>({
+    date: a.start_date_local ? a.start_date_local.slice(0,10) : '',
+    day: a.start_date_local ? DAY_SHORT[new Date(a.start_date_local).getDay()] : '',
+    sport: typeMap[a.type] || (a.type||'').toLowerCase(),
+    rawType: a.type,
+    name: a.name,
+    distance_km: a.distance ? Math.round(a.distance/100)/10 : 0,
+    moving_min: a.moving_time ? Math.round(a.moving_time/60) : 0,
+    avg_hr: a.average_heartrate ? Math.round(a.average_heartrate) : null,
+    max_hr: a.max_heartrate ? Math.round(a.max_heartrate) : null,
+    elev_m: a.total_elevation_gain ? Math.round(a.total_elevation_gain) : 0,
+  }));
+}
+
 function buildPrompt(){
   const plan = loadPlan();
   const phase = currentPhase();
@@ -341,9 +510,23 @@ async function runAnalysis(){
   setLoading();
   document.getElementById('refresh-btn').disabled = true;
 
-  const userMsg = custom
-    ? `Analyse my current training phase and give specific coaching recommendations.\n\nRecent training context:\n${custom}`
-    : `Based on the current training phase and today being ${DAYS[new Date().getDay()]}, give specific actionable coaching recommendations for this week.`;
+  // Pull real Strava activities if connected
+  let stravaData = null, stravaErr = null;
+  if(stravaConnected()){
+    try{
+      stravaData = await stravaFetchActivities(14);
+    }catch(e){ stravaErr = e.message; }
+  }
+
+  let userMsg;
+  if(stravaData){
+    userMsg = `Here are my actual Strava activities from the last 14 days (JSON). Analyse them against my plan and today being ${DAYS[new Date().getDay()]}. Compute weekSummary counts and totals from this real data, and build the compliance grid by matching these activities to the expected weekly sport split.\n\nActivities:\n${JSON.stringify(stravaData)}`;
+    if(custom) userMsg += `\n\nAdditional context from me:\n${custom}`;
+  } else {
+    userMsg = custom
+      ? `Analyse my current training phase and give specific coaching recommendations.\n\nRecent training context:\n${custom}`
+      : `Based on the current training phase and today being ${DAYS[new Date().getDay()]}, give specific actionable coaching recommendations for this week. I have not connected Strava, so set all weekSummary counts to 0 and mark compliance days as "upcoming" rather than missed.`;
+  }
 
   try {
     const res = await fetch(
@@ -365,7 +548,6 @@ async function runAnalysis(){
     );
     const raw = await res.json();
     if(!res.ok){ throw new Error(raw.error?.message || `HTTP ${res.status}`); }
-    // Surface non-STOP finish reasons (e.g. MAX_TOKENS, SAFETY) clearly
     const cand = raw.candidates?.[0];
     if(!cand){ throw new Error('Gemini returned no candidates. Check your API key and try again.'); }
     if(cand.finishReason && cand.finishReason !== 'STOP'){
@@ -375,7 +557,7 @@ async function runAnalysis(){
     if(!txt){ throw new Error('Gemini returned an empty response — try again.'); }
     const m = txt.match(/\{[\s\S]*\}/);
     if(!m) throw new Error('Could not parse the response. Tap Regenerate to retry.');
-    renderResults(JSON.parse(m[0]), custom);
+    renderResults(JSON.parse(m[0]), custom, stravaErr);
   } catch(e){
     renderError(e.message, custom);
   }
@@ -430,7 +612,7 @@ function customInputBlock(val=''){
   </div>`;
 }
 
-function renderResults(d, custom=''){
+function renderResults(d, custom='', stravaErr){
   const phase = currentPhase();
   const d2r = daysToRace();
   const wks = Math.floor(d2r/7);
@@ -473,7 +655,17 @@ function renderResults(d, custom=''){
   const phBd = phase?phase.bd:'var(--swim-bd)';
   const phC  = phase?phase.c:'var(--swim)';
 
-  document.getElementById('app').innerHTML = `
+  // Data-source banner
+  let srcBanner = '';
+  if(stravaConnected() && !stravaErr){
+    srcBanner = `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--rest);background:var(--rest-bg);border:1px solid var(--rest-bd);border-radius:8px;padding:7px 11px;margin-bottom:10px"><span>✓</span><span>Live Strava data · last 14 days</span></div>`;
+  } else if(stravaErr){
+    srcBanner = `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:7px 11px;margin-bottom:10px"><span>⚠</span><span>Strava unavailable (${esc(stravaErr)}) — analysis based on plan only. Tap 🔗 Strava to reconnect.</span></div>`;
+  } else {
+    srcBanner = `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;margin-bottom:10px"><span>🔗</span><span>Strava not connected — tap 🔗 Strava to auto-pull your activities.</span></div>`;
+  }
+
+  document.getElementById('app').innerHTML = srcBanner + `
     <div class="phase-banner" style="background:${phBg};border:1px solid ${phBd}">
       <div class="phase-dot" style="background:${phC}"></div>
       <div class="phase-name" style="color:${phC}">${esc(d.currentPhase||'')}</div>
@@ -535,6 +727,25 @@ function updateSubtitle(){
 
 function init(){
   updateSubtitle();
+
+  // Handle Strava OAuth redirect: ?code=... in the URL after authorising
+  const params = new URLSearchParams(window.location.search);
+  const stravaCode = params.get('code');
+  const stravaErr  = params.get('error');
+  if(stravaCode && localStorage.getItem(ST_CID) && !stravaConnected()){
+    // Auto-complete the connection
+    openStravaSettings();
+    document.getElementById('strava-step1').style.display = 'none';
+    document.getElementById('strava-step2').style.display = 'block';
+    document.getElementById('strava-code').value = stravaCode;
+    const st = document.getElementById('strava-status');
+    st.style.color='var(--muted)'; st.textContent='Finishing connection…';
+    stravaExchangeCode();
+    return;
+  } else if(stravaErr){
+    history.replaceState({}, '', window.location.origin + window.location.pathname);
+  }
+
   if(!getKey()){
     setupScreen();
   } else {
