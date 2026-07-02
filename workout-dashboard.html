@@ -489,7 +489,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       </tr>
     </table>
 
-    <div class="fuel-meta">Per gel: ~30 g carbs &middot; sodium covered by electrolyte drink</div>
+    <div class="fuel-meta">Per gel: ~30 g carbs</div>
 
     <div class="fuel-method-title">Method</div>
     <ol class="fuel-method">
@@ -501,18 +501,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     </ol>
   </div>
 
-  <!-- Electrolyte: commercial powder -->
-  <div class="fuel-card elec">
-    <div class="fuel-head">
-      <svg class="fuel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2.5c3 4 6 7 6 11a6 6 0 1 1-12 0c0-4 3-7 6-11z"/>
-      </svg>
-      <span class="fuel-name">Electrolyte Drink</span>
-      <span class="fuel-pill">Commercial powder</span>
-    </div>
-    <div class="fuel-sub">Mix your bought electrolyte powder per its label</div>
-    <div class="fuel-meta">Target on race day: ~500–800 mg sodium per hour. Check your product's per-serve sodium and dose to hit that range across your fluid intake.</div>
-  </div>
 </div>
 
 <!-- ── Plan Editor Modal ─────────────────────────────────────── -->
@@ -1345,6 +1333,42 @@ function sessionHTML(s){
   </div>`;
 }
 
+/* Map plan-editor sport keys → this page's session/tag keys */
+const SPLIT_TO_PAGE = { swim:'swim', bike:'bike', run:'run', strength:'str', sport:'sport', rest:'rest' };
+const DAYID_TO_SHORT = { mon:'Mon', tue:'Tue', wed:'Wed', thu:'Thu', fri:'Fri', sat:'Sat', sun:'Sun' };
+
+/* Generic fallback sessions for sports added via the plan editor that
+   have no detailed breakdown saved for the current phase. */
+const GENERIC_SESSION = {
+  swim: { type:'swim', title:'Swim — Zone 2 Aerobic', sets:[{label:'Session',target:'45–60 min',desc:'Zone 2 · technique focus · long stroke'}] },
+  bike: { type:'bike', title:'Bike — Zone 2', sets:[{label:'Session',target:'60–90 min',desc:'Zone 2 · cadence 85–95 rpm'}] },
+  run:  { type:'run',  title:'Run — Zone 2', sets:[{label:'Session',target:'40–60 min',desc:'Zone 2 · conversational pace'}] },
+  str:  { type:'str',  title:'Strength — Your Routine', sets:[{label:'Session',target:'~50 min',desc:'Follow your own programming'}] },
+  sport:{ type:'sport',title:'Sport Session', sets:[{label:'Session',target:'As scheduled',desc:'Play as scheduled · counts as unstructured conditioning'}] },
+  rest: { type:'rest', title:'Full Rest', sets:[{label:'Training',target:'None',desc:'Recovery day · sleep and nutrition are the session'}] },
+};
+
+/* Resolve a day's tags + sessions against the editable plan (weekSplit).
+   The saved split wins: sessions for removed sports are hidden, and sports
+   added in the editor get a generic placeholder session. */
+function resolveDay(day){
+  const short = DAYID_TO_SHORT[day.id];
+  const split = PLAN_CFG.weekSplit && PLAN_CFG.weekSplit[short];
+  if(!Array.isArray(split) || !split.length) return { tags: day.tags, sessions: day.sessions };
+  const tags = split.map(s => SPLIT_TO_PAGE[s] || s);
+  const sessions = [];
+  tags.forEach(t => {
+    const matches = (day.sessions||[]).filter(s => s.type === t);
+    if(matches.length){ sessions.push(...matches); }
+    else if(GENERIC_SESSION[t]){
+      sessions.push(Object.assign({}, GENERIC_SESSION[t], {
+        note:'Added via the plan editor — no detailed breakdown saved for this sport on this day in the current phase.'
+      }));
+    }
+  });
+  return { tags, sessions };
+}
+
 function render(){
   const plan = PLAN[currentPhase];
   const container = document.getElementById('week-container');
@@ -1358,13 +1382,14 @@ function render(){
   plan.days.forEach(day => {
     const isOpen  = openDays.has(day.id);
     const isToday = day.id === DOW;
+    const resolved = resolveDay(day);
 
-    const tagsHTML = day.tags.map(t => {
+    const tagsHTML = resolved.tags.map(t => {
       const cls = typeMap[t]?.tClass || '';
       return `<span class="tag ${cls}">${tagLabels[t] || t}</span>`;
     }).join('');
 
-    const sessHTML = day.sessions.map(sessionHTML).join('');
+    const sessHTML = resolved.sessions.map(sessionHTML).join('');
 
     html += `
     <div class="day-card${isToday ? ' today' : ''}${isOpen ? ' open' : ''}">
@@ -1398,17 +1423,27 @@ function updateGels(){
 gelSlider.addEventListener('input', updateGels);
 
 /* ── Live sync: refresh plan when another device edits it ──────── */
+function reloadPlanAndRender(){
+  if(!window.TrainingPlan) return;
+  PLAN_CFG = TrainingPlan.load();
+  updateCD(); renderHeader(); renderPhaseNav();
+  const di = detectCurrentPhaseIndex();
+  currentPhase = di >= 0 ? di+1 : currentPhase;
+  applyActivePhase();
+  render();
+}
 window.addEventListener('sync:remote-change', (ev)=>{
   if(window.TrainingPlan){
     ev.markHandled();
-    PLAN_CFG = TrainingPlan.load();
-    updateCD(); renderHeader(); renderPhaseNav();
-    const di = detectCurrentPhaseIndex();
-    currentPhase = di >= 0 ? di+1 : currentPhase;
-    applyActivePhase();
-    render();
+    reloadPlanAndRender();
   }
+});
+/* Same-browser updates (e.g. the AI coach tab editing the plan) fire a
+   'storage' event in this frame — re-render immediately. */
+window.addEventListener('storage', (e)=>{
+  if(e.key === 'training_plan') reloadPlanAndRender();
 });
 </script>
 </body>
 </html>
+

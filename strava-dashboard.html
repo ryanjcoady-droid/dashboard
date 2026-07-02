@@ -419,18 +419,38 @@ async function stravaFetchActivities(days){
   });
   if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.message || ('Strava HTTP '+res.status)); }
   const acts = await res.json();
-  // Map Strava sport types to our sport keys
+  // Map Strava sport types to our sport keys. Strava's newer `sport_type`
+  // field is preferred over the legacy `type` (which collapses many
+  // activities into generic values like "Workout").
   const typeMap = {
-    Swim:'swim', Ride:'bike', VirtualRide:'bike', EBikeRide:'bike',
+    Swim:'swim', OpenWaterSwim:'swim',
+    Ride:'bike', VirtualRide:'bike', EBikeRide:'bike', MountainBikeRide:'bike', GravelRide:'bike', Velomobile:'bike', Handcycle:'bike',
     Run:'run', TrailRun:'run', VirtualRun:'run',
-    WeightTraining:'strength', Workout:'strength', Crossfit:'strength',
-    Walk:'walk', Hike:'walk', Yoga:'yoga'
+    WeightTraining:'strength', Crossfit:'strength', HighIntensityIntervalTraining:'strength',
+    Volleyball:'sport', Pickleball:'sport', Racquetball:'sport', Squash:'sport', Badminton:'sport', Tennis:'sport', TableTennis:'sport', Soccer:'sport', Basketball:'sport',
+    Walk:'walk', Hike:'walk', Yoga:'yoga', Pilates:'yoga', Elliptical:'bike', StairStepper:'run', Rowing:'bike', VirtualRow:'bike'
   };
+  // Name-based fallback for ambiguous types (Strava logs many gym/team
+  // sports as generic "Workout"). Checked against the activity title.
+  function classify(a){
+    const raw = a.sport_type || a.type || '';
+    const nm = (a.name||'').toLowerCase();
+    if(/volley|vball/.test(nm)) return 'sport';
+    if(typeMap[raw]) return typeMap[raw];
+    if(raw === 'Workout'){
+      if(/strength|gym|lift|weights|legs|upper|lower|push|pull/.test(nm)) return 'strength';
+      if(/swim/.test(nm)) return 'swim';
+      if(/run|jog/.test(nm)) return 'run';
+      if(/ride|bike|cycl|spin/.test(nm)) return 'bike';
+      return 'strength';
+    }
+    return raw.toLowerCase() || 'other';
+  }
   return acts.map(a=>({
     date: a.start_date_local ? a.start_date_local.slice(0,10) : '',
     day: a.start_date_local ? DAY_SHORT[new Date(a.start_date_local).getDay()] : '',
-    sport: typeMap[a.type] || (a.type||'').toLowerCase(),
-    rawType: a.type,
+    sport: classify(a),
+    rawType: a.sport_type || a.type,
     name: a.name,
     distance_km: a.distance ? Math.round(a.distance/100)/10 : 0,
     moving_min: a.moving_time ? Math.round(a.moving_time/60) : 0,
@@ -486,6 +506,13 @@ Key coaching principles:
 - Aim for three swim sessions per week
 - Zone 2 on pre-fatigued legs builds fatigue resistance
 
+Activity data format: each Strava activity has a "sport" field using these keys — swim, bike, run, strength, sport, walk, yoga, other. The key "sport" means a team/racquet sport session (for this athlete: ${SPORT_LABELS.sport}). Match activities to the weekly split as follows:
+- swim ↔ Swim, bike ↔ Bike, run ↔ Run, strength ↔ Strength, sport ↔ ${SPORT_LABELS.sport}
+- Match case-insensitively and also check the activity "name" and "rawType" fields — e.g. an activity named "Volleyball" counts as ${SPORT_LABELS.sport} even if typed as a generic workout
+- Match each activity to the calendar day using its "date" and "day" fields
+- walk/yoga/other activities are bonus recovery work — do not count them as a planned sport
+- Days after today are "upcoming", never "missed". Today is only "missed" if clearly over.
+
 Use the most recent Strava activity data available to assess the last 7–14 days. Respond ONLY with raw JSON — no markdown, no explanation, just the JSON object:
 {
   "currentPhase": string,
@@ -494,10 +521,20 @@ Use the most recent Strava activity data available to assess the last 7–14 day
   "compliance": [{"day": string,"expected": [string],"completed": [string],"status": "complete"|"partial"|"missed"|"rest"|"upcoming"}],
   "recommendations": [{"priority": "high"|"medium"|"low","category": "swim"|"bike"|"run"|"strength"|"recovery"|"nutrition","title": string,"detail": string}],
   "zoneNote": string,
-  "nextSession": string
+  "nextSession": string,
+  "planUpdate": optional — see below
 }
 
-For the compliance array, use the athlete's weekly sport split above as the "expected" sports for each day.`;
+For the compliance array, use the athlete's weekly sport split above as the "expected" sports for each day (use the exact labels from the weekly structure), and list in "completed" the expected sports the athlete actually did that day.
+
+Plan editing: the athlete's message may ask you to change their training plan (e.g. "replace my volleyball with a run", "make Sunday a swim day", "move my race date"). ONLY in that case, add a "planUpdate" object containing JUST the fields being changed:
+{"weekSplit": {"Mon": [...], "Tue": [...], "Wed": [...], "Thu": [...], "Fri": [...], "Sat": [...], "Sun": [...]}, "raceTitle": string, "subtitle": string, "raceDate": "YYYY-MM-DD", "phases": [{"id": string, "name": string, "start": "YYYY-MM-DD", "end": "YYYY-MM-DD"}]}
+Rules for planUpdate:
+- weekSplit values are arrays of sport keys, ONLY from: swim, bike, run, strength, sport, rest ("sport" = ${SPORT_LABELS.sport})
+- When changing weekSplit, include ALL 7 days (copy unchanged days from the weekly structure above)
+- When changing phases, include the complete phases array
+- Omit "planUpdate" entirely if the athlete did not ask for a plan change. Never invent changes.
+- When you apply a planUpdate, mention what you changed in one of your recommendations.`;
 }
 
 async function runAnalysis(){
@@ -557,11 +594,59 @@ async function runAnalysis(){
     if(!txt){ throw new Error('Gemini returned an empty response — try again.'); }
     const m = txt.match(/\{[\s\S]*\}/);
     if(!m) throw new Error('Could not parse the response. Tap Regenerate to retry.');
-    renderResults(JSON.parse(m[0]), custom, stravaErr);
+    const parsed = JSON.parse(m[0]);
+    const planApplied = applyPlanUpdate(parsed.planUpdate);
+    // Once a requested plan change has been applied, clear the message so
+    // a later Regenerate doesn't re-apply it.
+    let showCustom = custom;
+    if(planApplied){ localStorage.setItem(CTX_LS, ''); showCustom = ''; }
+    renderResults(parsed, showCustom, stravaErr, planApplied);
   } catch(e){
     renderError(e.message, custom);
   }
   document.getElementById('refresh-btn').disabled = false;
+}
+
+/* ── Apply a coach-requested plan change to the shared training plan ──
+   Validates the model's planUpdate object, merges it into the plan in
+   localStorage ('training_plan'), which the Workout and Daily tabs read.
+   sync.js propagates it to other devices; a 'storage' event updates
+   sibling iframes in this browser instantly. */
+function applyPlanUpdate(pu){
+  if(!pu || typeof pu !== 'object' || Array.isArray(pu)) return null;
+  const plan = loadPlan();
+  const changes = [];
+  const VALID_SPORTS = ['swim','bike','run','strength','sport','rest'];
+  const DAYS7 = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+  if(pu.weekSplit && typeof pu.weekSplit === 'object'){
+    const ws = {};
+    let any = false;
+    DAYS7.forEach(d=>{
+      const arr = pu.weekSplit[d];
+      if(Array.isArray(arr)){
+        ws[d] = [...new Set(arr.map(s=>String(s).toLowerCase().trim()).filter(s=>VALID_SPORTS.includes(s)))];
+        any = true;
+      } else {
+        ws[d] = (plan.weekSplit && plan.weekSplit[d]) || [];
+      }
+    });
+    if(any){ plan.weekSplit = ws; changes.push('weekly sport split'); }
+  }
+  if(typeof pu.raceTitle === 'string' && pu.raceTitle.trim()){ plan.raceTitle = pu.raceTitle.trim(); changes.push('race title'); }
+  if(typeof pu.subtitle === 'string'){ plan.subtitle = pu.subtitle.trim(); changes.push('race subtitle'); }
+  if(isDate(pu.raceDate)){ plan.raceDate = pu.raceDate; changes.push('race date'); }
+  if(Array.isArray(pu.phases) && pu.phases.length &&
+     pu.phases.every(p=>p && typeof p.name==='string' && p.name.trim() && isDate(p.start) && isDate(p.end))){
+    plan.phases = pu.phases.map((p,i)=>({ id: p.id || ('p'+(i+1)), name: p.name.trim(), start: p.start, end: p.end }));
+    changes.push('training phases');
+  }
+
+  if(!changes.length) return null;
+  localStorage.setItem('training_plan', JSON.stringify(plan));
+  updateSubtitle();
+  return changes.join(', ');
 }
 
 function setLoading(){
@@ -604,15 +689,15 @@ function setupSave(){
 
 function customInputBlock(val=''){
   return `<div class="card">
-    <label class="custom-label" for="custom-input">Describe recent training <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional — for more specific advice)</span></label>
-    <textarea class="custom-textarea" id="custom-input" placeholder="e.g. Did Monday swim and legs. Missed Wednesday bike. Saturday ride was 45 min, HR sat at 138. Zone 2 feeling more comfortable this week.">${esc(val)}</textarea>
+    <label class="custom-label" for="custom-input">Talk to your coach <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional — add context or ask for plan changes)</span></label>
+    <textarea class="custom-textarea" id="custom-input" placeholder="e.g. 'Saturday ride was 45 min, HR sat at 138' — or ask for changes: 'Replace my Friday volleyball with a run' and the coach will update your workout plan for you.">${esc(val)}</textarea>
     <div style="display:flex;justify-content:flex-end;margin-top:10px">
-      <button class="ghost-btn btn-swim" onclick="runAnalysis()">↺ Regenerate</button>
+      <button class="ghost-btn btn-swim" onclick="runAnalysis()">↺ Send &amp; regenerate</button>
     </div>
   </div>`;
 }
 
-function renderResults(d, custom='', stravaErr){
+function renderResults(d, custom='', stravaErr, planApplied){
   const phase = currentPhase();
   const d2r = daysToRace();
   const wks = Math.floor(d2r/7);
@@ -665,7 +750,11 @@ function renderResults(d, custom='', stravaErr){
     srcBanner = `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;margin-bottom:10px"><span>🔗</span><span>Strava not connected — tap 🔗 Strava to auto-pull your activities.</span></div>`;
   }
 
-  document.getElementById('app').innerHTML = srcBanner + `
+  const planBanner = planApplied
+    ? `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--rest);background:var(--rest-bg);border:1px solid var(--rest-bd);border-radius:8px;padding:7px 11px;margin-bottom:10px"><span>✎</span><span>Training plan updated (${esc(planApplied)}) — the Workout and Daily tabs now reflect the change.</span></div>`
+    : '';
+
+  document.getElementById('app').innerHTML = srcBanner + planBanner + `
     <div class="phase-banner" style="background:${phBg};border:1px solid ${phBd}">
       <div class="phase-dot" style="background:${phC}"></div>
       <div class="phase-name" style="color:${phC}">${esc(d.currentPhase||'')}</div>
@@ -761,8 +850,13 @@ window.addEventListener('sync:remote-change', (ev)=>{
   ev.markHandled();
   updateSubtitle();
 });
+// Same-browser edits from the workout tab fire a 'storage' event here
+window.addEventListener('storage', (e)=>{
+  if(e.key === 'training_plan') updateSubtitle();
+});
 
 init();
 </script>
 </body>
 </html>
+

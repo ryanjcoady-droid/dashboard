@@ -3569,6 +3569,14 @@ updateOverall();
 initWeekStrip();
 loadGCal();
 
+// Live refresh of sport tags when the training plan is edited in another
+// tab/iframe (plan editor or AI coach) — 'storage' fires here on their write.
+window.addEventListener('storage', (e)=>{
+  if(e.key === 'training_plan'){
+    try{ refreshAllScheduleViews(); }catch(err){}
+  }
+});
+
 // ─── Midnight rollover ────────────────────────────────────────
 // The page captures today's date at load time. If the user keeps the
 // app open across midnight, we want it to reload so everything
