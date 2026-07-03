@@ -1,5 +1,5 @@
 /* service-worker.js — offline cache for the dashboard PWA. */
-const VERSION = 'v23';
+const VERSION = 'v24';
 const APP_CACHE = `dash-app-${VERSION}`;
 const RUNTIME = `dash-runtime-${VERSION}`;
 
