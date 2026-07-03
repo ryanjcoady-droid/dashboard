@@ -35,14 +35,17 @@
     ],
     // Weekly sport split — ordered list of sport keys per day.
     weekSplit: {
-      Mon: ['swim', 'strength'],
-      Tue: ['strength', 'run'],
-      Wed: ['swim', 'bike'],
-      Thu: ['bike', 'run'],
-      Fri: ['strength', 'sport'],
-      Sat: ['swim', 'bike', 'run'],
+      Mon: ['strength', 'bike'],
+      Tue: ['swim', 'run'],
+      Wed: ['bike', 'run'],
+      Thu: ['swim', 'strength'],
+      Fri: ['strength', 'bike'],
+      Sat: ['swim', 'run'],
       Sun: ['rest'],
     },
+    // Bump when the default split/phases change in a way that should
+    // supersede older saved plans (see migration in load()).
+    planVersion: 2,
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -52,6 +55,12 @@
       const raw = localStorage.getItem(PLAN_KEY);
       if (!raw) return clone(DEFAULT_PLAN);
       const p = JSON.parse(raw);
+      // Migration: saved plans older than the current default are replaced.
+      if ((p.planVersion || 0) < DEFAULT_PLAN.planVersion) {
+        const fresh = clone(DEFAULT_PLAN);
+        save(fresh);
+        return fresh;
+      }
       if (!p.raceTitle) p.raceTitle = DEFAULT_PLAN.raceTitle;
       if (!p.raceDate)  p.raceDate  = DEFAULT_PLAN.raceDate;
       if (!Array.isArray(p.phases) || !p.phases.length) p.phases = clone(DEFAULT_PLAN.phases);

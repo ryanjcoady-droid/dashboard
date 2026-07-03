@@ -549,7 +549,7 @@ let PLAN_CFG = (window.TrainingPlan ? TrainingPlan.load() : {
           {id:'p2',name:'Volume Build',start:'2026-07-07',end:'2026-08-30'},
           {id:'p3',name:'Race Specific',start:'2026-08-31',end:'2026-10-18'},
           {id:'p4',name:'Taper',start:'2026-10-19',end:'2026-11-08'}],
-  weekSplit:{Mon:['swim','strength'],Tue:['strength','run'],Wed:['swim','bike'],Thu:['bike','run'],Fri:['strength','sport'],Sat:['swim','bike','run'],Sun:['rest']}
+  weekSplit:{Mon:['strength','bike'],Tue:['swim','run'],Wed:['bike','run'],Thu:['swim','strength'],Fri:['strength','bike'],Sat:['swim','run'],Sun:['rest']}
 });
 
 function esc0(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -675,10 +675,30 @@ renderHeader();
 /* ── Training data ──────────────────────────────────────────── */
 const PLAN = {
   1: {
-    note: '<strong>Phase 1 — Base Building (11 May – 6 Jul · 8 weeks).</strong> All cardio in Zone 2 (65–75% MHR). Swim focus is technique and aerobic base. Resist going hard.',
+    note: '<strong>Phase 1 — Base Building (11 May – 6 Jul · 8 weeks).</strong> All cardio in Zone 2 (65–75% MHR). New weekly split: strength pairs with bike days, swims pair with runs, Friday is the long ride, Saturday the long run, Sunday full rest. Resist going hard.',
     days: [
       {
-        id:'mon', name:'Monday', tags:['swim','str'],
+        id:'mon', name:'Monday', tags:['str','bike'],
+        sessions:[
+          { type:'str', title:'Upper — Your Routine',
+            sets:[
+              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+            ],
+            note:'Upper first, bike after. Minimal leg interference — the easy spin doubles as recovery flushing.'
+          },
+          { type:'bike', title:'Easy Zone 2 Bike',
+            sets:[
+              {label:'Warm-up',   target:'5 min',       desc:'Easy spin · let HR settle'},
+              {label:'Main',      target:'30–40 min',   desc:'Zone 2 · 65–75% MHR · nasal breathing only'},
+              {label:'Cool-down', target:'5 min',       desc:'Drop intensity · HR below 60%'},
+            ],
+            totals:'40–50 min · Zone 2',
+            note:'Recovery-flavoured start to the week. Nasal breathing is the Z2 test — if you have to mouth-breathe you\'re above Z2.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['swim','run'],
         sessions:[
           { type:'swim', title:'Swim — Technique & Aerobic Base',
             sets:[
@@ -689,39 +709,41 @@ const PLAN = {
               {label:'Cool-down', target:'1 × 100 m',   desc:'Easy backstroke or very easy free'},
             ],
             totals:'1100 m total',
-            note:'Phase 1 priority is stroke mechanics. If 6×100 feels easy by week 4, add 2 reps. Rest intervals are generous — don\'t rush them.'
+            note:'Phase 1 priority is stroke mechanics. Rest intervals are generous — don\'t rush them.'
           },
-          { type:'str', title:'Legs — Your Routine',
+          { type:'run', title:'Easy Run — Zone 2 + Strides',
             sets:[
-              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+              {label:'Main',      target:'60 min',       desc:'Zone 2 · 65–75% MHR · conversational throughout'},
+              {label:'Strides',   target:'4 × 20 s',     desc:'Fast but relaxed · full recovery walk between · after the run'},
             ],
-            note:'Swim first, legs after. Keep volume controlled — legs are supporting bike and run sessions throughout the week.'
+            totals:'~60 min · Zone 2',
+            note:'Strict Z2. If HR drifts above 75% MHR, slow down or take a brief walk break. Strides are free neuromuscular work — smooth, not sprinting.'
           },
         ]
       },
       {
-        id:'tue', name:'Tuesday', tags:['str','run'],
+        id:'wed', name:'Wednesday', tags:['bike','run'],
         sessions:[
-          { type:'str', title:'Upper — Your Routine',
+          { type:'bike', title:'Quality Bike — Tempo Intro',
             sets:[
-              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin · build to Z2'},
+              {label:'Main set',  target:'3 × 8 min',   desc:'Zone 3 · 76–85% MHR · 5 min easy spin between'},
+              {label:'Cool-down', target:'5 min',       desc:'Easy spin'},
             ],
-            note:'~50 min. Upper session has minimal leg interference — run after is uncompromised.'
+            totals:'~55 min',
+            note:'The one midweek quality day. Controlled Z3, not all-out — you should finish each interval knowing you had another in the tank.'
           },
-          { type:'run', title:'Long Easy Run — Zone 2 Base',
+          { type:'run', title:'Brick Run — Off the Bike',
             sets:[
-              {label:'Progression',   target:'Weeks 1–8',    desc:'Start at 6 km · build by 0.5 km/week to 9 km'},
-              {label:'Target volume', target:'9 km',         desc:'Conversational pace throughout · Zone 2 only'},
-              {label:'Pace target',   target:'~5:40–6:30/km',desc:'Whatever keeps HR at 65–75% MHR'},
-              {label:'Incline',       target:'1%',           desc:'If treadmill — replicates outdoor resistance'},
+              {label:'Brick run', target:'10 min',      desc:'Zone 2 immediately off the bike · no rest · expect heavy legs'},
             ],
-            totals:'9 km · Zone 2',
-            note:'Tuesday is now the weekly long Z2 run — the highest-return session for building the aerobic engine that underpins the 70.3 half-marathon. Strict Z2 throughout. If HR drifts above 75% MHR, slow down or take a brief walk break.'
+            totals:'10 min run',
+            note:'Short in Phase 1 — just adapting the neuromuscular transition. Heavy legs in the first 2 km is normal and improves across phases.'
           },
         ]
       },
       {
-        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        id:'thu', name:'Thursday', tags:['swim','str'],
         sessions:[
           { type:'swim', title:'Swim — Volume & Endurance',
             sets:[
@@ -731,81 +753,55 @@ const PLAN = {
               {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
             ],
             totals:'1100 m total',
-            note:'Wednesday is a second swim day — more volume, slightly less drill focus than Monday. Even splits across 8×100 is the goal.'
+            note:'Second swim day — more volume, slightly less drill focus than Tuesday. Even splits across 8×100 is the goal.'
           },
-          { type:'bike', title:'Zone 2 — Assault Bike',
+          { type:'str', title:'Legs — Your Routine',
             sets:[
-              {label:'Warm-up',   target:'5 min',       desc:'Easy spin · let HR settle'},
-              {label:'Main',      target:'30 min',      desc:'Zone 2 · 65–75% MHR · nasal breathing only'},
-              {label:'Cool-down', target:'5 min',       desc:'Drop intensity · HR below 60%'},
+              {label:'Session',   target:'~50 min',     desc:'Injury prevention + power focus · step-ups, not split squats'},
             ],
-            totals:'40 min · Zone 2',
-            note:'Nasal breathing is the Z2 test — if you have to mouth-breathe you\'re above Z2. Keep RPM comfortable, not grinding.'
+            note:'Swim first, legs after. Keep the dose controlled — tomorrow is the long ride. If Friday ride quality drops, cut volume here, not the ride.'
           },
         ]
       },
       {
-        id:'thu', name:'Thursday', tags:['bike','run'],
-        sessions:[
-          { type:'bike', title:'Long Bike + Brick Run',
-            sets:[
-              {label:'Warm-up',   target:'10 min',      desc:'Easy assault bike or outdoor spin'},
-              {label:'Bike main', target:'60 min',      desc:'Zone 2 · 65–75% MHR · 85–90 rpm cadence'},
-              {label:'Cool-down', target:'5 min',       desc:'Easy spin'},
-              {label:'Brick run', target:'10 min',      desc:'Zone 2 immediately off the bike · no rest · expect heavy legs'},
-            ],
-            totals:'75 min bike · 10 min run',
-            note:'No gym today — Thursday is pure tri work. The brick run is short in Phase 1, just adapting the neuromuscular transition. The heavy-leg feeling in the first 2 km is normal and will improve across phases.'
-          },
-        ]
-      },
-      {
-        id:'fri', name:'Friday', tags:['str','sport'],
+        id:'fri', name:'Friday', tags:['str','bike'],
         sessions:[
           { type:'str', title:'Upper — Your Routine (second session)',
             sets:[
-              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · push-focused'},
+              {label:'Session',   target:'~50 min',     desc:'Follow your own programming'},
             ],
-            note:'Push-focused upper session. Keep it to ~50 min — volleyball follows.'
+            note:'Day off work — upper session first, then the week\'s key ride.'
           },
-          { type:'sport', title:'Volleyball',
+          { type:'bike', title:'Long Ride — Zone 2 Endurance',
             sets:[
-              {label:'Session',   target:'2 hr',        desc:'Light recreational play · no structured intensity'},
-              {label:'HR',        target:'Zone 1–2',    desc:'Incidental — don\'t chase it'},
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin · 70–75 rpm'},
+              {label:'Main',      target:'60–70 min',   desc:'Zone 2 · 65–75% MHR · 85–95 rpm · flat to rolling terrain'},
+              {label:'Cool-down', target:'10 min',      desc:'Easy spin'},
             ],
-            note:'Light work — treat as active recovery before Saturday\'s big day.'
+            totals:'~80–90 min · Zone 2',
+            note:'Friday is now the long-ride slot — the only day with room to grow this toward 2.5–3 h in later phases. Cadence discipline (85–95 rpm) matters more than speed.'
           },
         ]
       },
       {
-        id:'sat', name:'Saturday', tags:['swim','bike','run'],
+        id:'sat', name:'Saturday', tags:['swim','run'],
         sessions:[
-          { type:'swim', title:'Swim — Third Session (short sharpener)',
+          { type:'swim', title:'Swim — Third Session (moderate)',
             sets:[
               {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free'},
               {label:'Main set',  target:'5 × 100 m',   desc:'Zone 2 · 25 s rest · consistent effort'},
               {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
             ],
             totals:'800 m total',
-            note:'Saturday swim is short — keep it sharp and efficient. Three swim sessions per week is the 70.3 minimum. Volume builds in Phase 2.'
+            note:'Swim first, run second — keep the swim moderate so the long run stays the priority. Three swims per week is the 70.3 minimum.'
           },
-          { type:'bike', title:'Outdoor Long Ride — Zone 2 Endurance',
+          { type:'run', title:'Long Run — Zone 2',
             sets:[
-              {label:'Warm-up',   target:'10 min',      desc:'Easy spin · 70–75 rpm'},
-              {label:'Main',      target:'55 min',      desc:'Zone 2 · 65–75% MHR · 85–95 rpm · flat to rolling terrain'},
-              {label:'Cool-down', target:'10 min',      desc:'Easy spin'},
+              {label:'Main',      target:'75 min',      desc:'Zone 2 · 65–75% MHR · conversational throughout'},
+              {label:'Pace',      target:'~7:00–7:30/km', desc:'Whatever keeps HR at 65–75% MHR — pace is the output, not the target'},
             ],
-            totals:'~75 min · ~28–35 km',
-            note:'Phase 1 outdoor ride targets 60–75 min. Cadence discipline (85–95 rpm) matters more than speed. If HR climbs on hills, shift down and spin rather than grind.'
-          },
-          { type:'run', title:'Tempo Run — Zone 3',
-            sets:[
-              {label:'Warm-up',   target:'1 km',        desc:'Easy Zone 2 jog'},
-              {label:'Tempo',     target:'3 km',        desc:'Zone 3 · 76–85% MHR · comfortably hard · hold pace'},
-              {label:'Cool-down', target:'1 km',        desc:'Easy jog back to Z2'},
-            ],
-            totals:'5 km total',
-            note:'Run off the bike is deliberate — mimics race day. Even a short Zone 3 effort on fatigued legs builds the specific resilience needed for the 70.3 run leg.'
+            totals:'~75 min · Zone 2',
+            note:'Running the day after the long ride is deliberate — residual bike fatigue mimics the 70.3 run leg. Sunday\'s full rest absorbs the block.'
           },
         ]
       },
@@ -818,7 +814,7 @@ const PLAN = {
               {label:'Optional',  target:'Easy walk',    desc:'30 min max if you want to move'},
               {label:'Focus',     target:'Recovery',     desc:'Sleep, nutrition, foam roll, stretch'},
             ],
-            note:'Sunday rest is non-negotiable. Six training days produce adaptation only when the seventh allows repair. This is especially true with 3 swim sessions, 3 bike sessions and 2 runs in the week.'
+            note:'Sunday rest is non-negotiable — it sits directly after the Friday–Saturday long block and is what makes that pairing sustainable.'
           },
         ]
       },
@@ -826,139 +822,135 @@ const PLAN = {
   },
 
   2: {
-    note: '<strong>Phase 2 — Volume Build (7 Jul – 30 Aug · 8 weeks).</strong> Swim extends to 2000–2500 m per session. Outdoor ride builds to 60–75 km. Tuesday long run extends to 13–14 km (10 km Z2 plus tempo finish). Brick run on Thursday extends to 20 min. Start practising race nutrition on the bike.',
+    note: '<strong>Phase 2 — Volume Build (7 Jul – 30 Aug · 8 weeks).</strong> Swims extend to 2000–2400 m. Friday long ride builds 90 min → 2.5 h. Saturday long run builds to 90 min. Wednesday is the only quality day. Practise race nutrition on every ride over 90 min. Every 4th week is a deload: cut volume ~40%, keep Sunday fully off.',
     days: [
       {
-        id:'mon', name:'Monday', tags:['swim','str'],
+        id:'mon', name:'Monday', tags:['str','bike'],
         sessions:[
-          { type:'swim', title:'Swim — Volume Build',
+          { type:'str', title:'Upper — Your Routine',
             sets:[
-              {label:'Warm-up',     target:'1 × 400 m',   desc:'Easy free · settle into rhythm'},
-              {label:'Drill',       target:'4 × 50 m',    desc:'Catch-up or fingertip drag · 15 s rest'},
-              {label:'Main set',    target:'10 × 100 m',  desc:'Zone 2 · 20 s rest · count strokes · aim for even splits'},
-              {label:'Threshold',   target:'4 × 50 m',    desc:'Zone 3–4 · hard effort · 20 s rest · builds speed reserve'},
-              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy backstroke or free'},
+              {label:'Session',   target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
             ],
-            totals:'2000 m total',
-            note:'10×100 is the core 70.3 swim set. Short rest teaches you to swim without full recovery — exactly what a 1.9 km race demands. Time yourself across the 10 reps — splits should be consistent.'
+            note:'Upper first, easy bike after.'
+          },
+          { type:'bike', title:'Easy Zone 2 Bike',
+            sets:[
+              {label:'Warm-up',   target:'5 min',       desc:'Easy spin'},
+              {label:'Main',      target:'45–50 min',   desc:'Zone 2 · 65–75% MHR · nasal breathing only · 85–95 rpm'},
+              {label:'Cool-down', target:'5 min',       desc:'Easy'},
+            ],
+            totals:'~60 min · Zone 2',
+            note:'Genuinely easy — this ride adds aerobic volume, not fitness stress. Monday sets up the week; don\'t borrow from it.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['swim','run'],
+        sessions:[
+          { type:'swim', title:'Swim — Aerobic Endurance',
+            sets:[
+              {label:'Warm-up',   target:'1 × 300 m',   desc:'Easy free · long stroke'},
+              {label:'Drill set', target:'4 × 50 m',    desc:'Alternate catch-up / fingertip drag · 15 s rest'},
+              {label:'Main set',  target:'10 × 100 m',  desc:'Zone 2 · 20 s rest · even splits (progress to 5 × 200 m by week 6)'},
+              {label:'Pull set',  target:'4 × 100 m',   desc:'Pull buoy · 20 s rest · focus on catch'},
+              {label:'Cool-down', target:'1 × 200 m',   desc:'Easy'},
+            ],
+            totals:'2100 m total',
+            note:'Volume is the Phase 2 swim goal — building toward comfortably swimming beyond race distance (1.9 km) in a single session.'
+          },
+          { type:'run', title:'Easy Run — Zone 2 + Strides',
+            sets:[
+              {label:'Main',      target:'60–75 min',   desc:'Zone 2 · 65–75% MHR · conversational'},
+              {label:'Strides',   target:'4–6 × 20 s',  desc:'Fast but relaxed · full recovery between'},
+            ],
+            totals:'60–75 min · Zone 2',
+            note:'Second run of the week — supports Saturday\'s long run without competing with it. Cap at 75 min; the long-run progression happens Saturday.'
+          },
+        ]
+      },
+      {
+        id:'wed', name:'Wednesday', tags:['bike','run'],
+        sessions:[
+          { type:'bike', title:'Quality Bike — Tempo Build',
+            sets:[
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin · build to Z2'},
+              {label:'Main set',  target:'3 × 12 min',  desc:'Zone 3 · 76–85% MHR · 5 min easy between (build to 3 × 15 min by week 6)'},
+              {label:'Cool-down', target:'5 min',       desc:'Easy spin'},
+            ],
+            totals:'~70 min',
+            note:'The week\'s one quality day. Z3 here builds the sustained power that becomes race pace in Phase 3.'
+          },
+          { type:'run', title:'Brick Run — Off the Bike',
+            sets:[
+              {label:'Brick run', target:'20 min',      desc:'Straight off the bike · Zone 2 · settle into rhythm within 5 min'},
+            ],
+            totals:'20 min run',
+            note:'Longer than Phase 1 but still easy — the quality already happened on the bike. Goal: legs feel normal by minute 10.'
+          },
+        ]
+      },
+      {
+        id:'thu', name:'Thursday', tags:['swim','str'],
+        sessions:[
+          { type:'swim', title:'Swim — Technique & Skills',
+            sets:[
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free'},
+              {label:'Drill set', target:'6 × 50 m',    desc:'Mixed drills · 15 s rest · pick one weakness per week'},
+              {label:'Main set',  target:'6 × 150 m',   desc:'Zone 2 · 25 s rest · sighting every 6th stroke on odd reps'},
+              {label:'Kick set',  target:'4 × 50 m',    desc:'Board kick · 20 s rest'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
+            ],
+            totals:'1800 m total',
+            note:'Start practising sighting now — lifting the eyes without breaking stroke rhythm takes weeks to groove and St Kilda is an ocean swim.'
           },
           { type:'str', title:'Legs — Your Routine',
             sets:[
-              {label:'Session',     target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+              {label:'Session',   target:'~50 min',     desc:'Injury prevention + power · step-ups, not split squats'},
             ],
-            note:'Same structure as Phase 1. Strength volume holds steady — volume increase is in cardio only.'
+            note:'Controlled dose — the Friday long ride is now the week\'s biggest session. If ride quality suffers, this is what gets trimmed.'
           },
         ]
       },
       {
-        id:'tue', name:'Tuesday', tags:['str','run'],
+        id:'fri', name:'Friday', tags:['str','bike'],
         sessions:[
-          { type:'str', title:'Upper — Your Routine',
+          { type:'str', title:'Upper — Your Routine (second session)',
             sets:[
-              {label:'Session',     target:'~50 min',     desc:'Follow your own programming · hypertrophy intensity'},
+              {label:'Session',   target:'~45 min',     desc:'Follow your own programming'},
             ],
-            note:'Upper session has minimal leg interference — Tuesday long run after is uncompromised.'
+            note:'Keep it to ~45 min — the long ride is the priority today.'
           },
-          { type:'run', title:'Long Run with Tempo Finish',
+          { type:'bike', title:'Long Ride — Zone 2 Endurance + Nutrition',
             sets:[
-              {label:'Easy',        target:'10 km',       desc:'Zone 2 — conversational · this is the aerobic base block'},
-              {label:'Tempo',       target:'2 km',        desc:'Zone 3 · 76–85% MHR · hold pace'},
-              {label:'Easy',        target:'1 km',        desc:'Cool-down'},
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin'},
+              {label:'Main',      target:'80 min → 2 h 10', desc:'Zone 2 · 65–75% MHR · 85–95 rpm · add ~15 min/week'},
+              {label:'Nutrition', target:'2 flasks/hr', desc:'DIY gel every 30 min (~80 g carbs/hr) on all rides over 90 min · electrolytes in bottles'},
+              {label:'Cool-down', target:'10 min',      desc:'Easy spin'},
             ],
-            totals:'13 km total',
-            note:'Easy portion extended from 5 to 10 km — this becomes the weekly long aerobic run. Tempo finish is preserved as race-specific top-end work. By week 6 of Phase 2, push the tempo block to 3 km (total 14 km).'
+            totals:'90 min → 2.5 h · Zone 2',
+            note:'The key volume session of the week. Gut training is part of the workout — race-day carb absorption is trained, not assumed. Deload weeks: cap at 90 min.'
           },
         ]
       },
       {
-        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        id:'sat', name:'Saturday', tags:['swim','run'],
         sessions:[
-          { type:'swim', title:'Swim — Threshold & Volume',
+          { type:'swim', title:'Swim — Moderate Aerobic',
             sets:[
-              {label:'Warm-up',     target:'1 × 300 m',   desc:'Easy free'},
-              {label:'Main set A',  target:'6 × 200 m',   desc:'Zone 2–3 · 30 s rest · build pace across reps'},
-              {label:'Main set B',  target:'4 × 100 m',   desc:'Zone 3 · 20 s rest · harder effort'},
-              {label:'Kick',        target:'4 × 50 m',    desc:'Board kick · 20 s rest'},
-              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy'},
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free'},
+              {label:'Main set',  target:'8 × 100 m',   desc:'Zone 2 · 20 s rest · smooth and even'},
+              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
             ],
-            totals:'2100 m total',
-            note:'200 m reps build the sustained effort needed for the 1.9 km race distance. Build pace across the 6 reps — first two conservative, last two at the top of Zone 3.'
+            totals:'1300 m total',
+            note:'Swim first, run second. Moderate on purpose — the long run is today\'s priority session.'
           },
-          { type:'bike', title:'Zone 2 — Assault Bike (extended)',
+          { type:'run', title:'Long Run — Zone 2 Progression',
             sets:[
-              {label:'Warm-up',     target:'5 min',       desc:'Easy spin'},
-              {label:'Main',        target:'40 min',      desc:'Zone 2 · 65–75% MHR · nasal breathing'},
-              {label:'Cool-down',   target:'5 min',       desc:'Easy'},
+              {label:'Main',      target:'75 → 90 min', desc:'Zone 2 · 65–75% MHR · add ~5 min/week · cap at 90 min'},
+              {label:'Fuel',      target:'1 flask/hr',  desc:'Practise taking gel on runs over 75 min'},
             ],
-            totals:'50 min · Zone 2',
-            note:'5 min longer than Phase 1. Add 5 min every 2–3 weeks across Phase 2.'
-          },
-        ]
-      },
-      {
-        id:'thu', name:'Thursday', tags:['bike','run'],
-        sessions:[
-          { type:'bike', title:'Long Bike + Brick Run (extended)',
-            sets:[
-              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
-              {label:'Bike main',   target:'80 min',      desc:'Zone 2 · 65–75% MHR · 85–90 rpm'},
-              {label:'Cool-down',   target:'5 min',       desc:'Easy'},
-              {label:'Brick run',   target:'20 min',      desc:'Zone 2–3 · immediately off bike · no rest · hold pace despite heavy legs'},
-            ],
-            totals:'95 min bike · 20 min run',
-            note:'Brick run doubles from Phase 1. The first 5 min will feel terrible — that\'s the transition. Push through it, the legs come good. Practise with race nutrition: 1 gel per 30 min on the bike.'
-          },
-        ]
-      },
-      {
-        id:'fri', name:'Friday', tags:['str','sport'],
-        sessions:[
-          { type:'str', title:'Upper — Your Routine',
-            sets:[
-              {label:'Session',     target:'~50 min',     desc:'Follow your own programming · push-focused'},
-            ],
-            note:'Push-focused upper session. Keep it to ~50 min — volleyball follows.'
-          },
-          { type:'sport', title:'Volleyball',
-            sets:[
-              {label:'Session',     target:'2 hr',        desc:'Light recreational play · no structured intensity'},
-              {label:'HR',          target:'Zone 1–2',    desc:'Incidental — don\'t chase it'},
-            ],
-            note:'Light work — treat as active recovery before Saturday\'s big day. Don\'t go hard.'
-          },
-        ]
-      },
-      {
-        id:'sat', name:'Saturday', tags:['swim','bike','run'],
-        sessions:[
-          { type:'swim', title:'Swim — Race Pace Intro',
-            sets:[
-              {label:'Warm-up',     target:'1 × 300 m',   desc:'Easy free'},
-              {label:'Main set',    target:'6 × 100 m',   desc:'Race pace · 20 s rest · time yourself'},
-              {label:'Easy',        target:'4 × 50 m',    desc:'Zone 2 · flush lactic'},
-              {label:'Cool-down',   target:'1 × 100 m',   desc:'Easy'},
-            ],
-            totals:'1100 m total',
-            note:'First introduction of race-pace effort. Note your 100 m split — this is your baseline. Target sub-1:50/100 m for a comfortable race swim.'
-          },
-          { type:'bike', title:'Outdoor Long Ride — Building',
-            sets:[
-              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
-              {label:'Main',        target:'90 min',      desc:'Zone 2 · 65–75% MHR · 85–95 rpm · build to 55–60 km'},
-              {label:'Nutrition',   target:'Every 30 min',desc:'1 DIY gel (30 g carbs) + 250 ml electrolyte drink'},
-              {label:'Cool-down',   target:'10 min',      desc:'Easy'},
-            ],
-            totals:'~110 min · ~50–60 km',
-            note:'Start executing your full race nutrition plan on long rides. Note gut feel — any GI issues at this distance will compound to 90 km on race day.'
-          },
-          { type:'run', title:'Tempo Run — Building',
-            sets:[
-              {label:'Warm-up',     target:'1 km',        desc:'Easy Zone 2'},
-              {label:'Tempo',       target:'5 km',        desc:'Zone 3 · 76–85% MHR · hold pace'},
-              {label:'Easy',        target:'2 km',        desc:'Cool-down'},
-            ],
-            totals:'8 km total',
-            note:'Run off a 90 min bike ride. Legs will be fatigued — this is the whole point. Building to a half-marathon off the bike by end of Phase 3.'
+            totals:'75–90 min · Zone 2',
+            note:'The day-after-long-ride timing is the point: running on residual bike fatigue is exactly the 70.3 demand. Strict Z2 — walk breaks beat HR drift. Deload weeks: 60 min.'
           },
         ]
       },
@@ -967,10 +959,11 @@ const PLAN = {
         sessions:[
           { type:'rest', title:'Full Rest',
             sets:[
-              {label:'Training',    target:'None',        desc:'No structured sessions'},
-              {label:'Optional',    target:'Easy walk',   desc:'30 min max'},
+              {label:'Training',  target:'None',         desc:'No structured sessions'},
+              {label:'Optional',  target:'Easy walk',    desc:'30 min max'},
+              {label:'Focus',     target:'Recovery',     desc:'Sleep, nutrition, foam roll, stretch'},
             ],
-            note:'After a heavy Saturday (swim + 90 min ride + 8 km run), Sunday rest is essential.'
+            note:'The Friday–Saturday long block only works because Sunday is fully off. Watch morning HR on Mondays — if it\'s trending up across weeks, pull the next deload forward.'
           },
         ]
       },
@@ -978,139 +971,127 @@ const PLAN = {
   },
 
   3: {
-    note: '<strong>Phase 3 — Race Specific (31 Aug – 18 Oct · 7 weeks).</strong> Gym volume drops ~30% — maintaining strength, not building. Tuesday long run extends to 16–18 km with standalone 21 km benchmark in week 5. Complete race-distance swim (1.9 km), 90 km ride and half-marathon this phase. Execute your exact nutrition plan on every long session.',
+    note: '<strong>Phase 3 — Race Specific (31 Aug – 18 Oct · 7 weeks).</strong> Gym drops ~30% — maintaining, not building. Wednesday becomes race-pace work (Z3, 141–155 bpm). Friday ride reaches 2.5–3 h with a 90 km race simulation around week 4. Saturday long run reaches 100–105 min with a 21 km benchmark around week 5. Open water swims whenever possible. Execute your exact race nutrition on every long session.',
     days: [
       {
-        id:'mon', name:'Monday', tags:['swim','str'],
+        id:'mon', name:'Monday', tags:['str','bike'],
         sessions:[
-          { type:'swim', title:'Swim — Race Distance Build',
+          { type:'str', title:'Upper — Maintenance',
             sets:[
-              {label:'Warm-up',     target:'1 × 400 m',   desc:'Easy free'},
-              {label:'Race pace',   target:'3 × 400 m',   desc:'Race-pace effort (Zone 3) · 40 s rest · this is your 70.3 swim pace'},
-              {label:'Threshold',   target:'4 × 100 m',   desc:'Zone 4 · hard · 20 s rest · builds speed reserve'},
-              {label:'Easy',        target:'4 × 100 m',   desc:'Zone 2 · 15 s rest · flush lactic'},
-              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy'},
+              {label:'Session',   target:'~35 min',     desc:'Reduced volume · keep intensity · 2 working sets per movement'},
+            ],
+            note:'Maintenance dose. Strength is preserved with far less volume than it took to build — spend the freed-up recovery on the tri sessions.'
+          },
+          { type:'bike', title:'Easy Zone 2 Bike',
+            sets:[
+              {label:'Main',      target:'60 min',      desc:'Zone 2 · 65–75% MHR · genuinely easy · 85–95 rpm'},
+            ],
+            totals:'60 min · Zone 2',
+            note:'Recovery spin after the weekend block. No intensity leaks.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['swim','run'],
+        sessions:[
+          { type:'swim', title:'Swim — Race Endurance',
+            sets:[
+              {label:'Warm-up',   target:'1 × 300 m',   desc:'Easy free'},
+              {label:'Main set',  target:'3 × 500 m',   desc:'Zone 2 · 30 s rest · steady race rhythm · sighting practice'},
+              {label:'Speed set', target:'4 × 50 m',    desc:'Strong effort · 20 s rest · simulates race-start surge'},
+              {label:'Cool-down', target:'1 × 200 m',   desc:'Easy'},
             ],
             totals:'2400 m total',
-            note:'3×400 at race pace is the most specific set for 70.3 swim prep. Time each 400 — splits should tighten across the phase. Target sub-1:45/100 m for a sub-35 min swim split.'
+            note:'Every 2–3 weeks replace the main set with 1.9 km continuous at race effort — you should complete race distance comfortably several times before November.'
           },
-          { type:'str', title:'Legs — Your Routine (Maintenance)',
+          { type:'run', title:'Easy Run — Zone 2 + Strides',
             sets:[
-              {label:'Session',     target:'~30 min',     desc:'Reduced volume · maintenance intensity · heavier loads, fewer sets'},
+              {label:'Main',      target:'60 min',      desc:'Zone 2 · conversational · genuinely easy'},
+              {label:'Strides',   target:'6 × 20 s',    desc:'Fast but relaxed · full recovery between'},
             ],
-            note:'Legs volume roughly halved this phase. Energy goes to race-specific cardio sessions. Strength is maintained, not accumulated.'
-          },
-        ]
-      },
-      {
-        id:'tue', name:'Tuesday', tags:['str','run'],
-        sessions:[
-          { type:'str', title:'Upper — Your Routine (Maintenance)',
-            sets:[
-              {label:'Session',     target:'~30 min',     desc:'Reduced volume · maintenance intensity · heavier loads, fewer sets'},
-            ],
-            note:'~30 min total. Maintaining stimulus without accumulating fatigue load. Don\'t skip face pulls or shoulder health work.'
-          },
-          { type:'run', title:'Long Run — Half Marathon Specific',
-            sets:[
-              {label:'Easy',        target:'10 km',       desc:'Zone 2 · conversational · core aerobic block'},
-              {label:'Tempo',       target:'4 km',        desc:'Zone 3 · 76–85% MHR · hold pace'},
-              {label:'Easy',        target:'2 km',        desc:'Cool-down'},
-            ],
-            totals:'16 km total · build to 18 km',
-            note:'Easy portion extended from 6 to 10 km. Build the easy block to 12 km by week 4 (total 18 km). In week 5 of Phase 3, complete a standalone 21 km run at Zone 2–3 pace as the confidence benchmark.'
+            totals:'~60 min · Zone 2',
+            note:'Held at 60 min through Phase 3 — extra run load goes into Saturday, not here.'
           },
         ]
       },
       {
-        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        id:'wed', name:'Wednesday', tags:['bike','run'],
         sessions:[
-          { type:'swim', title:'Swim — Full Race Distance',
+          { type:'bike', title:'Race-Pace Bike Intervals',
             sets:[
-              {label:'Warm-up',     target:'1 × 400 m',   desc:'Easy free'},
-              {label:'Main set',    target:'10 × 100 m',  desc:'Zone 2–3 · 15 s rest · minimal rest = race conditions'},
-              {label:'Race sim',    target:'1 × 500 m',   desc:'Continuous · race pace · no stopping · open water if possible'},
-              {label:'Cool-down',   target:'1 × 200 m',   desc:'Easy'},
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin · build to Z2'},
+              {label:'Main set',  target:'2 × 20 min',  desc:'Race pace · Zone 3 · 141–155 bpm · 5 min easy between (build to 3 × 20 min by week 5)'},
+              {label:'Cool-down', target:'5 min',       desc:'Easy spin'},
             ],
-            totals:'2100 m · builds to 1900 m continuous',
-            note:'Aim to complete a continuous 1900 m swim by week 5 of Phase 3. Open water is preferable — pool sighting drills differ significantly from ocean sighting.'
+            totals:'~75–100 min',
+            note:'This is your race-day bike effort, rehearsed. Lock in the HR band — the discipline to hold 141–155 and no more is what saves the run leg.'
           },
-          { type:'bike', title:'Threshold Bike Intervals',
+          { type:'run', title:'Brick Run — Race Pace',
             sets:[
-              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
-              {label:'Intervals',   target:'3 × 10 min',  desc:'Zone 3–4 · 76–88% MHR · 4 min easy between · 85–95 rpm'},
-              {label:'Aerobic',     target:'15 min',      desc:'Zone 2 steady'},
-              {label:'Cool-down',   target:'5 min',       desc:'Easy'},
+              {label:'Brick run', target:'25–30 min',   desc:'Straight off the bike · settle to target race pace within 8 min'},
+              {label:'Pace',      target:'Race pace',   desc:'The half-marathon pace you\'ll actually hold — practise the feel, not a hero pace'},
             ],
-            totals:'~60 min',
-            note:'First threshold bike work. Zone 3–4 intervals build the sustained power needed for 90 km. Don\'t go Zone 5 — that\'s not what 70.3 demands.'
+            totals:'25–30 min run',
+            note:'The most race-specific session of the week: race-pace bike into race-pace run. Fuel it like race day.'
           },
         ]
       },
       {
-        id:'thu', name:'Thursday', tags:['bike','run'],
+        id:'thu', name:'Thursday', tags:['swim','str'],
         sessions:[
-          { type:'bike', title:'Race Simulation Brick',
+          { type:'swim', title:'Swim — Open Water Skills',
             sets:[
-              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
-              {label:'Bike main',   target:'2 hr',        desc:'Zone 2–3 · 70–82% MHR · 85–95 rpm · race simulation effort'},
-              {label:'Nutrition',   target:'Every 30 min',desc:'1 gel + 250 ml electrolyte · practise exact race plan'},
-              {label:'Transition',  target:'< 90 s',      desc:'Off bike · change shoes · practise speed'},
-              {label:'Brick run',   target:'30 min',      desc:'Zone 2–3 · hold pace · no walk breaks'},
+              {label:'Option A',  target:'Open water',  desc:'30–40 min continuous · sighting every 6–8 strokes · wetsuit familiarisation'},
+              {label:'Option B',  target:'Pool 1800 m', desc:'If no open water: 6 × 150 m Z2 with sighting + 4 × 50 m eyes-closed straight-line drill'},
+              {label:'Skills',    target:'Every session', desc:'Deep-water starts, turning around a mark, swimming in close proximity'},
             ],
-            totals:'2 hr 10 min bike · 30 min run',
-            note:'Most important session of the week. The ability to run at pace off a 2 hr ride is the defining skill of a 70.3. Note your pace in the first 5 min vs the last 5 min of the run — the gap should narrow across the phase.'
+            note:'Open water is the current gap — get to St Kilda or a bay beach as often as the water allows. Every open water session before race day lowers race-morning stress.'
+          },
+          { type:'str', title:'Legs — Maintenance',
+            sets:[
+              {label:'Session',   target:'~35 min',     desc:'Injury prevention only · 2 working sets · no new exercises, no PRs'},
+            ],
+            note:'Reduced ~30%. The goal from here is arriving at race day durable and fresh, not stronger.'
           },
         ]
       },
       {
-        id:'fri', name:'Friday', tags:['str','sport'],
+        id:'fri', name:'Friday', tags:['str','bike'],
         sessions:[
-          { type:'str', title:'Upper — Your Routine (Maintenance)',
+          { type:'str', title:'Upper — Maintenance',
             sets:[
-              {label:'Session',     target:'15–20 min',   desc:'Minimal volume · heavy, low reps · CNS stimulus only'},
+              {label:'Session',   target:'~30 min',     desc:'Reduced volume · keep intensity'},
             ],
-            note:'15–20 min only. Minimal volume before volleyball.'
+            note:'Short and sharp, then the week\'s biggest session.'
           },
-          { type:'sport', title:'Volleyball',
+          { type:'bike', title:'Long Ride — Race Simulation Block',
             sets:[
-              {label:'Session',     target:'2 hr',        desc:'Light recreational play · active recovery'},
-              {label:'HR',          target:'Zone 1–2',    desc:'Incidental — don\'t chase it'},
+              {label:'Main',      target:'2.5–3 h',     desc:'Zone 2 base · include 2 × 30 min at race pace (141–155 bpm) from week 2'},
+              {label:'Key session', target:'Week 4: 90 km', desc:'Full race simulation · race nutrition exactly as planned · race pacing · aero position'},
+              {label:'Nutrition', target:'2 flasks/hr', desc:'~80 g carbs/hr + electrolytes · every long ride is a gut-training rehearsal'},
             ],
-            note:'Light work — after a big Thursday brick, Friday\'s only job is blood flow and mental reset.'
+            totals:'2.5–3 h',
+            note:'The 90 km simulation is the single most informative session of the build — treat it as a dress rehearsal: kit, nutrition, pacing, position. Deload weeks: 90 min Z2 only.'
           },
         ]
       },
       {
-        id:'sat', name:'Saturday', tags:['swim','bike','run'],
+        id:'sat', name:'Saturday', tags:['swim','run'],
         sessions:[
-          { type:'swim', title:'Swim — Race Pace Sharpener',
+          { type:'swim', title:'Swim — Easy / Open Water',
             sets:[
-              {label:'Warm-up',     target:'1 × 300 m',   desc:'Easy'},
-              {label:'Race pace',   target:'8 × 100 m',   desc:'Race pace · 20 s rest · time each rep'},
-              {label:'Cool-down',   target:'1 × 100 m',   desc:'Easy'},
+              {label:'Session',   target:'1200–1500 m', desc:'Easy Zone 2 · or a short open water swim if conditions suit'},
             ],
-            totals:'1200 m total',
-            note:'Sharp, not long. Race pace effort on fresh(ish) legs before the big ride.'
+            note:'Easy on purpose — today belongs to the long run.'
           },
-          { type:'bike', title:'Long Outdoor Ride — Race Distance',
+          { type:'run', title:'Long Run — Race Build',
             sets:[
-              {label:'Warm-up',     target:'10 min',      desc:'Easy spin'},
-              {label:'Main',        target:'~3 hr',       desc:'Race pace · 70–80% MHR · 85–95 rpm · target 90 km'},
-              {label:'Nutrition',   target:'Every 30 min',desc:'1 gel + 250 ml electrolyte · note any GI issues'},
-              {label:'Cool-down',   target:'10 min',      desc:'Easy'},
+              {label:'Main',      target:'90–105 min',  desc:'Zone 2 base · alternate weeks: final 20 min at race pace'},
+              {label:'Key session', target:'Week 5: 21 km', desc:'Standalone half-marathon benchmark · race nutrition · even pacing'},
+              {label:'Fuel',      target:'1–2 flasks/hr', desc:'Race-day gel schedule on every run over 75 min'},
             ],
-            totals:'~90 km · ~3 hrs',
-            note:'This is your race-distance ride. Note how your legs feel at km 70–80 — that\'s where race day gets hard. If nutrition is dialled, it\'s manageable.'
-          },
-          { type:'run', title:'Tempo Run — Race Specific',
-            sets:[
-              {label:'Warm-up',     target:'1 km',        desc:'Easy · very easy — legs are fatigued'},
-              {label:'Tempo',       target:'6 km',        desc:'Zone 3 · hold race-run pace · this is hard and intentional'},
-              {label:'Cool-down',   target:'2 km',        desc:'Easy'},
-            ],
-            totals:'9 km total',
-            note:'Running 6 km at tempo off a 90 km bike ride is the hardest session in the plan. It directly simulates the back half of the race run. If you can do this, you\'re ready.'
+            totals:'90–105 min',
+            note:'The 21 km benchmark on post-ride legs tells you your realistic race-day run pace — use it to set final race targets. Deload weeks: 60 min Z2.'
           },
         ]
       },
@@ -1119,9 +1100,10 @@ const PLAN = {
         sessions:[
           { type:'rest', title:'Full Rest',
             sets:[
-              {label:'Training',    target:'None',        desc:'Non-negotiable after Phase 3 Saturday'},
+              {label:'Training',  target:'None',         desc:'No structured sessions'},
+              {label:'Focus',     target:'Recovery',     desc:'Sleep, nutrition, foam roll, stretch'},
             ],
-            note:'After a swim + 90 km ride + 9 km tempo run, Sunday is the training.'
+            note:'Biggest phase of the build — recovery discipline decides whether the big weeks turn into fitness or fatigue. Deload every 4th week without negotiation.'
           },
         ]
       },
@@ -1129,123 +1111,133 @@ const PLAN = {
   },
 
   4: {
-    note: '<strong>Taper (19 Oct – 8 Nov · 3 weeks).</strong> Volume drops 40–50%. Intensity maintained — short sharp sessions keep race fitness without accumulating fatigue. Do not add extra sessions "just in case." The fitness is built. Trust it.',
+    note: '<strong>Taper (19 Oct – 8 Nov · 3 weeks).</strong> Volume drops 40–50%, then further in race week. Intensity stays — short race-pace touches keep the engine sharp without accumulating fatigue. Do not add sessions "just in case." The fitness is built. Trust it. Race day: Sunday 8 November, St Kilda.',
     days: [
       {
-        id:'mon', name:'Monday', tags:['swim','str'],
+        id:'mon', name:'Monday', tags:['str','bike'],
+        sessions:[
+          { type:'str', title:'Upper — Light Maintenance',
+            sets:[
+              {label:'Session',   target:'~25 min',     desc:'Light · 1–2 sets per movement · nothing to failure · skip entirely in race week'},
+            ],
+            note:'Strength now is about feeling normal, not adapting.'
+          },
+          { type:'bike', title:'Bike — Short + Race-Pace Touches',
+            sets:[
+              {label:'Main',      target:'45 min',      desc:'Zone 2 with 3 × 3 min at race pace (141–155 bpm) · full recovery between'},
+            ],
+            totals:'45 min',
+            note:'Short sharp touches maintain race feel. Race week: 30 min easy with 2 × 2 min.'
+          },
+        ]
+      },
+      {
+        id:'tue', name:'Tuesday', tags:['swim','run'],
         sessions:[
           { type:'swim', title:'Swim — Sharpener',
             sets:[
-              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy'},
-              {label:'Race pace', target:'6 × 100 m',   desc:'Race pace · 30 s rest · sharp and controlled'},
-              {label:'Easy',      target:'4 × 50 m',    desc:'Zone 2 · just feel the water'},
+              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy free'},
+              {label:'Main set',  target:'6 × 100 m',   desc:'Zone 2 with 4 × 25 m pickups at race-start effort'},
               {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
             ],
-            totals:'900 m total',
-            note:'Half the volume of Phase 3. Same intensity. Sharpening not building.'
+            totals:'~1400 m total',
+            note:'Feel for the water, race rhythm, nothing heavy.'
           },
-          { type:'str', title:'Legs — Your Routine (Minimal)',
+          { type:'run', title:'Run — Easy + Strides',
             sets:[
-              {label:'Session',   target:'10 min max',  desc:'CNS stimulus only · heavy, very low volume, full rest'},
+              {label:'Main',      target:'40 min',      desc:'Zone 2 · easy'},
+              {label:'Strides',   target:'4 × 20 s',    desc:'Relaxed speed'},
             ],
-            note:'10 min max. Stop there. Legs need to be fresh on race day.'
+            totals:'~40 min',
+            note:'Race week: 25–30 min. Legs should start feeling springy — that\'s the taper working, not fitness arriving.'
           },
         ]
       },
       {
-        id:'tue', name:'Tuesday', tags:['str','run'],
+        id:'wed', name:'Wednesday', tags:['bike','run'],
         sessions:[
-          { type:'str', title:'Upper — Your Routine (Minimal)',
+          { type:'bike', title:'Bike — Race-Pace Reminder',
             sets:[
-              {label:'Session',   target:'10 min',      desc:'CNS stimulus only · heavy, very low volume'},
+              {label:'Warm-up',   target:'10 min',      desc:'Easy spin'},
+              {label:'Main set',  target:'2 × 10 min',  desc:'Race pace · 141–155 bpm · 5 min easy between'},
+              {label:'Cool-down', target:'5 min',       desc:'Easy'},
             ],
-            note:'10 min total. Stop.'
+            totals:'~45 min',
+            note:'Race week: 1 × 10 min only.'
           },
-          { type:'run', title:'Short Sharpener Run',
+          { type:'run', title:'Brick Run — Short',
             sets:[
-              {label:'Easy',      target:'3 km',        desc:'Zone 2'},
-              {label:'Strides',   target:'4 × 30 s',    desc:'Zone 4–5 · 90 s walk between · sharp not long'},
-              {label:'Easy',      target:'1 km',        desc:'Cool-down'},
+              {label:'Brick run', target:'10 min',      desc:'Off the bike · race pace feel · smooth'},
             ],
-            totals:'~5 km',
-            note:'Strides maintain leg turnover and neuromuscular sharpness without accumulating fatigue. Don\'t extend this.'
+            totals:'10 min',
+            note:'Keeping the transition groove without any fatigue cost.'
           },
         ]
       },
       {
-        id:'wed', name:'Wednesday', tags:['swim','bike'],
+        id:'thu', name:'Thursday', tags:['swim','str'],
         sessions:[
           { type:'swim', title:'Swim — Easy Technique',
             sets:[
-              {label:'Warm-up',   target:'1 × 200 m',   desc:'Easy'},
-              {label:'Drill',     target:'4 × 50 m',    desc:'Catch-up · 20 s rest · technique focus'},
-              {label:'Easy',      target:'4 × 100 m',   desc:'Zone 2 · 30 s rest · no pressure'},
-              {label:'Cool-down', target:'1 × 100 m',   desc:'Easy'},
+              {label:'Session',   target:'1000–1200 m', desc:'Easy · drills and smooth swimming · open water if convenient'},
             ],
-            totals:'900 m total',
-            note:'Light and easy. Just staying in the water.'
+            note:'Race week: this is a good day for a short swim at St Kilda to preview the course.'
           },
-          { type:'bike', title:'Easy Z2 Spin',
+          { type:'str', title:'Legs — Mobility & Activation Only',
             sets:[
-              {label:'Total',     target:'25 min',      desc:'Zone 2 · easy · just keep legs moving'},
+              {label:'Session',   target:'~20 min',     desc:'Mobility, glute activation, light step-ups · no loading'},
             ],
-            note:'Don\'t think about fitness gains. Keep the legs loose.'
+            note:'No heavy leg work inside 3 weeks of the race. This slot is maintenance movement only.'
           },
         ]
       },
       {
-        id:'thu', name:'Thursday', tags:['bike','run'],
+        id:'fri', name:'Friday', tags:['str','bike'],
         sessions:[
-          { type:'bike', title:'Short Race-Feel Brick',
+          { type:'str', title:'Upper — Optional Light',
             sets:[
-              {label:'Warm-up',   target:'5 min',       desc:'Easy'},
-              {label:'Bike',      target:'25 min',      desc:'Zone 2–3 · 85–95 rpm · race feel'},
-              {label:'Brick run', target:'10 min',      desc:'Zone 2–3 immediately off bike'},
+              {label:'Session',   target:'~20 min',     desc:'Optional · very light · skip in race week'},
             ],
-            totals:'35 min',
-            note:'Short brick keeps the bike–run transition feeling fresh without loading legs before race day. No gym today.'
+            note:'Skip without guilt — nothing done here helps 8 November.'
+          },
+          { type:'bike', title:'Bike — Easy Spin',
+            sets:[
+              {label:'Main',      target:'45 min',      desc:'Zone 2 · easy · check bike fully race-ready (tyres, gears, bottles, spares)'},
+            ],
+            totals:'45 min',
+            note:'Weeks 1–2 of taper. Race week: rest day or 20 min spin + final bike check before check-in.'
           },
         ]
       },
       {
-        id:'fri', name:'Friday', tags:['rest'],
+        id:'sat', name:'Saturday', tags:['swim','run'],
         sessions:[
-          { type:'rest', title:'Rest',
+          { type:'swim', title:'Swim — Short Sharpener',
             sets:[
-              {label:'Training',  target:'None',        desc:'No structured session'},
-              {label:'Optional',  target:'20 min walk', desc:'Fresh air only'},
+              {label:'Session',   target:'800–1000 m',  desc:'Easy with a few short pickups'},
             ],
-            note:'Gear check today. Lay out everything: wetsuit, helmet, bike shoes, run shoes, race belt, nutrition, electrolyte, sunscreen. Find what\'s missing now, not Sunday morning.'
+            note:'Race eve: 10 min loosen-up swim at St Kilda if the race schedule allows, or skip.'
           },
-        ]
-      },
-      {
-        id:'sat', name:'Saturday', tags:['swim','bike'],
-        sessions:[
-          { type:'swim', title:'Open Water Swim — Familiarisation',
+          { type:'run', title:'Run — Shakeout',
             sets:[
-              {label:'Session',   target:'20 min',      desc:'Easy open water · practice sighting · no lap counting'},
+              {label:'Main',      target:'30 min',      desc:'Easy Zone 2'},
+              {label:'Strides',   target:'4 × 15 s',    desc:'Relaxed'},
             ],
-            note:'If St Kilda Beach or any open water is accessible, get in. Sighting in open water is different from pool swimming and worth practising before race day.'
-          },
-          { type:'bike', title:'Leg Flush Spin',
-            sets:[
-              {label:'Total',     target:'25 min',      desc:'Zone 1 only · flat · keep legs loose'},
-            ],
-            note:'Last ride before race day. Keep it very easy. After this: rest until 8 Nov. 5 Nov = complete rest. 6 Nov = registration and briefings.'
+            totals:'~30 min',
+            note:'Race eve: 15 min shakeout jog only · lay out all race kit · early night · 8–9 hours sleep.'
           },
         ]
       },
       {
         id:'sun', name:'Sunday', tags:['rest'],
         sessions:[
-          { type:'rest', title:'Full Rest',
+          { type:'rest', title:'Full Rest — Final Sunday: RACE DAY',
             sets:[
-              {label:'Training',  target:'None',        desc:'No training'},
-              {label:'Sleep',     target:'8–9 hours',   desc:'Most important variable now'},
-              {label:'Eat',       target:'Normal meals', desc:'Don\'t carb-load aggressively — moderate increase only'},
+              {label:'Weeks 1–2', target:'Full rest',   desc:'Sleep, food, mental rehearsal'},
+              {label:'8 Nov',     target:'RACE DAY',    desc:'Ironman 70.3 Melbourne · St Kilda · swim 1.9 km · bike 90 km (141–155 bpm) · run 21.1 km'},
+              {label:'Nutrition', target:'As rehearsed', desc:'2 flasks/hr on the bike · electrolytes · nothing new on race day'},
             ],
-            note:'You\'ve done the work. Nothing you do this week makes you fitter. Rest, sleep, eat normally, and trust the training.'
+            note:'You\'ve done the work. Nothing in the final week makes you fitter. Rest, sleep, eat normally, and trust the training.'
           },
         ]
       },
@@ -1264,7 +1256,7 @@ const typeMap = {
 };
 const tagLabels = {
   swim:'Swim', bike:'Bike', run:'Run',
-  str:'Strength', rest:'Rest', sport:'Volleyball'
+  str:'Strength', rest:'Rest', sport:'Sport'
 };
 const DOW = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
 
