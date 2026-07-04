@@ -448,7 +448,7 @@ async function stravaFetchActivities(days){
   }
   return acts.map(a=>({
     date: a.start_date_local ? a.start_date_local.slice(0,10) : '',
-    day: a.start_date_local ? DAY_SHORT[new Date(a.start_date_local).getDay()] : '',
+    day: a.start_date_local ? DAY_SHORT[new Date(a.start_date_local.slice(0,10)+'T12:00:00').getDay()] : '',
     sport: classify(a),
     rawType: a.sport_type || a.type,
     name: a.name,
@@ -458,6 +458,44 @@ async function stravaFetchActivities(days){
     max_hr: a.max_heartrate ? Math.round(a.max_heartrate) : null,
     elev_m: a.total_elevation_gain ? Math.round(a.total_elevation_gain) : 0,
   }));
+}
+
+/* Deterministic weekly aggregation — computed in JS so the coach model
+   never has to count raw activities itself (it was unreliable at this).
+   Covers the current Mon–Sun week. */
+function computeWeekData(acts){
+  const split = (loadPlan().weekSplit)||{};
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const fullName = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+  const now = new Date();
+  const mon = new Date(now); mon.setDate(mon.getDate()-((mon.getDay()+6)%7)); mon.setHours(0,0,0,0);
+  const sum = {swimCount:0,swimTotalM:0,bikeCount:0,bikeTotalKm:0,runCount:0,runTotalKm:0,strengthCount:0};
+  const done = {}; days.forEach(d=>done[d]=new Set());
+  acts.forEach(a=>{
+    if(!a.date) return;
+    if(new Date(a.date+'T12:00:00') < mon) return;
+    if(a.sport==='swim'){ sum.swimCount++; sum.swimTotalM += Math.round((a.distance_km||0)*1000); }
+    else if(a.sport==='bike'){ sum.bikeCount++; sum.bikeTotalKm += (a.distance_km||0); }
+    else if(a.sport==='run'){ sum.runCount++; sum.runTotalKm += (a.distance_km||0); }
+    else if(a.sport==='strength'){ sum.strengthCount++; }
+    if(done[a.day]) done[a.day].add(a.sport);
+  });
+  sum.bikeTotalKm = Math.round(sum.bikeTotalKm*10)/10;
+  sum.runTotalKm = Math.round(sum.runTotalKm*10)/10;
+  const todayIdx = (now.getDay()+6)%7;
+  const compliance = days.map((d,i)=>{
+    const expected = (split[d]||[]).filter(k=>k!=='rest');
+    const completedKeys = expected.filter(k=>done[d].has(k));
+    let status;
+    if(!expected.length) status='rest';
+    else if(i>todayIdx) status='upcoming';
+    else if(completedKeys.length===expected.length) status='complete';
+    else if(completedKeys.length) status='partial';
+    else status = (i===todayIdx) ? 'upcoming' : 'missed';
+    return { day: fullName[d], expected: expected.map(k=>SPORT_LABELS[k]||k),
+             completed: completedKeys.map(k=>SPORT_LABELS[k]||k), status };
+  });
+  return { weekSummary: sum, compliance };
 }
 
 function buildPrompt(){
@@ -555,9 +593,10 @@ async function runAnalysis(){
     }catch(e){ stravaErr = e.message; }
   }
 
-  let userMsg;
+  let userMsg, computed = null;
   if(stravaData){
-    userMsg = `Here are my actual Strava activities from the last 14 days (JSON). Analyse them against my plan and today being ${DAYS[new Date().getDay()]}. Compute weekSummary counts and totals from this real data, and build the compliance grid by matching these activities to the expected weekly sport split.\n\nActivities:\n${JSON.stringify(stravaData)}`;
+    computed = computeWeekData(stravaData);
+    userMsg = `Here are my actual Strava activities from the last 14 days (JSON), plus a precomputed, authoritative summary of the current week. Today is ${DAYS[new Date().getDay()]}. Copy the precomputed weekSummary and compliance into your response EXACTLY as given — do not recount or rebuild them. Focus your analysis on session quality, HR zones, volume trends versus the plan and what to prioritise next.\n\nActivities:\n${JSON.stringify(stravaData)}\n\nPrecomputed weekSummary and compliance (authoritative):\n${JSON.stringify(computed)}`;
     if(custom) userMsg += `\n\nAdditional context from me:\n${custom}`;
   } else {
     userMsg = custom
@@ -595,6 +634,9 @@ async function runAnalysis(){
     const m = txt.match(/\{[\s\S]*\}/);
     if(!m) throw new Error('Could not parse the response. Tap Regenerate to retry.');
     const parsed = JSON.parse(m[0]);
+    // Guarantee the grid and totals reflect real data even if the model
+    // ignored the precomputed values.
+    if(computed){ parsed.weekSummary = computed.weekSummary; parsed.compliance = computed.compliance; }
     const planApplied = applyPlanUpdate(parsed.planUpdate);
     // Once a requested plan change has been applied, clear the message so
     // a later Regenerate doesn't re-apply it.
