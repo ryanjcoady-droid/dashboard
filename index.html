@@ -42,6 +42,7 @@
   .switcher button[data-target="market"]  .dot{color:#8b5cf6}
   .switcher button[data-target="workout"] .dot{color:#7DD3FC}
   .switcher button[data-target="coach"]   .dot{color:#F59E0B}
+  .switcher button[data-target="notes"]   .dot{color:#C084FC}
 
   @media(max-width:600px){
     .switcher{top:8px;right:8px;font-size:11px;padding:3px}
@@ -146,12 +147,14 @@
   <button type="button" data-target="market"  role="tab" aria-selected="false" class=""><span class="dot"></span>Market</button>
   <button type="button" data-target="workout" role="tab" aria-selected="false" class=""><span class="dot"></span>Workout</button>
   <button type="button" data-target="coach"   role="tab" aria-selected="false" class=""><span class="dot"></span>Coach</button>
+  <button type="button" data-target="notes"   role="tab" aria-selected="false" class=""><span class="dot"></span>Notes</button>
 </nav>
 
 <iframe id="frame-daily"   class="frame hidden" src="daily-dashboard.html"   title="Daily Dashboard"></iframe>
 <iframe id="frame-market"  class="frame hidden" src="market-dashboard.html"  title="Market Dashboard"></iframe>
 <iframe id="frame-workout" class="frame hidden" src="workout-dashboard.html" title="Workout Dashboard"></iframe>
 <iframe id="frame-coach"   class="frame hidden" src="strava-dashboard.html"  title="Training Coach"></iframe>
+<iframe id="frame-notes"   class="frame hidden" src="notes-dashboard.html"   title="Notes"></iframe>
 
 <script>
   const STORAGE_KEY = 'dashboard.activeTab';
@@ -160,6 +163,7 @@
     market:  document.getElementById('frame-market'),
     workout: document.getElementById('frame-workout'),
     coach:   document.getElementById('frame-coach'),
+    notes:   document.getElementById('frame-notes'),
   };
   const buttons = document.querySelectorAll('.switcher button');
 
@@ -189,6 +193,7 @@
     if(e.key==='2'){e.preventDefault();show('market');}
     if(e.key==='3'){e.preventDefault();show('workout');}
     if(e.key==='4'){e.preventDefault();show('coach');}
+    if(e.key==='5'){e.preventDefault();show('notes');}
   });
 
   // Sync pairing UI

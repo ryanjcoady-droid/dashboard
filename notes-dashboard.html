@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Notes</title>
+<script src="firebase-config.js"></script>
+<script src="sync.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D0D0B;--card:#161614;--card2:#1C1C19;
+  --border:#272522;--border2:#2F2D2A;
+  --text:#F5F3EF;--muted:#C0BBB2;--muted2:#9B978F;
+  --accent:#C084FC;--accent-bg:#150A1F;--accent-bd:#2E1A45;
+  --ok:#4ADE80;--ok-bg:#071A0F;--ok-bd:#134D22;
+  --err:#F87171;--err-bg:#1A0808;--err-bd:#3D1010;
+  --warn:#FCD34D;--warn-bg:#1A1500;--warn-bd:#3D3000;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+*{touch-action:manipulation}
+body{padding:28px 24px;max-width:860px;margin:0 auto}
+@media(max-width:720px){body{padding:16px 14px}}
+@media(max-width:600px){
+  body{padding-top:max(12px,env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+}
+@media(max-width:900px){input,textarea,select{font-size:16px !important}}
+
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+.title-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.title-main{font-family:'Outfit',sans-serif;font-size:42px;font-weight:400;line-height:1}
+.title-sub{font-family:'Outfit',sans-serif;font-size:15px;color:var(--muted);margin-top:4px}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:600px){.title-main{font-size:28px}.title-sub{font-size:13px}}
+
+.ghost-btn{display:inline-flex;align-items:center;gap:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:8px 14px;border-radius:9px;background:var(--card);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all .12s}
+.ghost-btn:hover{background:var(--card2);border-color:var(--border2)}
+.ghost-btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-accent{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent)}
+.btn-accent:hover:not(:disabled){background:var(--accent-bd)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+
+/* Composer */
+.note-title{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:11px 13px;font-size:14px;font-weight:600;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;transition:border-color .15s}
+.note-body{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:11px 13px;font-size:13.5px;line-height:1.6;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:vertical;min-height:110px;margin-bottom:12px;transition:border-color .15s}
+.note-title:focus,.note-body:focus{border-color:var(--accent-bd)}
+.note-title::placeholder,.note-body::placeholder{color:var(--muted2)}
+.cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.cat-chip{font-size:11px;font-weight:500;padding:5px 12px;border-radius:999px;border:1px solid var(--border2);background:var(--card2);color:var(--muted);cursor:pointer;transition:all .12s;font-family:inherit}
+.cat-chip:hover{color:var(--text)}
+.cat-chip.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent)}
+.cat-add{font-size:13px;padding:4px 10px;line-height:1}
+.composer-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.composer-hint{font-size:11px;color:var(--muted2)}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.search-input{flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:12.5px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.search-input:focus{border-color:var(--accent-bd)}
+
+/* Note list */
+.note-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.note-item-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.note-item-title{font-size:14px;font-weight:600;flex:1;min-width:120px}
+.note-item-date{font-size:11px;color:var(--muted2);white-space:nowrap}
+.note-item-body{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:6px;white-space:pre-wrap;word-break:break-word}
+.note-item-foot{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.note-cat{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:var(--accent-bg);border:1px solid var(--accent-bd);color:var(--accent)}
+.sync-state{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:6px;border:1px solid}
+.ss-synced{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-bd)}
+.ss-pending{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bd)}
+.ss-error{color:var(--err);background:var(--err-bg);border-color:var(--err-bd)}
+.ss-local{color:var(--muted2);background:var(--card2);border-color:var(--border)}
+.note-actions{margin-left:auto;display:flex;gap:6px}
+.icon-btn{background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:3px 7px;border-radius:6px;font-family:inherit;transition:all .12s}
+.icon-btn:hover{color:var(--text);background:var(--card2)}
+.icon-btn.danger:hover{color:var(--err)}
+.empty{color:var(--muted2);font-size:13px;text-align:center;padding:36px 0}
+
+/* Settings overlay */
+.overlay-bg{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto}
+.overlay-bg.show{display:flex}
+.overlay{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:480px;width:100%;margin-top:24px}
+.overlay h2{font-family:'Outfit',sans-serif;font-size:20px;font-weight:400;margin-bottom:6px}
+.overlay-sub{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.field-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.field-input{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+.field-input:focus{border-color:var(--accent-bd)}
+.field-input::placeholder{color:var(--muted2)}
+.overlay-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+.overlay-status{font-size:11.5px;margin-top:10px;min-height:15px;color:var(--ok)}
+.overlay-status.err{color:var(--err)}
+.setup-steps{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0}
+.setup-step{font-size:12px;color:var(--text);padding:3px 0;display:flex;gap:8px;align-items:baseline;line-height:1.5}
+.setup-step-num{color:var(--accent);font-weight:600;font-size:11px;flex-shrink:0;min-width:16px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="title-label">Second Brain</div>
+    <div class="title-main">Notes</div>
+    <div class="title-sub" id="sub-line">Saved locally · Obsidian sync off</div>
+  </div>
+  <div class="header-right">
+    <button class="ghost-btn" id="sync-now-btn" onclick="syncAll(true)">⟳ Sync now</button>
+    <button class="ghost-btn" onclick="openSettings()">⚙ Obsidian</button>
+  </div>
+</div>
+
+<div class="card">
+  <input class="note-title" id="in-title" placeholder="Title (optional — first line used if empty)" autocomplete="off">
+  <textarea class="note-body" id="in-body" placeholder="Write a note… plain text or markdown, it lands in your vault as-is."></textarea>
+  <div class="cat-row" id="cat-row"></div>
+  <div class="composer-foot">
+    <span class="composer-hint" id="composer-hint"></span>
+    <button class="ghost-btn btn-accent" id="save-btn" onclick="saveNote()">Save note</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <input class="search-input" id="search" placeholder="Search notes…" oninput="renderList()">
+  <div id="filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+</div>
+
+<div id="note-list"></div>
+
+<div class="overlay-bg" id="settings-bg">
+  <div class="overlay">
+    <h2>Obsidian sync</h2>
+    <div class="overlay-sub">Notes are pushed as markdown files to a GitHub repo that your Obsidian vault syncs with (via the free <strong>obsidian-git</strong> community plugin). Each note gets a category folder and YAML frontmatter with tags. The token is stored only in this browser.</div>
+    <div class="setup-steps">
+      <div class="setup-step"><span class="setup-step-num">1.</span><span>Create a <strong>private</strong> GitHub repo for your vault (e.g. <strong>obsidian-vault</strong>)</span></div>
+      <div class="setup-step"><span class="setup-step-num">2.</span><span>In Obsidian: install the <strong>Git</strong> community plugin, then clone or publish your vault to that repo and enable auto pull/push</span></div>
+      <div class="setup-step"><span class="setup-step-num">3.</span><span>github.com → Settings → Developer settings → <strong>Fine-grained tokens</strong> → generate one scoped to ONLY that repo with <strong>Contents: Read and write</strong></span></div>
+      <div class="setup-step"><span class="setup-step-num">4.</span><span>Paste everything below</span></div>
+    </div>
+    <div class="field-label">Repository (owner/name)</div>
+    <input class="field-input" id="gh-repo" placeholder="ryanjcoady-droid/obsidian-vault" autocomplete="off" spellcheck="false">
+    <div class="field-label">Fine-grained token</div>
+    <input class="field-input" id="gh-token" type="password" placeholder="github_pat_…" autocomplete="off">
+    <div class="field-label">Branch</div>
+    <input class="field-input" id="gh-branch" placeholder="main" autocomplete="off" spellcheck="false">
+    <div class="field-label">Folder inside the vault for these notes</div>
+    <input class="field-input" id="gh-folder" placeholder="Dashboard Notes" autocomplete="off">
+    <div class="overlay-status" id="settings-status"></div>
+    <div class="overlay-actions">
+      <button class="ghost-btn" onclick="testConnection()">Test connection</button>
+      <button class="ghost-btn" onclick="closeSettings()">Close</button>
+      <button class="ghost-btn btn-accent" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── Storage keys ─────────────────────────────────────────────
+   Notes + categories sync across devices via sync.js/Firestore.
+   The GitHub token and repo config stay device-local on purpose. */
+const NOTES_KEY = 'obsidian_notes';
+const CATS_KEY  = 'obsidian_note_cats';
+const GH_REPO='gh_notes_repo', GH_TOKEN='gh_notes_token', GH_BRANCH='gh_notes_branch', GH_FOLDER='gh_notes_folder';
+
+const DEFAULT_CATS = ['Inbox','Training','Investing','Uni','Health','Ideas'];
+
+function loadNotes(){ try{ return JSON.parse(localStorage.getItem(NOTES_KEY)||'[]'); }catch(e){ return []; } }
+function saveNotes(n){ localStorage.setItem(NOTES_KEY, JSON.stringify(n)); }
+function loadCats(){ try{ const c=JSON.parse(localStorage.getItem(CATS_KEY)||'null'); return Array.isArray(c)&&c.length?c:DEFAULT_CATS.slice(); }catch(e){ return DEFAULT_CATS.slice(); } }
+function saveCats(c){ localStorage.setItem(CATS_KEY, JSON.stringify(c)); }
+
+let notes = loadNotes();
+let cats  = loadCats();
+let activeCat = cats[0];
+let filterCat = 'All';
+let editingId = null;
+
+/* ── GitHub config ── */
+const ghCfg = () => ({
+  repo:   (localStorage.getItem(GH_REPO)||'').trim(),
+  token:  (localStorage.getItem(GH_TOKEN)||'').trim(),
+  branch: (localStorage.getItem(GH_BRANCH)||'main').trim()||'main',
+  folder: (localStorage.getItem(GH_FOLDER)||'Dashboard Notes').trim().replace(/^\/+|\/+$/g,''),
+});
+const ghReady = () => { const c=ghCfg(); return !!(c.repo && c.token); };
+
+/* ── Helpers ── */
+const esc = s => String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const b64 = s => btoa(unescape(encodeURIComponent(s)));
+function slugify(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').slice(0,48)||'note'; }
+function safeName(s){ return String(s||'').replace(/[\\/:*?"<>|#^[\]]/g,'').trim(); }
+function noteTitle(n){ return n.title || (n.body.split('\n')[0]||'Untitled').slice(0,64); }
+function fmtDate(iso){ const d=new Date(iso); return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+
+function notePath(n){
+  const c = ghCfg();
+  const day = n.created.slice(0,10);
+  const file = `${day} ${safeName(slugify(noteTitle(n)))}-${n.id.slice(0,6)}.md`;
+  return `${c.folder}/${safeName(n.category)||'Inbox'}/${file}`;
+}
+
+function noteMarkdown(n){
+  const tag = slugify(n.category);
+  const t = noteTitle(n).replace(/"/g,"'");
+  return `---\ntitle: "${t}"\ntags:\n  - ${tag}\n  - dashboard\ncreated: ${n.created}\nupdated: ${n.updated}\nsource: dashboard\n---\n\n${n.body}\n`;
+}
+
+/* ── GitHub API ──────────────────────────────────────────────
+   Contents API: PUT create/update (update needs current sha),
+   DELETE remove. One request per note — fine at personal scale. */
+async function ghRequest(method, path, bodyObj){
+  const c = ghCfg();
+  const res = await fetch(`https://api.github.com/repos/${c.repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`,{
+    method,
+    headers:{ 'Authorization':'Bearer '+c.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28', ...(bodyObj?{'Content-Type':'application/json'}:{}) },
+    body: bodyObj ? JSON.stringify(bodyObj) : undefined
+  });
+  const data = await res.json().catch(()=>({}));
+  return { ok: res.ok, status: res.status, data };
+}
+async function ghGetSha(path){
+  const c = ghCfg();
+  const r = await ghRequest('GET', path + `?ref=${encodeURIComponent(c.branch)}`);
+  return r.ok ? r.data.sha : null;
+}
+async function ghPut(n){
+  const c = ghCfg();
+  const path = notePath(n);
+  // Path changed since last sync (renamed title/category) → delete old file first
+  if(n.ghPath && n.ghPath !== path && n.ghSha){
+    await ghRequest('DELETE', n.ghPath, { message:`notes: remove ${n.ghPath.split('/').pop()}`, sha:n.ghSha, branch:c.branch }).catch(()=>{});
+    n.ghSha = null;
+  }
+  const body = { message:`notes: ${n.ghSha?'update':'add'} ${noteTitle(n)}`, content:b64(noteMarkdown(n)), branch:c.branch };
+  if(n.ghPath === path && n.ghSha) body.sha = n.ghSha;
+  let r = await ghRequest('PUT', path, body);
+  if(!r.ok && (r.status===409||r.status===422)){
+    const sha = await ghGetSha(path);          // sha stale or file exists — refetch and retry once
+    if(sha) body.sha = sha; else delete body.sha;
+    r = await ghRequest('PUT', path, body);
+  }
+  if(!r.ok) throw new Error(r.data.message || ('GitHub HTTP '+r.status));
+  n.ghPath = path;
+  n.ghSha  = r.data.content && r.data.content.sha;
+  return n;
+}
+async function ghDelete(n){
+  const c = ghCfg();
+  if(!n.ghPath) return;
+  let sha = n.ghSha || await ghGetSha(n.ghPath);
+  if(!sha) return; // already gone
+  const r = await ghRequest('DELETE', n.ghPath, { message:`notes: remove ${noteTitle(n)}`, sha, branch:c.branch });
+  if(!r.ok && r.status!==404) throw new Error(r.data.message || ('GitHub HTTP '+r.status));
+}
+
+/* ── Sync engine ── */
+let syncing = false;
+async function syncAll(manual){
+  if(syncing) return;
+  if(!ghReady()){ if(manual) openSettings(); return; }
+  syncing = true; updateSub('Syncing…');
+  let failed = 0;
+  for(const n of notes){
+    if(n.status==='synced') continue;
+    try{ await ghPut(n); n.status='synced'; n.error=null; }
+    catch(e){ n.status='error'; n.error=e.message; failed++; }
+    saveNotes(notes);
+  }
+  syncing = false;
+  renderList(); updateSub();
+  if(manual && failed) alert('Some notes failed to sync: check the token, repo name and branch in ⚙ Obsidian settings.');
+}
+
+function updateSub(txt){
+  const el = document.getElementById('sub-line');
+  if(txt){ el.textContent = txt; return; }
+  if(!ghReady()){ el.textContent = 'Saved locally · Obsidian sync off'; return; }
+  const pending = notes.filter(n=>n.status!=='synced').length;
+  el.textContent = pending ? `Obsidian sync on · ${pending} note${pending>1?'s':''} pending` : 'Obsidian sync on · all notes in your vault';
+}
+
+/* ── CRUD ── */
+function saveNote(){
+  const title = document.getElementById('in-title').value.trim();
+  const body  = document.getElementById('in-body').value.trim();
+  if(!body && !title) return;
+  const now = new Date();
+  const iso = new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);
+  if(editingId){
+    const n = notes.find(x=>x.id===editingId);
+    if(n){ n.title=title; n.body=body; n.category=activeCat; n.updated=iso; n.status='pending'; }
+    editingId = null;
+  } else {
+    notes.unshift({ id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2)), title, body, category:activeCat, created:iso, updated:iso, status:'pending', ghPath:null, ghSha:null, error:null });
+  }
+  saveNotes(notes);
+  document.getElementById('in-title').value=''; document.getElementById('in-body').value='';
+  document.getElementById('save-btn').textContent='Save note';
+  document.getElementById('composer-hint').textContent='';
+  renderList(); updateSub();
+  if(ghReady() && navigator.onLine) syncAll(false);
+}
+
+function editNote(id){
+  const n = notes.find(x=>x.id===id); if(!n) return;
+  editingId = id; activeCat = n.category;
+  document.getElementById('in-title').value = n.title;
+  document.getElementById('in-body').value  = n.body;
+  document.getElementById('save-btn').textContent = 'Update note';
+  document.getElementById('composer-hint').textContent = 'Editing — updates the vault file too';
+  renderCats();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteNote(id){
+  const n = notes.find(x=>x.id===id); if(!n) return;
+  if(!confirm(`Delete "${noteTitle(n)}"${n.ghPath?' from here AND your vault':''}?`)) return;
+  if(n.ghPath && ghReady()){
+    try{ await ghDelete(n); }
+    catch(e){ if(!confirm('Could not delete the vault copy ('+e.message+'). Delete locally anyway?')) return; }
+  }
+  notes = notes.filter(x=>x.id!==id);
+  if(editingId===id){ editingId=null; document.getElementById('in-title').value=''; document.getElementById('in-body').value=''; document.getElementById('save-btn').textContent='Save note'; }
+  saveNotes(notes); renderList(); updateSub();
+}
+
+/* ── Categories ── */
+function renderCats(){
+  const row = document.getElementById('cat-row');
+  row.innerHTML = cats.map(c=>`<button class="cat-chip ${c===activeCat?'active':''}" onclick="setCat('${esc(c)}')">${esc(c)}</button>`).join('')
+    + `<button class="cat-chip cat-add" title="Add category" onclick="addCat()">+</button>`;
+}
+function setCat(c){ activeCat=c; renderCats(); }
+function addCat(){
+  const c = (prompt('New category name:')||'').trim();
+  if(!c) return;
+  if(!cats.some(x=>x.toLowerCase()===c.toLowerCase())){ cats.push(c); saveCats(cats); }
+  activeCat = cats.find(x=>x.toLowerCase()===c.toLowerCase());
+  renderCats(); renderFilter();
+}
+
+/* ── List rendering ── */
+function renderFilter(){
+  const el = document.getElementById('filter-chips');
+  el.innerHTML = ['All'].concat(cats).map(c=>`<button class="cat-chip ${c===filterCat?'active':''}" onclick="setFilter('${esc(c)}')">${esc(c)}</button>`).join('');
+}
+function setFilter(c){ filterCat=c; renderFilter(); renderList(); }
+
+const STATE_LABEL = { synced:'✓ In vault', pending:'⟳ Pending', error:'✗ Failed', local:'Local' };
+function renderList(){
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const list = notes.filter(n =>
+    (filterCat==='All' || n.category===filterCat) &&
+    (!q || noteTitle(n).toLowerCase().includes(q) || n.body.toLowerCase().includes(q))
+  );
+  const el = document.getElementById('note-list');
+  if(!list.length){ el.innerHTML = `<div class="empty">${notes.length?'No notes match.':'No notes yet — write your first one above.'}</div>`; return; }
+  el.innerHTML = list.map(n=>{
+    const st = ghReady() ? (n.status||'pending') : 'local';
+    return `<div class="note-item">
+      <div class="note-item-head">
+        <span class="note-item-title">${esc(noteTitle(n))}</span>
+        <span class="note-item-date">${fmtDate(n.updated||n.created)}</span>
+      </div>
+      ${n.body?`<div class="note-item-body">${esc(n.body.length>400?n.body.slice(0,400)+'…':n.body)}</div>`:''}
+      <div class="note-item-foot">
+        <span class="note-cat">${esc(n.category)}</span>
+        <span class="sync-state ss-${st}" title="${esc(n.error||'')}">${STATE_LABEL[st]||st}</span>
+        <div class="note-actions">
+          <button class="icon-btn" onclick="editNote('${n.id}')">Edit</button>
+          <button class="icon-btn danger" onclick="deleteNote('${n.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Settings ── */
+function openSettings(){
+  document.getElementById('gh-repo').value   = localStorage.getItem(GH_REPO)||'';
+  document.getElementById('gh-token').value  = localStorage.getItem(GH_TOKEN)||'';
+  document.getElementById('gh-branch').value = localStorage.getItem(GH_BRANCH)||'main';
+  document.getElementById('gh-folder').value = localStorage.getItem(GH_FOLDER)||'Dashboard Notes';
+  document.getElementById('settings-status').textContent='';
+  document.getElementById('settings-bg').classList.add('show');
+}
+function closeSettings(){ document.getElementById('settings-bg').classList.remove('show'); }
+function saveSettings(){
+  localStorage.setItem(GH_REPO,   document.getElementById('gh-repo').value.trim());
+  localStorage.setItem(GH_TOKEN,  document.getElementById('gh-token').value.trim());
+  localStorage.setItem(GH_BRANCH, document.getElementById('gh-branch').value.trim()||'main');
+  localStorage.setItem(GH_FOLDER, document.getElementById('gh-folder').value.trim()||'Dashboard Notes');
+  const s = document.getElementById('settings-status');
+  s.classList.remove('err'); s.textContent='✓ Saved';
+  updateSub();
+  setTimeout(()=>{ closeSettings(); if(ghReady()) syncAll(false); }, 500);
+}
+async function testConnection(){
+  const s = document.getElementById('settings-status');
+  const repo   = document.getElementById('gh-repo').value.trim();
+  const token  = document.getElementById('gh-token').value.trim();
+  const branch = document.getElementById('gh-branch').value.trim()||'main';
+  if(!repo||!token){ s.classList.add('err'); s.textContent='Enter the repo and token first.'; return; }
+  s.classList.remove('err'); s.textContent='Testing…';
+  try{
+    const r = await fetch(`https://api.github.com/repos/${repo}/branches/${encodeURIComponent(branch)}`,{
+      headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' }
+    });
+    if(r.ok){ s.textContent='✓ Connected — repo and branch found'; }
+    else if(r.status===404){ s.classList.add('err'); s.textContent='Repo or branch not found — check owner/name, branch, and that the token can access this repo.'; }
+    else { const d=await r.json().catch(()=>({})); s.classList.add('err'); s.textContent='GitHub says: '+(d.message||('HTTP '+r.status)); }
+  }catch(e){ s.classList.add('err'); s.textContent='Network error: '+e.message; }
+}
+
+/* ── Cross-device updates (sync.js writes remote snapshots into localStorage) ── */
+window.addEventListener('storage', e=>{
+  if(e.key===NOTES_KEY){ notes = loadNotes(); renderList(); updateSub(); }
+  if(e.key===CATS_KEY){ cats = loadCats(); if(!cats.includes(activeCat)) activeCat=cats[0]; renderCats(); renderFilter(); }
+});
+document.getElementById('settings-bg').addEventListener('click', e=>{ if(e.target.id==='settings-bg') closeSettings(); });
+window.addEventListener('online', ()=>syncAll(false));
+
+/* Ctrl/Cmd+Enter saves from the textarea */
+document.getElementById('in-body').addEventListener('keydown', e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') saveNote(); });
+
+renderCats(); renderFilter(); renderList(); updateSub();
+if(ghReady() && navigator.onLine) setTimeout(()=>syncAll(false), 1500);
+</script>
+</body>
+</html>

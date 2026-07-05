@@ -1,5 +1,5 @@
 /* service-worker.js — offline cache for the dashboard PWA. */
-const VERSION = 'v25';
+const VERSION = 'v26';
 const APP_CACHE = `dash-app-${VERSION}`;
 const RUNTIME = `dash-runtime-${VERSION}`;
 
@@ -10,6 +10,7 @@ const APP_SHELL = [
   './market-dashboard.html',
   './workout-dashboard.html',
   './strava-dashboard.html',
+  './notes-dashboard.html',
   './sync.js',
   './training-plan.js',
   './firebase-config.js',
@@ -24,6 +25,7 @@ const NEVER_CACHE_HOSTS = [
   'api.anthropic.com',
   'mcp.strava.com',
   'www.strava.com',
+  'api.github.com',
   'api.open-meteo.com',
   'firestore.googleapis.com',
   'firebaseinstallations.googleapis.com',

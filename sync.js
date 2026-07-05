@@ -30,6 +30,8 @@
     /^weather_location$/,
     /^cal_ics_url$/,
     /^myCustomStocks$/,
+    /^obsidian_notes$/,         // notes page — note content + sync state
+    /^obsidian_note_cats$/,     // notes page — category list
     /^dashboard\.activeTab$/,
   ];
   const isSynced = (k) => typeof k === 'string' && SYNCED.some((r) => r.test(k));
