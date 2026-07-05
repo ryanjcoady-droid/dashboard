@@ -53,6 +53,7 @@ body{padding:28px 24px;max-width:860px;margin:0 auto}
 .cat-chip:hover{color:var(--text)}
 .cat-chip.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent)}
 .cat-add{font-size:13px;padding:4px 10px;line-height:1}
+.chip-del{color:var(--err);border-color:var(--err-bd);background:var(--err-bg)}
 .composer-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .composer-hint{font-size:11px;color:var(--muted2)}
 
@@ -329,18 +330,43 @@ async function deleteNote(id){
 }
 
 /* ── Categories ── */
+let manageCats = false;
 function renderCats(){
   const row = document.getElementById('cat-row');
-  row.innerHTML = cats.map(c=>`<button class="cat-chip ${c===activeCat?'active':''}" onclick="setCat('${esc(c)}')">${esc(c)}</button>`).join('')
-    + `<button class="cat-chip cat-add" title="Add category" onclick="addCat()">+</button>`;
+  row.innerHTML = cats.map(c=>{
+    const on = manageCats ? `delCat('${esc(c)}')` : `setCat('${esc(c)}')`;
+    const cls = manageCats ? 'chip-del' : (c===activeCat?'active':'');
+    return `<button class="cat-chip ${cls}" onclick="${on}">${esc(c)}${manageCats?' ✕':''}</button>`;
+  }).join('')
+    + `<button class="cat-chip cat-add" title="Add category" onclick="addCat()">+</button>`
+    + `<button class="cat-chip cat-add" title="${manageCats?'Done':'Delete a category'}" onclick="toggleManage()">${manageCats?'Done':'−'}</button>`;
 }
 function setCat(c){ activeCat=c; renderCats(); }
+function toggleManage(){ manageCats=!manageCats; renderCats(); }
 function addCat(){
   const c = (prompt('New category name:')||'').trim();
   if(!c) return;
   if(!cats.some(x=>x.toLowerCase()===c.toLowerCase())){ cats.push(c); saveCats(cats); }
   activeCat = cats.find(x=>x.toLowerCase()===c.toLowerCase());
+  manageCats = false;
   renderCats(); renderFilter();
+}
+function delCat(c){
+  if(cats.length<=1){ alert('You need at least one category.'); return; }
+  const rest = cats.filter(x=>x!==c);
+  const fb = rest.includes('Inbox') ? 'Inbox' : rest[0];
+  const affected = notes.filter(n=>n.category===c);
+  const msg = affected.length
+    ? `Delete category "${c}"? ${affected.length} note${affected.length>1?'s':''} will move to "${fb}" (their vault files move too on next sync).`
+    : `Delete category "${c}"?`;
+  if(!confirm(msg)) return;
+  cats = rest; saveCats(cats);
+  affected.forEach(n=>{ n.category=fb; n.status='pending'; });
+  if(affected.length) saveNotes(notes);
+  if(activeCat===c) activeCat=fb;
+  if(filterCat===c) filterCat='All';
+  renderCats(); renderFilter(); renderList(); updateSub();
+  if(affected.length && ghReady() && navigator.onLine) syncAll(false);
 }
 
 /* ── List rendering ── */

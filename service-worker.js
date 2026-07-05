@@ -1,5 +1,5 @@
 /* service-worker.js — offline cache for the dashboard PWA. */
-const VERSION = 'v26';
+const VERSION = 'v27';
 const APP_CACHE = `dash-app-${VERSION}`;
 const RUNTIME = `dash-runtime-${VERSION}`;
 
@@ -9,7 +9,6 @@ const APP_SHELL = [
   './daily-dashboard.html',
   './market-dashboard.html',
   './workout-dashboard.html',
-  './strava-dashboard.html',
   './notes-dashboard.html',
   './sync.js',
   './training-plan.js',
