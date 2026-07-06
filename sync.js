@@ -29,6 +29,7 @@
     /^skip_tasks$/,
     /^weather_location$/,
     /^cal_ics_url$/,
+    /^work_ics_url$/,        // Humanforce roster webcal URL
     /^myCustomStocks$/,
     /^obsidian_notes$/,         // notes page — note content + sync state
     /^obsidian_note_cats$/,     // notes page — category list

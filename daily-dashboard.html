@@ -387,6 +387,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cal-evt{font-size:11px;padding:4px 7px;border-radius:6px;background:var(--cal-bg);border:1px solid var(--cal-bd);color:var(--cal-c)}
 .cal-evt-time{font-size:10px;opacity:.7;margin-bottom:1px}
 .cal-evt-title{font-weight:500;line-height:1.3}
+.work-pill{font-size:11px;padding:4px 7px;border-radius:6px;background:var(--warn-bg,#1A1500);border:1px solid var(--warn-bd,#3D3000);color:#FBBF24}
+.work-pill .wp-time{font-size:10px;opacity:.75;margin-bottom:1px}
+.work-pill .wp-role{font-weight:500;line-height:1.3}
 .custom-pill{font-size:10px;padding:3px 7px;border-radius:5px;background:var(--custom-bg);border:1px solid var(--custom-bd);color:var(--custom-c);margin-top:2px}
 .sport-tag-row{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}
 .sport-tag{font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;border:1px solid}
@@ -1380,6 +1383,16 @@ html, body{overflow-x:hidden; max-width:100vw}
     <button class="setup-clear-btn" id="setup-clear-btn" onclick="clearCalSetup()" style="display:none">Remove</button>
   </div>
   <div class="setup-status" id="setup-status"></div>
+  <div style="border-top:1px solid var(--border,#272522);margin:16px 0 14px"></div>
+  <div class="setup-title" style="font-size:15px">Work roster (Humanforce)</div>
+  <p class="setup-sub">In the Humanforce Work app: sync shifts to calendar → copy the webcal link and paste it here. Published, confirmed shifts show up as amber pills in the schedule and update on every page load.</p>
+  <input class="setup-input" id="setup-work-input" type="text"
+    placeholder="webcal://…humanforce.com/mobileapi/calendarsync/…">
+  <div class="setup-row">
+    <button class="setup-save-btn" onclick="saveWorkSetup()">Save &amp; load</button>
+    <button class="setup-clear-btn" id="setup-work-clear-btn" onclick="clearWorkSetup()" style="display:none">Remove</button>
+  </div>
+  <div class="setup-status" id="setup-work-status"></div>
 </div>
 
 <script>
@@ -2056,7 +2069,9 @@ function populateWeekDay(date, calEvts){
       }).join('')+'</div>';
     }
   }catch(e){}
+  const workEvts=workEvents[date]||[];
   const parts=[
+    ...workEvts.map(w=>`<div class="work-pill"><div class="wp-time">${w.time}</div><div class="wp-role">Work · ${w.role}</div></div>`),
     ...recur.map(r=>{const p=recurPal(r.color);return `<div class="recur-pill" style="background:${p.bg};border-color:${p.bd};color:${p.c}">&#9679; ${r.name}${r.time?' · '+r.time:''}</div>`;}),
     ...calEvts.map(e=>`<div class="cal-evt"><div class="cal-evt-time">${e.time}</div><div class="cal-evt-title">${e.title}</div></div>`),
     ...custom.map(t=>`<div class="custom-pill">&#9679; ${t.label}</div>`),
@@ -2098,8 +2113,10 @@ function renderMonthView(){
         return `<span class="month-dot" style="background:${sp.c}"></span>`;
       });
     }catch(e){}
+    const workDots=(workEvents[ds]||[]).slice(0,2).map(()=>`<span class="month-dot work" style="background:#FBBF24"></span>`);
     const dots=[
       ...sportDots,
+      ...workDots,
       ...recur.slice(0,2).map(r=>{const p=recurPal(r.color);return `<span class="month-dot recur" style="background:${p.c}"></span>`;}),
       ...calEvts.slice(0,2).map(()=>`<span class="month-dot cal"></span>`),
       ...custom.slice(0,2).map(()=>`<span class="month-dot custom"></span>`),
@@ -2144,6 +2161,15 @@ function renderModalBody(dateStr){
   const calEvts=calEvents[dateStr]||[];
 
 
+  const workShifts=workEvents[dateStr]||[];
+  const workHTML=workShifts.length?`<div class="modal-section">
+    ${workShifts.map(w=>`<div style="display:flex;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:var(--warn-bg,#1A1500);border:1px solid var(--warn-bd,#3D3000);align-items:center">
+      <span style="width:6px;height:6px;border-radius:50%;background:#FBBF24;flex-shrink:0"></span>
+      <span style="font-size:11px;color:#FBBF24;font-weight:600;letter-spacing:.04em;flex-shrink:0">${w.time}</span>
+      <span style="font-size:13px;color:var(--text)">Work · ${w.role}</span>
+    </div>`).join('')}
+  </div>`:'';
+
   const recurEvts=getRecurForDate(dateStr);
   const recurHTML=recurEvts.length?`<div class="modal-section">
     ${recurEvts.map(r=>{const p=recurPal(r.color);return `<div style="display:flex;gap:10px;padding:7px 9px;border-radius:8px;margin-bottom:4px;background:${p.bg};border:1px solid ${p.bd};align-items:center">
@@ -2179,7 +2205,7 @@ function renderModalBody(dateStr){
   </div>`;
 
   document.getElementById('modal-body').innerHTML=
-    recurHTML+calHTML+
+    workHTML+recurHTML+calHTML+
     sections.map(s=>sectionHTML(s,dateStr,true)).join('')+
     skSectionHTML(getSK('am'),'sk-am','AM Skincare','morning routine','#67E8F9','var(--am-skin-bg)','var(--am-skin-bd)',dateStr,true)+
     skSectionHTML(skPm,'sk-pm','PM Skincare',skLabel,pmCh,pmBg,pmBd,dateStr,true)+
@@ -2269,9 +2295,12 @@ async function loadGCal(){
   if(!loaded){
     const icsUrl = localStorage.getItem(CAL_ICS_KEY);
     if(icsUrl){
-      loaded = await fetchICS(icsUrl);
+      loaded = await fetchICS_fill(icsUrl);
     }
   }
+
+  // Work roster (independent of Google Calendar)
+  try{ await loadWorkRoster(); }catch(e){ console.warn('[work-ics]', e.message); }
 
   // Populate schedule
   for(const day of SEVEN_DAYS) populateWeekDay(day.date,calEvents[day.date]||[]);
@@ -2325,15 +2354,15 @@ function fetchT(url, ms){
     .catch(function(e){ clearTimeout(t); throw e; });
 }
 
-// Fetch and parse a Google Calendar ICS URL, trying multiple proxies
-async function fetchICS(url){
+// Core: fetch + parse an ICS URL via proxies, return parsed events or null
+async function fetchICS_core(url){
   url = url.replace(/^webcal:\/\//i,'https://');
 
   // Ordered by reliability — codetabs confirmed working, corsproxy returns 403 for GCal
   const proxies = [
+    'https://corsproxy.io/?url='                + encodeURIComponent(url),
     'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
     'https://api.allorigins.win/raw?url='       + encodeURIComponent(url),
-    'https://corsproxy.io/?'                    + encodeURIComponent(url),
     url, // direct last — blocked by CORS from file:// but works from a local server
   ];
 
@@ -2348,20 +2377,58 @@ async function fetchICS(url){
         continue;
       }
       const events = parseIcal(text);
-      const limit  = fmtDate(addDays(today,35));
-      for(const e of events){
-        const dk = fmtDate(e.start);
-        if(dk < TODAY || dk > limit) continue;
-        if(!calEvents[dk]) calEvents[dk]=[];
-        calEvents[dk].push({title:e.summary, time:fmtTime(e.start)});
-      }
       console.log('[ICS] ✓ Loaded '+events.length+' events via '+proxyUrl.slice(0,70));
-      return true;
+      return events;
     }catch(e){
       console.warn('[ICS] Failed:', proxyUrl.slice(0,70), '|', e.message);
     }
   }
-  return false;
+  return null;
+}
+
+// Wrapper kept for Google Calendar — fills calEvents within the 35-day window.
+async function fetchICS_fill(url){
+  const events = await fetchICS_core(url);
+  if(!events) return false;
+  const limit = fmtDate(addDays(today,35));
+  for(const e of events){
+    const dk = fmtDate(e.start);
+    if(dk < TODAY || dk > limit) continue;
+    if(!calEvents[dk]) calEvents[dk]=[];
+    calEvents[dk].push({title:e.summary, time:fmtTime(e.start)});
+  }
+  return true;
+}
+
+// ── Work roster (Humanforce webcal) ─────────────────────────────
+const WORK_ICS_KEY = 'work_ics_url';
+let workEvents = {};   // 'YYYY-MM-DD' → [{role,time}]
+
+function parseShift(e){
+  // SUMMARY: "Shift: 8:00AM - 1:00PM - LIFEGUARD" → role after the last " - "
+  let role = e.summary||'Shift';
+  const m = role.match(/^Shift:\s*.*? - .*? - (.+)$/i);
+  if(m) role = m[1];
+  role = role.toLowerCase().replace(/(^|[\s/])\w/g, c=>c.toUpperCase());
+  const time = fmtTime(e.start) + (e.end ? '–'+fmtTime(e.end) : '');
+  return { role, time };
+}
+
+async function loadWorkRoster(){
+  workEvents = {};
+  const url = localStorage.getItem(WORK_ICS_KEY);
+  if(!url) return false;
+  const events = await fetchICS_core(url.replace(/^webcal:\/\//i,'https://'));
+  if(!events) return false;
+  const limit = fmtDate(addDays(today,35));
+  for(const e of events){
+    const dk = fmtDate(e.start);
+    if(dk < TODAY || dk > limit) continue;
+    if(!workEvents[dk]) workEvents[dk]=[];
+    workEvents[dk].push(parseShift(e));
+  }
+  Object.values(workEvents).forEach(a=>a.sort((x,y)=>x.time.localeCompare(y.time)));
+  return true;
 }
 
 // Calendar setup modal
@@ -2371,6 +2438,11 @@ function showCalSetup(){
   document.getElementById('setup-clear-btn').style.display = existing ? 'inline-flex' : 'none';
   document.getElementById('setup-status').textContent = '';
   document.getElementById('setup-status').className = 'setup-status';
+  const workExisting = localStorage.getItem(WORK_ICS_KEY)||'';
+  document.getElementById('setup-work-input').value = workExisting;
+  document.getElementById('setup-work-clear-btn').style.display = workExisting ? 'inline-flex' : 'none';
+  document.getElementById('setup-work-status').textContent = '';
+  document.getElementById('setup-work-status').className = 'setup-status';
   document.getElementById('setup-overlay').classList.add('open');
   document.getElementById('setup-panel').classList.add('open');
   document.body.style.overflow='hidden';
@@ -2398,7 +2470,7 @@ async function saveCalSetup(){
   status.textContent='\u23F3 Connecting — trying up to 5 methods, please wait…';
   calEvents = {};
   localStorage.setItem(CAL_ICS_KEY, url);
-  const ok = await fetchICS(url);
+  const ok = await fetchICS_fill(url);
   if(ok){
     const count = Object.values(calEvents).reduce((n,a)=>n+a.length,0);
     status.className='setup-status ok';
@@ -2417,6 +2489,39 @@ async function saveCalSetup(){
     localStorage.removeItem(CAL_ICS_KEY);
     calEvents = {};
   }
+}
+async function saveWorkSetup(){
+  const rawUrl = document.getElementById('setup-work-input').value.trim();
+  const status = document.getElementById('setup-work-status');
+  if(!rawUrl){ status.className='setup-status err'; status.textContent='Paste your Humanforce webcal URL first.'; return; }
+  const url = rawUrl.replace(/^webcal:\/\//i,'https://');
+  if(!url.startsWith('http')){ status.className='setup-status err'; status.textContent='URL must start with webcal:// or https://'; return; }
+  status.className='setup-status'; status.textContent='\u23F3 Connecting to Humanforce…';
+  localStorage.setItem(WORK_ICS_KEY, url);
+  const ok = await loadWorkRoster();
+  if(ok){
+    const count = Object.values(workEvents).reduce((n,a)=>n+a.length,0);
+    status.className='setup-status ok';
+    status.textContent='\u2713 Connected! ' + count + ' shift' + (count!==1?'s':'') + ' in the next 5 weeks.';
+    document.getElementById('setup-work-clear-btn').style.display='inline-flex';
+    for(const day of SEVEN_DAYS) populateWeekDay(day.date,calEvents[day.date]||[]);
+    if(currentView==='month') renderMonthView();
+    setTimeout(closeCalSetup, 1600);
+  }else{
+    status.className='setup-status err';
+    status.textContent='Could not load the roster. Check the link is the calendar-sync URL from the Humanforce Work app, then try again.';
+    localStorage.removeItem(WORK_ICS_KEY);
+  }
+}
+function clearWorkSetup(){
+  localStorage.removeItem(WORK_ICS_KEY);
+  workEvents={};
+  document.getElementById('setup-work-input').value='';
+  document.getElementById('setup-work-clear-btn').style.display='none';
+  document.getElementById('setup-work-status').className='setup-status';
+  document.getElementById('setup-work-status').textContent='Work roster disconnected.';
+  for(const day of SEVEN_DAYS) populateWeekDay(day.date,calEvents[day.date]||[]);
+  if(currentView==='month') renderMonthView();
 }
 function clearCalSetup(){
   localStorage.removeItem(CAL_ICS_KEY);
