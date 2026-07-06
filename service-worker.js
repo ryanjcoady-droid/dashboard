@@ -1,5 +1,5 @@
 /* service-worker.js — offline cache for the dashboard PWA. */
-const VERSION = 'v33';
+const VERSION = 'v34';
 const APP_CACHE = `dash-app-${VERSION}`;
 const RUNTIME = `dash-runtime-${VERSION}`;
 
@@ -7,7 +7,6 @@ const APP_SHELL = [
   './',
   './index.html',
   './daily-dashboard.html',
-  './market-dashboard.html',
   './workout-dashboard.html',
   './notes-dashboard.html',
   './sync.js',
@@ -31,8 +30,6 @@ const NEVER_CACHE_HOSTS = [
   'identitytoolkit.googleapis.com',
   'www.googleapis.com',
   'calendar.google.com',
-  'query1.finance.yahoo.com',
-  'query2.finance.yahoo.com',
 ];
 
 self.addEventListener('install', (e) => {

@@ -39,7 +39,6 @@
   .switcher button.active{background:rgba(255,255,255,0.08);color:#F5F3EF}
   .switcher .dot{width:6px;height:6px;border-radius:999px;background:currentColor;opacity:.75}
   .switcher button[data-target="daily"]   .dot{color:#4ADE80}
-  .switcher button[data-target="market"]  .dot{color:#8b5cf6}
   .switcher button[data-target="workout"] .dot{color:#7DD3FC}
   .switcher button[data-target="notes"]   .dot{color:#C084FC}
 
@@ -143,13 +142,11 @@
 
 <nav class="switcher" role="tablist" aria-label="Dashboard switcher">
   <button type="button" data-target="daily"   role="tab" aria-selected="false" class=""><span class="dot"></span>Daily</button>
-  <button type="button" data-target="market"  role="tab" aria-selected="false" class=""><span class="dot"></span>Market</button>
   <button type="button" data-target="workout" role="tab" aria-selected="false" class=""><span class="dot"></span>Workout</button>
   <button type="button" data-target="notes"   role="tab" aria-selected="false" class=""><span class="dot"></span>Notes</button>
 </nav>
 
 <iframe id="frame-daily"   class="frame hidden" src="daily-dashboard.html"   title="Daily Dashboard"></iframe>
-<iframe id="frame-market"  class="frame hidden" src="market-dashboard.html"  title="Market Dashboard"></iframe>
 <iframe id="frame-workout" class="frame hidden" src="workout-dashboard.html" title="Workout Dashboard"></iframe>
 <iframe id="frame-notes"   class="frame hidden" src="notes-dashboard.html"   title="Notes"></iframe>
 
@@ -157,7 +154,6 @@
   const STORAGE_KEY = 'dashboard.activeTab';
   const frames = {
     daily:   document.getElementById('frame-daily'),
-    market:  document.getElementById('frame-market'),
     workout: document.getElementById('frame-workout'),
     notes:   document.getElementById('frame-notes'),
   };
@@ -186,9 +182,8 @@
   window.addEventListener('keydown',(e)=>{
     if(!(e.metaKey||e.ctrlKey)) return;
     if(e.key==='1'){e.preventDefault();show('daily');}
-    if(e.key==='2'){e.preventDefault();show('market');}
-    if(e.key==='3'){e.preventDefault();show('workout');}
-    if(e.key==='4'){e.preventDefault();show('notes');}
+    if(e.key==='2'){e.preventDefault();show('workout');}
+    if(e.key==='3'){e.preventDefault();show('notes');}
   });
 
   // Sync pairing UI
