@@ -1,5 +1,5 @@
 /* service-worker.js — offline cache for the dashboard PWA. */
-const VERSION = 'v31';
+const VERSION = 'v32';
 const APP_CACHE = `dash-app-${VERSION}`;
 const RUNTIME = `dash-runtime-${VERSION}`;
 
@@ -37,7 +37,11 @@ const NEVER_CACHE_HOSTS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(APP_CACHE).then((c) => c.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    // cache:'reload' bypasses the browser HTTP cache so a new SW version
+    // can never install itself with stale copies of the app shell.
+    caches.open(APP_CACHE)
+      .then((c) => c.addAll(APP_SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
   );
 });
 
