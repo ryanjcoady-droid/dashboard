@@ -29,6 +29,7 @@
     /^skip_tasks$/,
     /^weather_location$/,
     /^cal_ics_url$/,
+    /^gcal_ics_url$/,        // Google Calendar private ICS (actual key used)
     /^work_ics_url$/,        // Humanforce roster webcal URL
     /^myCustomStocks$/,
     /^obsidian_notes$/,         // notes page — note content + sync state
@@ -44,6 +45,11 @@
     UID = 'u_' + (crypto?.randomUUID?.() || (Date.now().toString(36) + Math.random().toString(36).slice(2)));
     localStorage.setItem('__sync_uid', UID);
   }
+
+  // Sentinel written to Firestore when a key is deleted locally. Using an
+  // explicit marker (instead of removing the field) lets applyRemote tell
+  // "deleted on another device" apart from "never uploaded yet".
+  const DELETED = '__SYNC_DELETED__';
 
   // Per-key change tracking. Map<key, value | null (delete)>.
   const pending = new Map();
@@ -81,10 +87,10 @@
   async function flushPush() {
     pushTimer = null;
     if (!fb || pending.size === 0) return;
-    const { setDoc, deleteField } = fb.fns;
+    const { setDoc } = fb.fns;
     const update = {};
     for (const [k, v] of pending) {
-      update[encodeKey(k)] = v === null ? deleteField() : v;
+      update[encodeKey(k)] = v === null ? DELETED : v;
     }
     pending.clear();
     suppressEcho++;
@@ -113,9 +119,10 @@
       if (encK === '__updatedAt') continue;
       const k = decodeKey(encK);
       if (!isSynced(k)) continue;
+      if (pending.has(k)) continue; // local change in flight wins
       const remoteVal = remote[encK];
       const localVal = localStorage.getItem(k);
-      if (remoteVal == null) {
+      if (remoteVal == null || remoteVal === DELETED) {
         if (localVal !== null) { origRemove.call(localStorage, k); changed = true; }
       } else if (localVal !== remoteVal) {
         origSet.call(localStorage, k, String(remoteVal));
@@ -123,13 +130,16 @@
       }
     }
 
-    // Remove local synced keys not in remote (so deletes propagate)
+    // Local synced keys the cloud doesn't know about yet are UPLOADED,
+    // never deleted. (Remote deletions arrive as the explicit sentinel
+    // above, so a missing field can only mean "not synced yet" — e.g. a
+    // key newly added to the SYNCED list.)
     const remoteKeys = new Set(Object.keys(remote).map(decodeKey));
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      if (isSynced(k) && !remoteKeys.has(k)) {
-        origRemove.call(localStorage, k);
-        changed = true;
+      if (isSynced(k) && !remoteKeys.has(k) && !pending.has(k)) {
+        pending.set(k, localStorage.getItem(k));
+        schedulePush();
       }
     }
     return changed;
