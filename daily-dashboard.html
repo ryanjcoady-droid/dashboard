@@ -3670,6 +3670,22 @@ updateOverall();
 initWeekStrip();
 loadGCal();
 
+// Work roster auto-refresh: hourly while the tab is open, and on return
+// to the foreground if the last fetch is more than 15 min old (covers
+// the phone PWA being resumed from the background).
+let _lastWorkFetch = Date.now();
+async function refreshWorkRoster(){
+  if(!localStorage.getItem(WORK_ICS_KEY)) return;
+  _lastWorkFetch = Date.now();
+  try{ await loadWorkRoster(); }catch(e){ return; }
+  for(const day of SEVEN_DAYS) populateWeekDay(day.date,calEvents[day.date]||[]);
+  if(currentView==='month') renderMonthView();
+}
+setInterval(refreshWorkRoster, 3600000);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && Date.now()-_lastWorkFetch > 900000) refreshWorkRoster();
+});
+
 // Live refresh of sport tags when the training plan is edited in another
 // tab/iframe (plan editor or AI coach) — 'storage' fires here on their write.
 window.addEventListener('storage', (e)=>{
