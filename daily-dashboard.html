@@ -1398,12 +1398,12 @@ const DAYKEY = DAY_SHORT[DI];
 const IS_TRET = ['Mon','Tue','Wed','Fri','Sat'].includes(DAYKEY);
 
 const WORKOUTS = {
-  Mon:{name:'Upper + Zone 2', type:'Resistance + cardio'},
-  Tue:{name:'Legs + Zone 2',  type:'Resistance + cardio'},
-  Wed:{name:'Swim',           type:'Cardio'},
-  Thu:{name:'Push + 5km Run', type:'Resistance + cardio'},
-  Fri:{name:'Pull + Volleyball', type:'Resistance + sport'},
-  Sat:{name:'Outdoor Bike Ride', type:'Cardio'},
+  Mon:{name:'Upper + Easy Bike',  type:'Resistance + cardio'},
+  Tue:{name:'Swim + Easy Run',    type:'Cardio'},
+  Wed:{name:'Bike + Brick Run',   type:'Quality cardio'},
+  Thu:{name:'Swim + Legs',        type:'Cardio + resistance'},
+  Fri:{name:'Upper + Long Ride',  type:'Resistance + cardio'},
+  Sat:{name:'Swim + Long Run',    type:'Cardio'},
   Sun:{name:'Rest',  type:'Recovery day'}
 };
 
@@ -1411,40 +1411,40 @@ const WORKOUTS = {
 // Sessions per day, per phase. t=type, l=label, v=volume/totals.
 const IM_DAYS = {
   1:{
-    mon:[{t:'swim',l:'Swim · Technique & Aerobic Base',v:'1100 m'},{t:'str',l:'Legs — Your Routine',v:'~50 min'}],
-    tue:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'run',l:'Long Easy Run — Zone 2 Base',v:'9 km'}],
-    wed:[{t:'swim',l:'Swim · Volume & Endurance',v:'1100 m'},{t:'bike',l:'Zone 2 — Assault Bike',v:'40 min'}],
-    thu:[{t:'bike',l:'Long Bike + Brick Run',v:'75 min bike · 10 min run'}],
-    fri:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'sport',l:'Volleyball',v:'2 hr'}],
-    sat:[{t:'swim',l:'Swim · Short Sharpener',v:'800 m'},{t:'bike',l:'Outdoor Long Ride',v:'~75 min'},{t:'run',l:'Tempo Run — Zone 3',v:'5 km'}],
+    mon:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'bike',l:'Easy Zone 2 Bike',v:'40–50 min'}],
+    tue:[{t:'swim',l:'Swim · Technique & Aerobic Base',v:'1100 m'},{t:'run',l:'Easy Run — Zone 2 + Strides',v:'~60 min'}],
+    wed:[{t:'bike',l:'Quality Bike — Tempo Intro (3×8 min Z3)',v:'~55 min'},{t:'run',l:'Brick Run — Off the Bike',v:'10 min'}],
+    thu:[{t:'swim',l:'Swim · Volume & Endurance',v:'1100 m'},{t:'str',l:'Legs — Your Routine',v:'~50 min'}],
+    fri:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'bike',l:'Long Ride — Zone 2',v:'~80–90 min'}],
+    sat:[{t:'swim',l:'Swim · Moderate',v:'800 m'},{t:'run',l:'Long Run — Zone 2',v:'~75 min'}],
     sun:[{t:'rest',l:'Full Rest',v:''}],
   },
   2:{
-    mon:[{t:'swim',l:'Swim · Volume Build',v:'2000 m'},{t:'str',l:'Legs — Your Routine',v:'~50 min'}],
-    tue:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'run',l:'Long Run with Tempo Finish',v:'13 km'}],
-    wed:[{t:'swim',l:'Swim · Threshold & Volume',v:'2100 m'},{t:'bike',l:'Zone 2 — Assault Bike',v:'50 min'}],
-    thu:[{t:'bike',l:'Long Bike + Brick Run',v:'95 min bike · 20 min run'}],
-    fri:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'sport',l:'Volleyball',v:'2 hr'}],
-    sat:[{t:'swim',l:'Swim · Race Pace Intro',v:'1100 m'},{t:'bike',l:'Outdoor Long Ride',v:'~110 min'},{t:'run',l:'Tempo Run — Building',v:'8 km'}],
+    mon:[{t:'str',l:'Upper — Your Routine',v:'~50 min'},{t:'bike',l:'Easy Zone 2 Bike',v:'~60 min'}],
+    tue:[{t:'swim',l:'Swim · Aerobic Endurance',v:'2100 m'},{t:'run',l:'Easy Run — Zone 2 + Strides',v:'60–75 min'}],
+    wed:[{t:'bike',l:'Quality Bike — Tempo Build (3×12→15 min Z3)',v:'~70 min'},{t:'run',l:'Brick Run — Off the Bike',v:'20 min'}],
+    thu:[{t:'swim',l:'Swim · Technique & Skills',v:'1800 m'},{t:'str',l:'Legs — Your Routine',v:'~50 min'}],
+    fri:[{t:'str',l:'Upper — Your Routine',v:'~45 min'},{t:'bike',l:'Long Ride — Z2 + Race Nutrition',v:'90 min → 2.5 h'}],
+    sat:[{t:'swim',l:'Swim · Moderate Aerobic',v:'1300 m'},{t:'run',l:'Long Run — Zone 2 Progression',v:'75 → 90 min'}],
     sun:[{t:'rest',l:'Full Rest',v:''}],
   },
   3:{
-    mon:[{t:'swim',l:'Swim · Race Distance Build',v:'2400 m'},{t:'str',l:'Legs · Maintenance',v:'~30 min'}],
-    tue:[{t:'str',l:'Upper · Maintenance',v:'~30 min'},{t:'run',l:'Long Run — Half Marathon Specific',v:'16 km'}],
-    wed:[{t:'swim',l:'Swim · Full Race Distance',v:'2100 m'},{t:'bike',l:'Threshold Bike Intervals',v:'~60 min'}],
-    thu:[{t:'bike',l:'Race Simulation Brick',v:'2 hr 10 min · 30 min run'}],
-    fri:[{t:'str',l:'Upper · Maintenance',v:'15–20 min'},{t:'sport',l:'Volleyball',v:'2 hr'}],
-    sat:[{t:'swim',l:'Swim · Race Pace Sharpener',v:'1200 m'},{t:'bike',l:'Long Outdoor Ride — 90 km',v:'~3 hrs'},{t:'run',l:'Tempo Run — Race Specific',v:'9 km'}],
+    mon:[{t:'str',l:'Upper · Maintenance',v:'~35 min'},{t:'bike',l:'Easy Zone 2 Bike',v:'60 min'}],
+    tue:[{t:'swim',l:'Swim · Race Endurance',v:'2400 m'},{t:'run',l:'Easy Run — Zone 2 + Strides',v:'~60 min'}],
+    wed:[{t:'bike',l:'Race-Pace Bike Intervals (2–3×20 min Z3)',v:'~75–100 min'},{t:'run',l:'Brick Run — Race Pace',v:'25–30 min'}],
+    thu:[{t:'swim',l:'Swim · Open Water Skills',v:'30–40 min'},{t:'str',l:'Legs · Maintenance',v:'~35 min'}],
+    fri:[{t:'str',l:'Upper · Maintenance',v:'~30 min'},{t:'bike',l:'Long Ride — Race Simulation Block',v:'2.5–3 h'}],
+    sat:[{t:'swim',l:'Swim · Easy / Open Water',v:'1200–1500 m'},{t:'run',l:'Long Run — Race Build',v:'90–105 min'}],
     sun:[{t:'rest',l:'Full Rest',v:''}],
   },
   4:{
-    mon:[{t:'swim',l:'Swim · Sharpener',v:'900 m'},{t:'str',l:'Legs · Minimal',v:'10 min'}],
-    tue:[{t:'str',l:'Upper · Minimal',v:'10 min'},{t:'run',l:'Short Sharpener Run',v:'~5 km'}],
-    wed:[{t:'swim',l:'Swim · Easy Technique',v:'900 m'},{t:'bike',l:'Easy Z2 Spin',v:'25 min'}],
-    thu:[{t:'bike',l:'Short Race-Feel Brick',v:'35 min'}],
-    fri:[{t:'rest',l:'Rest',v:''}],
-    sat:[{t:'swim',l:'Open Water Familiarisation',v:'20 min'},{t:'bike',l:'Leg Flush Spin',v:'25 min'}],
-    sun:[{t:'rest',l:'Full Rest',v:''}],
+    mon:[{t:'str',l:'Upper · Light Maintenance',v:'~25 min'},{t:'bike',l:'Bike — Race-Pace Touches (3×3 min)',v:'45 min'}],
+    tue:[{t:'swim',l:'Swim · Sharpener',v:'~1400 m'},{t:'run',l:'Run — Easy + Strides',v:'~40 min'}],
+    wed:[{t:'bike',l:'Bike — Race-Pace Reminder (2×10 min)',v:'~45 min'},{t:'run',l:'Brick Run — Short',v:'10 min'}],
+    thu:[{t:'swim',l:'Swim · Easy Technique',v:'1000–1200 m'},{t:'str',l:'Legs · Mobility & Activation',v:'~20 min'}],
+    fri:[{t:'str',l:'Upper · Optional Light',v:'~20 min'},{t:'bike',l:'Bike — Easy Spin',v:'45 min'}],
+    sat:[{t:'swim',l:'Swim · Short Sharpener',v:'800–1000 m'},{t:'run',l:'Run — Shakeout + Strides',v:'~30 min'}],
+    sun:[{t:'rest',l:'Full Rest — race day 8 Nov',v:''}],
   },
 };
 const IM_PHASE_NAMES = {1:'Base',2:'Volume',3:'Race Specific',4:'Taper'};
@@ -1460,7 +1460,7 @@ function getIronmanToday(){
   const id=['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
   return IM_DAYS[phase]?.[id]||null;
 }
-const IM_TAG_LABELS={swim:'Swim',bike:'Bike',run:'Run',str:'Strength',rest:'Rest',sport:'Volleyball'};
+const IM_TAG_LABELS={swim:'Swim',bike:'Bike',run:'Run',str:'Strength',rest:'Rest',sport:'Sport'};
 
 // Workout schedule overrides — let the user permanently rename the
 // recurring weekly workout for each day. Stored as
@@ -2143,10 +2143,6 @@ function renderModalBody(dateStr){
   const custom=getCustom(dateStr);
   const calEvts=calEvents[dateStr]||[];
 
-  const workoutHTML=`<div class="modal-section" style="padding:10px 12px;background:var(--workout-bg);border:1px solid var(--workout-bd);border-radius:10px;display:flex;align-items:center;gap:10px;margin-bottom:14px">
-    <span style="font-size:11px;color:var(--workout-c);font-weight:600;text-transform:uppercase;letter-spacing:.08em">${workout.type}</span>
-    <span style="font-family:'Outfit',sans-serif;font-size:20px;margin-left:auto">${workout.name}</span>
-  </div>`;
 
   const recurEvts=getRecurForDate(dateStr);
   const recurHTML=recurEvts.length?`<div class="modal-section">
@@ -2183,7 +2179,7 @@ function renderModalBody(dateStr){
   </div>`;
 
   document.getElementById('modal-body').innerHTML=
-    workoutHTML+recurHTML+calHTML+
+    recurHTML+calHTML+
     sections.map(s=>sectionHTML(s,dateStr,true)).join('')+
     skSectionHTML(getSK('am'),'sk-am','AM Skincare','morning routine','#67E8F9','var(--am-skin-bg)','var(--am-skin-bd)',dateStr,true)+
     skSectionHTML(skPm,'sk-pm','PM Skincare',skLabel,pmCh,pmBg,pmBd,dateStr,true)+

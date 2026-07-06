@@ -81,6 +81,17 @@ body{padding:28px 24px;max-width:860px;margin:0 auto}
 .icon-btn.danger:hover{color:var(--err)}
 .empty{color:var(--muted2);font-size:13px;text-align:center;padding:36px 0}
 
+/* Ask AI */
+.ai-row{display:flex;gap:8px}
+.ai-input{flex:1;background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+.ai-input:focus{border-color:var(--accent-bd)}
+.ai-input::placeholder{color:var(--muted2)}
+.ai-status{font-size:11px;color:var(--muted2);margin-top:8px;min-height:14px}
+.ai-answer{font-size:13px;line-height:1.7;color:var(--text);margin-top:10px;white-space:pre-wrap;word-break:break-word;display:none;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px 15px}
+.ai-answer.show{display:block}
+.ai-sources{font-size:10.5px;color:var(--muted2);margin-top:8px;line-height:1.6;display:none}
+.ai-sources.show{display:block}
+
 /* Settings overlay */
 .overlay-bg{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto}
 .overlay-bg.show{display:flex}
@@ -123,6 +134,16 @@ body{padding:28px 24px;max-width:860px;margin:0 auto}
   </div>
 </div>
 
+<div class="card">
+  <div class="ai-row">
+    <input class="ai-input" id="ai-q" placeholder="Ask your notes anything… (searches your whole Obsidian vault)" autocomplete="off">
+    <button class="ghost-btn btn-accent" id="ai-btn" onclick="askAI()">Ask AI</button>
+  </div>
+  <div class="ai-status" id="ai-status"></div>
+  <div class="ai-answer" id="ai-answer"></div>
+  <div class="ai-sources" id="ai-sources"></div>
+</div>
+
 <div class="filter-bar">
   <input class="search-input" id="search" placeholder="Search notes…" oninput="renderList()">
   <div id="filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
@@ -148,6 +169,8 @@ body{padding:28px 24px;max-width:860px;margin:0 auto}
     <input class="field-input" id="gh-branch" placeholder="main" autocomplete="off" spellcheck="false">
     <div class="field-label">Folder inside the vault for these notes</div>
     <input class="field-input" id="gh-folder" placeholder="Dashboard Notes" autocomplete="off">
+    <div class="field-label">Gemini API key (for Ask AI — shared with the rest of the dashboard)</div>
+    <input class="field-input" id="ai-key" type="password" placeholder="AIza…" autocomplete="off">
     <div class="overlay-status" id="settings-status"></div>
     <div class="overlay-actions">
       <button class="ghost-btn" onclick="testConnection()">Test connection</button>
@@ -166,6 +189,7 @@ body{padding:28px 24px;max-width:860px;margin:0 auto}
 const NOTES_KEY = 'obsidian_notes';
 const CATS_KEY  = 'obsidian_note_cats';
 const GH_REPO='gh_notes_repo', GH_TOKEN='gh_notes_token', GH_BRANCH='gh_notes_branch', GH_FOLDER='gh_notes_folder';
+const AI_KEY='coach_api_key';   // same Gemini key the dashboard has always used
 
 const DEFAULT_CATS = ['Inbox','Training','Investing','Uni','Health','Ideas'];
 
@@ -411,6 +435,7 @@ function openSettings(){
   document.getElementById('gh-token').value  = localStorage.getItem(GH_TOKEN)||'';
   document.getElementById('gh-branch').value = localStorage.getItem(GH_BRANCH)||'main';
   document.getElementById('gh-folder').value = localStorage.getItem(GH_FOLDER)||'Dashboard Notes';
+  document.getElementById('ai-key').value    = localStorage.getItem(AI_KEY)||'';
   document.getElementById('settings-status').textContent='';
   document.getElementById('settings-bg').classList.add('show');
 }
@@ -420,6 +445,8 @@ function saveSettings(){
   localStorage.setItem(GH_TOKEN,  document.getElementById('gh-token').value.trim());
   localStorage.setItem(GH_BRANCH, document.getElementById('gh-branch').value.trim()||'main');
   localStorage.setItem(GH_FOLDER, document.getElementById('gh-folder').value.trim()||'Dashboard Notes');
+  const aiK = document.getElementById('ai-key').value.trim();
+  if(aiK) localStorage.setItem(AI_KEY, aiK);
   const s = document.getElementById('settings-status');
   s.classList.remove('err'); s.textContent='✓ Saved';
   updateSub();
@@ -442,6 +469,106 @@ async function testConnection(){
   }catch(e){ s.classList.add('err'); s.textContent='Network error: '+e.message; }
 }
 
+/* ── Ask AI — Gemini over the whole Obsidian vault ────────────
+   1. Pull the vault file tree from GitHub (git trees API, cached 5 min).
+   2. Rank .md files against the question (path keywords), fetch the
+      best ~20 raw files (cached by sha for the session).
+   3. Send question + vault excerpts + all dashboard notes to Gemini. */
+let _treeCache = null, _treeAt = 0;
+const _fileCache = new Map();   // sha → content
+
+async function vaultTree(){
+  if(_treeCache && Date.now()-_treeAt < 300000) return _treeCache;
+  const c = ghCfg();
+  const res = await fetch(`https://api.github.com/repos/${c.repo}/git/trees/${encodeURIComponent(c.branch)}?recursive=1`,{
+    headers:{ 'Authorization':'Bearer '+c.token, 'Accept':'application/vnd.github+json' }
+  });
+  if(!res.ok) throw new Error('Could not read the vault file list (HTTP '+res.status+')');
+  const data = await res.json();
+  _treeCache = (data.tree||[]).filter(t =>
+    t.type==='blob' && t.path.endsWith('.md') &&
+    !t.path.startsWith('.obsidian') && !t.path.startsWith('.trash')
+  );
+  _treeAt = Date.now();
+  return _treeCache;
+}
+
+function rankFiles(question, files){
+  const words = question.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2);
+  const scored = files.map(f=>{
+    const pl = f.path.toLowerCase();
+    let score = 0;
+    words.forEach(w=>{ if(pl.includes(w)) score += 3; });
+    return { f, score };
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  const hits = scored.filter(x=>x.score>0).map(x=>x.f);
+  const rest = scored.filter(x=>x.score===0).map(x=>x.f);
+  return hits.concat(rest).slice(0,20);
+}
+
+async function fetchVaultFile(f){
+  if(_fileCache.has(f.sha)) return _fileCache.get(f.sha);
+  const c = ghCfg();
+  const res = await fetch(`https://api.github.com/repos/${c.repo}/contents/${encodeURIComponent(f.path).replace(/%2F/g,'/')}?ref=${encodeURIComponent(c.branch)}`,{
+    headers:{ 'Authorization':'Bearer '+c.token, 'Accept':'application/vnd.github.raw' }
+  });
+  if(!res.ok) return null;
+  let txt = await res.text();
+  if(txt.length > 6000) txt = txt.slice(0,6000) + '\n…[truncated]';
+  _fileCache.set(f.sha, txt);
+  return txt;
+}
+
+async function askAI(){
+  const q = document.getElementById('ai-q').value.trim();
+  const st = document.getElementById('ai-status');
+  const ans = document.getElementById('ai-answer');
+  const src = document.getElementById('ai-sources');
+  const btn = document.getElementById('ai-btn');
+  if(!q) return;
+  const key = (localStorage.getItem(AI_KEY)||'').trim();
+  if(!key){ st.textContent='Add your Gemini API key in ⚙ Obsidian settings first.'; openSettings(); return; }
+  btn.disabled = true; ans.classList.remove('show'); src.classList.remove('show');
+
+  // Gather context
+  let vaultParts = [], used = [];
+  if(ghReady()){
+    try{
+      st.textContent = 'Reading your vault…';
+      const files = rankFiles(q, await vaultTree());
+      const texts = await Promise.all(files.map(fetchVaultFile));
+      files.forEach((f,i)=>{ if(texts[i]){ vaultParts.push(`--- ${f.path} ---\n${texts[i]}`); used.push(f.path); } });
+    }catch(e){ st.textContent = 'Vault read failed ('+e.message+') — answering from dashboard notes only.'; }
+  }
+  const localNotes = notes.map(n=>`--- [dashboard] ${n.category} / ${noteTitle(n)} (${n.created.slice(0,10)}) ---\n${n.body}`).join('\n\n');
+
+  const sys = `You are the personal notes assistant inside Ryan's dashboard. Answer questions using his Obsidian vault notes and dashboard notes provided below. Be direct and concise. Use British English. If the notes don't contain the answer, say so plainly rather than inventing content. When you draw on a specific note, mention its file name inline. You cannot edit or create notes.`;
+  const userMsg = `My question: ${q}\n\n=== OBSIDIAN VAULT NOTES ===\n${vaultParts.join('\n\n')||'(no vault connection)'}\n\n=== DASHBOARD NOTES ===\n${localNotes||'(none)'}`;
+
+  try{
+    st.textContent = 'Thinking…';
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system_instruction:{parts:[{text:sys}]},
+        contents:[{role:'user',parts:[{text:userMsg}]}],
+        generationConfig:{ maxOutputTokens:2000, temperature:0.3, thinkingConfig:{thinkingBudget:0} }
+      })
+    });
+    const raw = await res.json();
+    if(!res.ok) throw new Error(raw.error?.message || ('HTTP '+res.status));
+    const txt = (raw.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
+    if(!txt) throw new Error('Empty response — try again.');
+    ans.textContent = txt; ans.classList.add('show');
+    if(used.length){ src.textContent = 'Read from vault: ' + used.join(' · '); src.classList.add('show'); }
+    st.textContent = '';
+  }catch(e){
+    st.textContent = 'Ask AI failed: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
 /* ── Cross-device updates (sync.js writes remote snapshots into localStorage) ── */
 window.addEventListener('storage', e=>{
   if(e.key===NOTES_KEY){ notes = loadNotes(); renderList(); updateSub(); }
@@ -452,6 +579,7 @@ window.addEventListener('online', ()=>syncAll(false));
 
 /* Ctrl/Cmd+Enter saves from the textarea */
 document.getElementById('in-body').addEventListener('keydown', e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') saveNote(); });
+document.getElementById('ai-q').addEventListener('keydown', e=>{ if(e.key==='Enter') askAI(); });
 
 renderCats(); renderFilter(); renderList(); updateSub();
 if(ghReady() && navigator.onLine) setTimeout(()=>syncAll(false), 1500);
