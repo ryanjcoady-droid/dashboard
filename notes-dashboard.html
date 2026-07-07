@@ -284,17 +284,25 @@ async function ghDelete(n){
 
 /* ── Sync engine ── */
 let syncing = false;
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
 async function syncAll(manual){
   if(syncing) return;
   if(!ghReady()){ if(manual) openSettings(); return; }
   syncing = true; updateSub('Syncing…');
-  let failed = 0;
-  for(const n of notes){
-    if(n.status==='synced') continue;
-    try{ await ghPut(n); n.status='synced'; n.error=null; }
-    catch(e){ n.status='error'; n.error=e.message; failed++; }
-    saveNotes(notes);
+  // Two passes: each PUT is a separate commit on GitHub's side, so rapid
+  // bursts can conflict (409). Space them out and retry failures once.
+  for(let pass=0; pass<2; pass++){
+    for(const n of notes){
+      if(n.status==='synced') continue;
+      try{ await ghPut(n); n.status='synced'; n.error=null; }
+      catch(e){ n.status='error'; n.error=e.message; }
+      saveNotes(notes);
+      await sleep(400);
+    }
+    if(!notes.some(n=>n.status==='error')) break;
+    await sleep(1200);
   }
+  const failed = notes.filter(n=>n.status==='error').length;
   syncing = false;
   renderList(); updateSub();
   if(manual && failed) alert('Some notes failed to sync: check the token, repo name and branch in ⚙ Obsidian settings.');
