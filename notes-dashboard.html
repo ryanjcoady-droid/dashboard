@@ -237,9 +237,9 @@ function noteMarkdown(n){
 /* ── GitHub API ──────────────────────────────────────────────
    Contents API: PUT create/update (update needs current sha),
    DELETE remove. One request per note — fine at personal scale. */
-async function ghRequest(method, path, bodyObj){
+async function ghRequest(method, path, bodyObj, query){
   const c = ghCfg();
-  const res = await fetch(`https://api.github.com/repos/${c.repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`,{
+  const res = await fetch(`https://api.github.com/repos/${c.repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}${query||''}`,{
     method,
     headers:{ 'Authorization':'Bearer '+c.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28', ...(bodyObj?{'Content-Type':'application/json'}:{}) },
     body: bodyObj ? JSON.stringify(bodyObj) : undefined
@@ -249,7 +249,7 @@ async function ghRequest(method, path, bodyObj){
 }
 async function ghGetSha(path){
   const c = ghCfg();
-  const r = await ghRequest('GET', path + `?ref=${encodeURIComponent(c.branch)}`);
+  const r = await ghRequest('GET', path, null, `?ref=${encodeURIComponent(c.branch)}`);
   return r.ok ? r.data.sha : null;
 }
 async function ghPut(n){
