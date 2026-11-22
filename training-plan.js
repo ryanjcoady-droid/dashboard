@@ -30,8 +30,8 @@
     raceDate:  '2027-06-13',
     phases: [
       { id: 'p1', name: 'Reset',     start: '2026-11-09', end: '2026-11-22' },
-      { id: 'p2', name: 'Base 1',    start: '2026-11-23', end: '2027-01-17' },
-      { id: 'p3', name: 'Base 2',    start: '2027-01-18', end: '2027-03-14' },
+      { id: 'p2', name: 'Base 1',    start: '2026-11-23', end: '2026-12-20' },
+      { id: 'p3', name: 'Base 2',    start: '2026-12-21', end: '2027-03-14' },
       { id: 'p4', name: 'Build',     start: '2027-03-15', end: '2027-05-09' },
       { id: 'p5', name: 'Peak',      start: '2027-05-10', end: '2027-05-30' },
       { id: 'p6', name: 'Taper',     start: '2027-05-31', end: '2027-06-06' },
@@ -40,17 +40,17 @@
     // Weekly sport split (Base 1 pattern). The workout dashboard follows each
     // phase's own detailed days unless this split is edited in the plan editor.
     weekSplit: {
-      Mon: ['bike', 'run', 'strength'],
-      Tue: ['swim', 'run'],
-      Wed: ['bike', 'run', 'strength'],
+      Mon: ['bike', 'strength'],
+      Tue: ['run', 'swim'],
+      Wed: ['bike', 'run'],
       Thu: ['strength', 'swim'],
-      Fri: ['bike', 'run'],
+      Fri: ['bike', 'strength'],
       Sat: ['run', 'swim'],
       Sun: ['rest'],
     },
     // Bump when the default split/phases change in a way that should
     // supersede older saved plans (see migration in load()).
-    planVersion: 4,
+    planVersion: 5,
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }

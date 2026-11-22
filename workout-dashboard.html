@@ -553,13 +553,13 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 let PLAN_CFG = (window.TrainingPlan ? TrainingPlan.load() : {
   raceTitle:'Ironman Cairns', subtitle:'Palm Cove to Cairns', raceDate:'2027-06-13',
   phases:[{id:'p1',name:'Reset',start:'2026-11-09',end:'2026-11-22'},
-          {id:'p2',name:'Base 1',start:'2026-11-23',end:'2027-01-17'},
-          {id:'p3',name:'Base 2',start:'2027-01-18',end:'2027-03-14'},
+          {id:'p2',name:'Base 1',start:'2026-11-23',end:'2026-12-20'},
+          {id:'p3',name:'Base 2',start:'2026-12-21',end:'2027-03-14'},
           {id:'p4',name:'Build',start:'2027-03-15',end:'2027-05-09'},
           {id:'p5',name:'Peak',start:'2027-05-10',end:'2027-05-30'},
           {id:'p6',name:'Taper',start:'2027-05-31',end:'2027-06-06'},
           {id:'p7',name:'Race week',start:'2027-06-07',end:'2027-06-13'}],
-  weekSplit:{Mon:['bike','run','strength'],Tue:['swim','run'],Wed:['bike','run','strength'],Thu:['strength','swim'],Fri:['bike','run'],Sat:['run','swim'],Sun:['rest']}
+  weekSplit:{Mon:['bike','strength'],Tue:['run','swim'],Wed:['bike','run'],Thu:['strength','swim'],Fri:['bike','strength'],Sat:['run','swim'],Sun:['rest']}
 });
 
 function esc0(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -684,7 +684,7 @@ updateCD();
 renderHeader();
 
 /* ── Training data: Ironman Cairns 2027 ─────────────────────── */
-/* Zones (update after each retest, weeks 9, 17 and 25):
+/* Zones (update after each retest: end of week 4, weeks 13, 17 and 25):
    Bike FTP 210 W · Z1 <116 W · Z2 118–158 W · race 137–151 W · tempo 160–183 W
      · sweet spot 185–195 W · threshold 197–221 W · VO2 223–252 W
    Swim CSS 1:50/100 m · easy 2:05+ · Z2 1:58–2:05 · race 1:55–1:58 · VO2 ≤1:47
@@ -693,7 +693,7 @@ renderHeader();
 const IM_WEEK1 = '2026-11-23', IM_WEEKS = 29;
 const IM_WEEK_HOURS = [5.5,11.5,12,12.5,9,12,13,13.5,9.5,13,13.5,14,10,14,14.5,15,10.5,15,15.5,16,11,15.5,16,16,11.5,16,16.5,14,9.5,5.5];
 const IM_EASY_WEEKS = [4,8,12,16,20,24];
-const IM_TEST_WEEKS = [1,9,17,25];
+const IM_TEST_WEEKS = [4,13,17,25];
 const IM_HEAT_WEEKS = [27,28];
 
 /* Session builders keep the phases consistent. */
@@ -739,40 +739,32 @@ const lower = (load, note) => ({ type:'str', title:'Lower · Legs',
   totals:'~45 min',
   note: note || 'Heavy leg work improves cycling efficiency (Llanos-Lagos et al. 2025). It sits the day before your long ride, so leave 1–2 reps in reserve and ride the first hour of Friday easy.'
 });
-const thuSwim = () => ({ type:'swim', title:'Short easy swim (optional)',
-  sets:[{label:'Swim', target:'20–30 min', desc:'Easy before your 1 pm shift · technique focus'}],
-  totals:'20–30 min · zone 1–2',
-  note:'Skip it if time is tight. Legs are the priority today.'
-});
-const sundayRest = () => ({ type:'rest', title:'Rest, or a short easy swim',
+const sundayRest = () => ({ type:'rest', title:'Rest, or an optional recovery session',
   sets:[
-    {label:'Swim (optional)', target:'20–30 min', desc:'After your shift · easy, 2:05/100 m or slower · drills welcome'},
-    {label:'Mobility',        target:'10–15 min', desc:'Hips, calves, thoracic spine'},
+    {label:'Default',          target:'Full rest',  desc:'Sleep and food are the session'},
+    {label:'Option 1 · swim',  target:'20–30 min',  desc:'After your shift · easy, 2:05/100 m or slower · drills welcome'},
+    {label:'Option 2 · B4 spin', target:'30–45 min', desc:'Under 116 W · high cadence, no effort'},
+    {label:'Option 3 · mobility', target:'15 min',  desc:'Hips, calves, thoracic spine'},
   ],
-  totals:'Up to 30 min · zone 1',
-  note:'Full rest is just as good. Pick whichever leaves you fresher for Monday.'
-});
-const tempoBrick = () => ({ type:'run', title:'R2 · Tempo run off the bike',
-  sets:[{label:'Run', target:'25–30 min', desc:'First 5 min easy, then 20 min at zone 3 heart rate (90–94% LTHR)'}],
-  totals:'25–30 min',
-  note:'Tempo running on tired legs builds the strength you need for the marathon off the bike.'
+  totals:'0–45 min · zone 1',
+  note:'Pick one option at most, and take Sunday fully off in every easier week.'
 });
 const swimEasy = (time) => ({ type:'swim', title:'Easy swim',
   sets:[{label:'Swim', target:time, desc:'Any strokes · 2:05/100 m or slower · focus on long, relaxed strokes'}],
   totals:time+' · zone 1–2'
 });
-const S1 = (reps, note) => ({ type:'swim', title:'S1 · Aerobic + technique swim',
+const S1 = (reps, total, note) => ({ type:'swim', title:'S1 · Aerobic + technique swim',
   sets:[
     {label:'Warm-up',   target:'400 m',          desc:'Easy · 2:05/100 m or slower'},
     {label:'Drills',    target:'8 × 50 m',       desc:'Catch-up, fingertip drag, 6-kick switch · 15 s rest'},
     {label:'Main',      target:reps+' × 200 m',  desc:'1:58/100 m (CSS + 8 s) · 20 s rest'},
-    {label:'Pull',      target:'400 m',          desc:'Pull buoy · long strokes · breathe every 3'},
+    {label:'Pull',      target:'200–400 m',      desc:'Pull buoy · long strokes · breathe every 3'},
     {label:'Cool-down', target:'200 m',          desc:'Easy, mixed strokes'},
   ],
-  totals:'~3 km · zone 2',
+  totals:total+' · zone 2',
   note: note || ''
 });
-const S2 = (main, target, desc, total, note) => ({ type:'swim', title:'S2 · Threshold swim',
+const S2 = (main, target, desc, total, note) => ({ type:'swim', title:'S2 · CSS threshold swim',
   sets:[
     {label:'Warm-up',   target:'600 m',  desc:'400 easy + 4 × 50 m building to fast'},
     {label:'Main',      target:main,     desc:target+' · '+desc},
@@ -783,33 +775,34 @@ const S2 = (main, target, desc, total, note) => ({ type:'swim', title:'S2 · Thr
 });
 const S3 = (sets, total, note) => ({ type:'swim', title:'S3 · Race-pace swim', sets, totals:total, note });
 
-const B1ss = (main, desc, total, note) => ({ type:'bike', title:'B1 · Sweet spot',
+/* B1 · Monday key bike session (freshest day after Sunday rest) */
+const B1 = (title, main, desc, total, note) => ({ type:'bike', title:'B1 · '+title,
   sets:[
-    {label:'Warm-up',   target:'10–15 min', desc:'Build from zone 1 to zone 2 · 3 × 1 min high cadence'},
-    {label:'Main',      target:main,        desc:desc},
-    {label:'Cool-down', target:'10 min',    desc:'Easy spin · under 116 W'},
+    {label:'Warm-up',   target:'15 min', desc:'Build from zone 1 to zone 2 · 3 × 1 min high cadence'},
+    {label:'Main',      target:main,     desc:desc},
+    {label:'Cool-down', target:'10 min', desc:'Easy spin · under 116 W'},
   ],
   totals:total,
-  note: note || 'ERG mode on the Kickr. Sweet spot is hard but steady: you should be able to say short sentences.'
+  note: note || 'ERG mode on the Kickr. Do this before Upper A while your legs are fresh.'
 });
-const B1race = (note) => ({ type:'bike', title:'B1 · Race-pace intervals',
+const B1base2 = () => ({ type:'bike', title:'B1 · VO2 (weeks 5–10), then threshold (weeks 11–16)',
   sets:[
-    {label:'Warm-up',   target:'15 min',          desc:'Zone 2 · 3 × 1 min high cadence'},
-    {label:'Main',      target:'3 × 25 min',      desc:'137–151 W (race watts) on the aero bars · 5 min easy between'},
-    {label:'Fuel',      target:'Every 15 min',    desc:'Drink and eat as you will on race day'},
-    {label:'Cool-down', target:'10 min',          desc:'Easy spin'},
+    {label:'Warm-up',          target:'15 min',         desc:'Zone 2 · 2 × 1 min at 220 W'},
+    {label:'Main · weeks 5–10', target:'5–6 × 4–5 min', desc:'223–242 W · 4 min easy between'},
+    {label:'Main · weeks 11–16', target:'2 × 15–20 min', desc:'197–210 W · 5 min easy between'},
+    {label:'Cool-down',        target:'10 min',         desc:'Easy spin'},
   ],
-  totals:'~90 min',
-  note: note || 'Race watts should feel almost too easy now. That is the point: you have to run a marathon afterwards.'
+  totals:'75–90 min',
+  note:'This is the block that lifts your FTP. Build from 5 × 4 min to 6 × 5 min, then 2 × 15 min to 2 × 20 min. If you can\'t hold the last rep, drop 5 W rather than stopping.'
 });
-const B2 = () => ({ type:'bike', title:'B2 · VO2 max intervals',
+/* B2 · Wednesday ride before the brick run */
+const B2 = (time, main) => ({ type:'bike', title:'B2 · Brick ride',
   sets:[
-    {label:'Warm-up',   target:'15 min',          desc:'Zone 2 · 2 × 1 min at 220 W'},
-    {label:'Main',      target:'5–6 × 4–5 min',   desc:'223–242 W · 4 min easy (zone 1) between'},
-    {label:'Cool-down', target:'10 min',          desc:'Easy spin'},
+    {label:'Ride',     target:time, desc:main},
+    {label:'Transition', target:'Under 3 min', desc:'Shoes ready · straight out the door'},
   ],
-  totals:'~75 min',
-  note:'This is the session that lifts your FTP. Start at 5 × 4 min and build to 6 × 5 min by week 15. If you can\'t hold the last rep, drop 5 W rather than stopping.'
+  totals:time,
+  note:'Practise eating and drinking as you would on race day.'
 });
 const B3 = (time, main, fuel, note) => ({ type:'bike', title:'B3 · Long ride',
   sets:[
@@ -818,63 +811,46 @@ const B3 = (time, main, fuel, note) => ({ type:'bike', title:'B3 · Long ride',
     {label:'Fuel', target:fuel, desc:'Start eating at 15 min · drink to thirst plus a bit'},
   ],
   totals:time,
-  note: note || ''
-});
-const B4 = (time) => ({ type:'bike', title:'B4 · Easy spin',
-  sets:[
-    {label:'Ride',     target:time,        desc:'Zone 1–2 · under 158 W'},
-    {label:'Cadence',  target:'5 × 1 min', desc:'110 rpm · 2 min easy between'},
-  ],
-  totals:time+' · easy',
-  note:'Legs should feel better at the end than at the start.'
+  note: note || 'Ride the first hour extra easy after Thursday\'s legs session.'
 });
 const bikeEasy = (time) => ({ type:'bike', title:'Easy ride',
   sets:[{label:'Ride', target:time, desc:'Zone 1–2 · under 158 W · flat route or Kickr'}],
   totals:time+' · easy'
 });
 
-const R1 = (time, note) => ({ type:'run', title:'R1 · Easy run',
+/* R1 · Tuesday run */
+const R1 = (time, main, extra, note) => ({ type:'run', title:'R1 · Tuesday run',
   sets:[
-    {label:'Run',     target:time,        desc:'Zone 2 heart rate · full sentences possible'},
-    {label:'Strides', target:'6 × 20 s',  desc:'Quick and relaxed, not sprinting · walk back'},
+    {label:'Run',   target:time,  desc:main},
+    {label:'Extra', target:extra.t, desc:extra.d},
   ],
-  totals:time+' · zone 2',
-  note: note || 'If your heart rate drifts above zone 2, slow down or walk. Easy runs are where your run base gets built.'
+  totals:time,
+  note: note || 'Keep this easy so it doesn\'t stack on Monday\'s hard bike. If your heart rate drifts above zone 2, slow down.'
 });
-const R2tempo = () => ({ type:'run', title:'R2 · Tempo run',
-  sets:[
-    {label:'Warm-up',   target:'15 min',        desc:'Easy'},
-    {label:'Main',      target:'3 × 10 min',    desc:'Zone 3 heart rate (90–94% LTHR) · 2 min jog between'},
-    {label:'Cool-down', target:'10 min',        desc:'Easy'},
-  ],
-  totals:'~55 min'
+/* R2 · Wednesday brick run */
+const R2 = (time, main, note) => ({ type:'run', title:'R2 · Brick run (straight off the bike)',
+  sets:[{label:'Run', target:time, desc:main}],
+  totals:time,
+  note: note || 'The first 10 min off the bike always feel awful. That is normal.'
 });
-const R2race = (main) => ({ type:'run', title:'R2 · Race-pace run',
+const R3 = (time, main, fuel, note) => ({ type:'run', title:'R3 · Long run',
   sets:[
-    {label:'Warm-up',   target:'15 min', desc:'Easy'},
-    {label:'Main',      target:main,     desc:'Race-pace heart rate (85–89% LTHR) · steady, not hard'},
-    {label:'Cool-down', target:'5–10 min', desc:'Easy'},
-  ],
-  totals:'60–75 min',
-  note:'Practise taking a gel and water mid-run at race pace.'
-});
-const R3 = (time, fuel, note) => ({ type:'run', title:'R3 · Long run',
-  sets:[
-    {label:'Run',  target:time, desc:'Zone 2 heart rate · flat route'},
+    {label:'Run',  target:time, desc:main},
     {label:'Fuel', target:fuel, desc:'Gel or drink every 20–30 min'},
   ],
-  totals:time+' · zone 2',
+  totals:time,
   note: note || 'Add about 10 min a week and cap at 2 h 30. You don\'t need to run a marathon in training.'
+});
+const R4 = (time) => ({ type:'run', title:'R4 · Run off the long ride',
+  sets:[{label:'Run', target:time, desc:'First 10 min easy · then race-pace heart rate (85–89% LTHR)'}],
+  totals:time,
+  note:'The closest thing to Ironman run legs. First thing to cut on a bad day.'
 });
 const runEasy = (time) => ({ type:'run', title:'Easy run',
   sets:[{label:'Run', target:time, desc:'Zone 2 heart rate · walk breaks are fine'}],
   totals:time+' · easy'
 });
-const brick = (time, desc, note) => ({ type:'run', title:'Brick run (straight off the bike)',
-  sets:[{label:'Run', target:time, desc:desc}],
-  totals:time,
-  note: note || 'Shoes ready before you finish the ride. The first 10 min always feel awful; that is normal.'
-});
+const thuSwim = () => S1(4, '2–2.5 km', 'Keep it short before your 1 pm shift. Legs are the priority today.');
 
 const PLAN = {
   1: {
@@ -891,53 +867,49 @@ const PLAN = {
     ]
   },
   2: {
-    note:'<strong>Base 1 · 23 Nov – 17 Jan · weeks 1–8 · 11.5–13.5 h.</strong> Built around your shifts: train late morning Monday to Wednesday, a short legs day before Thursday\'s 1 pm shift, long ride Friday, long run Saturday, rest Sunday. Gut training starts: 40–60 g carbs/h on long rides, 30–40 g/h on long runs. <strong>Easier weeks 4 and 8:</strong> cut every session by about 40% and skip the intervals. Christmas falls in week 5: move sessions around and don\'t make up missed ones.',
+    note:'<strong>Base 1 · 23 Nov – 20 Dec · weeks 1–4 · 11.5–12.5 h.</strong> A short lead-in back to about 12 h a week, using the same weekly layout as your 70.3 block. Learn the lifts at a moderate load. Gut training starts: 40–60 g carbs/h on long rides, 30–40 g/h on long runs. <strong>Week 4 is easier:</strong> cut every session by about 40%, then retest FTP, CSS and run LTHR at the end of the week.',
     days:[
-      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
-        B1ss('3 × 15 min', '185–195 W · 5 min easy between', '75 min'),
-        brick('15 min', 'Easy · zone 2 heart rate'),
-        upperA('Weeks 1–3: 3 × 8–10 · then 4 × 5–8')]},
-      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
-        S2('10–12 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.2–2.4 km'),
-        R1('50–60 min')]},
-      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
-        B4('75–90 min'),
-        runEasy('30–40 min'),
-        upperB('Weeks 1–3: 3 × 8–10 · then 4 × 5–8')]},
+      {id:'mon', name:'Monday', tags:['bike','str'], sessions:[
+        B1('Sweet spot', '3 × 12–15 min', '185–195 W · 5 min easy between', '75 min'),
+        upperA('3 × 8–10', 'Weeks 1–3 are for learning the lifts at a moderate load. No swim on upper days.')]},
+      {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
+        R1('50–60 min', 'Zone 2 heart rate · full sentences possible', {t:'6 × 20 s', d:'Hill strides · walk back down'}),
+        S2('10–12 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.2–2.4 km')]},
+      {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
+        B2('75–90 min', 'Zone 2 with 2 × 15 min tempo at 160–183 W'),
+        R2('15–20 min', 'Easy · zone 2 heart rate')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
-        lower('Weeks 1–3: 3 × 8–10 · then 4 × 4–6', 'Weeks 1–3 are for learning the lifts at a moderate load. From week 4, go heavy (about 80–85% of 1RM), but leave 1–2 reps in reserve because the long ride is tomorrow.'),
+        lower('3 × 8–10', 'Learn the lifts at a moderate load in weeks 1–3. Leave 2 reps in reserve because the long ride is tomorrow.'),
         thuSwim()]},
-      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
-        B3('3–3.5 h', 'Zone 2 · 118–158 W · first hour extra easy after legs · Kickr until the P3 is ready for outdoor rides', '40–60 g carbs/h', 'Use every long ride to practise eating and drinking.'),
-        brick('15 min', 'Easy · zone 2 heart rate')]},
+      {id:'fri', name:'Friday', tags:['bike','str'], sessions:[
+        B3('3–3.5 h', 'Zone 2 · 118–158 W · Kickr until the P3 is ready for outdoor rides', '40–60 g carbs/h'),
+        upperB('3 × 8–10', 'After the long ride: eat first and keep it to about 40 min.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('90–110 min', '30–40 g carbs/h'),
-        S1(6, 'Later in the day after the long run. Your swim is already strong, so cut this first on a busy day.')]},
+        R3('90–110 min', 'Zone 2 heart rate · flat route', '30–40 g carbs/h'),
+        S1(6, '~3 km', 'Later in the day after the long run.')]},
       {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
   },
   3: {
-    note:'<strong>Base 2 · 18 Jan – 14 Mar · weeks 9–16 · 13–15 h.</strong> Lift your FTP with VO2 and sweet spot work, keep lifting heavy and get the long rides outdoors. The tempo run now comes straight off Wednesday\'s bike so hard days never sit back to back. <strong>Retest week 9</strong> (FTP, CSS, run LTHR) after the easier week 8. <strong>Easier weeks 12 and 16.</strong> Fuel: 60–75 g carbs/h on long rides, 40–50 g/h on long runs.',
+    note:'<strong>Base 2 · 21 Dec – 14 Mar · weeks 5–16 · 12–15 h.</strong> 12 weeks to lift your FTP: VO2 intervals on Mondays in weeks 5–10, threshold intervals in weeks 11–16. Run quality comes off the bike on Wednesdays. Heavy lifting and outdoor long rides. <strong>Easier weeks 8, 12 and 16</strong>, <strong>retest week 13</strong>. Christmas falls in week 5: move sessions around and don\'t make up missed ones. Fuel: 60–75 g carbs/h on long rides, 40–50 g/h on long runs.',
     days:[
-      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
-        B2(),
-        brick('20 min', 'Easy · zone 2 heart rate'),
+      {id:'mon', name:'Monday', tags:['bike','str'], sessions:[
+        B1base2(),
         upperA('4 × 5–8')]},
-      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
-        S2('12–15 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.4–2.7 km'),
-        R1('50–60 min')]},
-      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
-        B1ss('2 × 30 min', '185–195 W · 10 min easy between', '90 min'),
-        tempoBrick(),
-        upperB('4 × 5–8')]},
+      {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
+        R1('60 min', 'Progression · first 45 min zone 2, last 15 min zone 3 (90–94% LTHR)', {t:'4 × 20 s', d:'Strides after the run'}, 'Moderate, not hard: the last 15 min should feel comfortably hard, never a race.'),
+        S2('12–15 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.4–2.7 km')]},
+      {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
+        B2('75 min', 'Zone 2 · 118–158 W'),
+        R2('35 min', '5 min easy · 3 × 8 min at threshold HR (95–100% LTHR), 2 min jog between · easy to finish', 'Threshold running on bike legs builds the strength you need for the marathon.')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
-        lower('4 × 4–6'),
+        lower('4 × 4–6', 'Heavy now (about 80–85% of 1RM), but leave 1–2 reps in reserve because the long ride is tomorrow.'),
         thuSwim()]},
-      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+      {id:'fri', name:'Friday', tags:['bike','str'], sessions:[
         B3('3.5–4.5 h', 'Zone 2 · 118–158 W · outdoors when you can, on the aero bars', '60–75 g carbs/h'),
-        brick('20 min', 'Easy · zone 2 heart rate')]},
+        upperB('4 × 5–8', 'After the long ride: eat first and keep it to about 40 min.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('1 h 45 – 2 h', '40–50 g carbs/h'),
+        R3('1 h 45 – 2 h', 'Zone 2 heart rate · flat route', '40–50 g carbs/h'),
         S3([
           {label:'Warm-up',   target:'400 m',     desc:'Easy + 4 × 50 m build'},
           {label:'Main',      target:'4 × 800 m', desc:'1:55–1:58/100 m (race pace) · 30 s rest'},
@@ -947,27 +919,26 @@ const PLAN = {
     ]
   },
   4: {
-    note:'<strong>Build · 15 Mar – 9 May · weeks 17–24 · 15–16 h.</strong> Ironman-specific now: race-pace blocks, brick runs and full race nutrition (75–90 g carbs/h on the bike, 50–60 g/h running). Strength drops to maintenance: same weights, fewer sets. <strong>Retest week 17</strong> and set your goal time. <strong>Easier weeks 20 and 24.</strong> Open water from April. Easter falls at the end of week 18.',
+    note:'<strong>Build · 15 Mar – 9 May · weeks 17–24 · 15–16 h.</strong> Ironman-specific: threshold on Mondays, race-pace bricks on Wednesdays, race-watt blocks in the long ride and a race-pace finish to the long run. Full race nutrition (75–90 g carbs/h on the bike, 50–60 g/h running). Strength drops to maintenance. <strong>Retest week 17</strong> and set your goal time. <strong>Easier weeks 20 and 24.</strong> Open water from April. Easter falls at the end of week 18.',
     days:[
-      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
-        B1race(),
-        brick('20 min', 'Easy · zone 2 heart rate'),
+      {id:'mon', name:'Monday', tags:['bike','str'], sessions:[
+        B1('Threshold', '2 × 20 min', '197–210 W · 5 min easy between', '90 min'),
         upperA('3 × 6–8', 'Maintenance now: same weights, fewer sets. No swim on upper days.')]},
-      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
-        S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km'),
-        R1('60 min')]},
-      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
-        B4('60–75 min'),
-        R2race('40–50 min'),
-        upperB('3 × 6–8', 'Maintenance now: same weights, fewer sets. No swim on upper days.')]},
+      {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
+        R1('60 min', 'Zone 2 heart rate', {t:'6 × 20 s', d:'Strides · quick and relaxed'}),
+        S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km')]},
+      {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
+        B2('90 min', 'Zone 2 with 2 × 20 min at 137–151 W (race watts) on the aero bars'),
+        R2('40–50 min', 'First 10 min easy · then race-pace HR (85–89% LTHR)')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
         lower('3 × 4–5', 'Keep the heavy load but fewer sets. Leave 2 reps in reserve before Friday\'s long ride.'),
-        thuSwim()]},
-      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+        S1(5, '~2.5 km', 'Easy and short before your shift. Open water is fine from April.')]},
+      {id:'fri', name:'Friday', tags:['bike','run','str'], sessions:[
         B3('4.5–5.5 h', 'Zone 2 with 2–3 × 30–45 min at 137–151 W (race watts) on the aero bars', '75–90 g carbs/h', 'Ride the race-watt blocks in the middle of the ride, not at the end.'),
-        brick('30–45 min', 'First 10 min easy · then race-pace heart rate')]},
+        R4('20–30 min'),
+        upperB('3 × 6–8', 'After the long ride: eat first and keep it to about 40 min.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('2 h – 2 h 20', '50–60 g carbs/h'),
+        R3('2 h – 2 h 20', 'Zone 2 · last 20 min at race-pace HR', '50–60 g carbs/h'),
         S3([
           {label:'Warm-up', target:'300 m',   desc:'Easy'},
           {label:'Main',    target:'3.5 km',  desc:'4 × 800 m at race pace (30 s rest), or continuous in open water from April'},
@@ -977,27 +948,26 @@ const PLAN = {
     ]
   },
   5: {
-    note:'<strong>Peak · 10–30 May · weeks 25–27 · 14–16.5 h.</strong> Your biggest weeks. <strong>Retest week 25.</strong> <strong>Race rehearsal Fri 14 May:</strong> 3 km open-water swim, 4.5 h at race watts, 45 min run at race effort, using exact race food, drinks and kit. On Sat 15 May just do an easy 30–40 min run and an easy swim. Week 26 is the peak (16.5 h). <strong>Heat block starts week 27:</strong> 20–30 min sauna or 40 °C bath after easy sessions. Last strength sessions are in week 27.',
+    note:'<strong>Peak · 10–30 May · weeks 25–27 · 14–16.5 h.</strong> Your biggest weeks. <strong>Retest week 25.</strong> <strong>Race rehearsal Fri 14 May:</strong> 3 km open-water swim, 4.5 h at race watts, 45 min run at race effort, using exact race food, drinks and kit. Skip Upper B that day, and on Sat 15 May just do an easy 30–40 min run and an easy swim. Week 26 is the peak (16.5 h). <strong>Heat block starts week 27:</strong> 20–30 min sauna or 40 °C bath after easy sessions. Last strength sessions are in week 27.',
     days:[
-      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
-        B1race(),
-        brick('20 min', 'Easy · zone 2 heart rate'),
+      {id:'mon', name:'Monday', tags:['bike','str'], sessions:[
+        B1('Sharpening', '4 × 8 min', '200–215 W · 4 min easy between', '75–90 min'),
         upperA('3 × 6–8', 'Maintenance: same weights, fewer sets.')]},
-      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
-        S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km'),
-        R1('60 min')]},
-      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
-        B4('60 min'),
-        R2race('50–60 min'),
-        upperB('3 × 6–8', 'Maintenance: same weights, fewer sets.')]},
+      {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
+        R1('60 min', 'Zone 2 heart rate', {t:'6 × 20 s', d:'Strides · quick and relaxed'}),
+        S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km')]},
+      {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
+        B2('90 min', 'Zone 2 with 2 × 25 min at 137–151 W (race watts) on the aero bars'),
+        R2('45–60 min', 'First 10 min easy · then race-pace HR (85–89% LTHR)')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
         lower('3 × 4–5', 'Keep it crisp, not exhausting. Leave 2 reps in reserve before Friday.'),
-        thuSwim()]},
-      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
-        B3('5–5.5 h', 'Zone 2 with 3 h at 137–151 W (race watts) · week 25: race rehearsal instead (see note above)', 'Exact race plan · 80–90 g carbs/h', 'Longest brick is week 26: 5.5 h ride + 60 min run.'),
-        brick('45–60 min', 'First 10 min easy · then race-pace heart rate')]},
+        S1(5, '~2.5 km', 'Easy and short before your shift.')]},
+      {id:'fri', name:'Friday', tags:['bike','run','str'], sessions:[
+        B3('5–5.5 h', 'Zone 2 with 3 h at 137–151 W (race watts) · week 25: race rehearsal instead (see note above)', 'Exact race plan · 80–90 g carbs/h', 'Longest day is week 26: 5.5 h ride + 30 min run off.'),
+        R4('30 min'),
+        upperB('3 × 6–8', 'After the long ride: eat first and keep it to about 40 min. Moving it to Sunday is fine in peak weeks.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('2 h – 2 h 30', '50–60 g carbs/h', 'Make it 90 min after a big Friday brick, and only 30–40 min easy after the week 25 rehearsal. Cap at 2 h 30.'),
+        R3('2 h – 2 h 30', 'Zone 2 · last 30 min at race-pace HR', '50–60 g carbs/h', 'Cap at 2 h 30, and only 30–40 min easy after the week 25 rehearsal.'),
         S3([
           {label:'Warm-up', target:'200 m',  desc:'Easy'},
           {label:'Main',    target:'3.8 km', desc:'Continuous in wetsuit at race pace · practise a firm first 200 m, then settle'},
@@ -1014,20 +984,16 @@ const PLAN = {
           {label:'Main', target:'2 × 15 min', desc:'137–151 W on the aero bars · 5 min easy between'},
           {label:'Cool-down', target:'10 min', desc:'Easy'},
         ], totals:'60 min', note:'Feeling flat or restless in taper is normal. Trust the training.'}]},
-      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
-        S2('6–8 × 100 m', '1:50/100 m (CSS)', '20 s rest', '~2 km', 'Half the usual reps, same pace.'),
-        runEasy('40 min')]},
+      {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
+        runEasy('40 min'),
+        S2('6–8 × 100 m', '1:50/100 m (CSS)', '20 s rest', '~2 km', 'Half the usual reps, same pace.')]},
       {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
-        B4('45 min'),
-        {type:'run', title:'Short race-pace run', sets:[
-          {label:'Warm-up', target:'10 min', desc:'Easy'},
-          {label:'Main', target:'15 min', desc:'Race-pace heart rate'},
-          {label:'Cool-down', target:'5 min', desc:'Easy'},
-        ], totals:'30 min'}]},
-      {id:'thu', name:'Thursday', tags:['swim'], sessions:[thuSwim()]},
+        B2('45 min', 'Zone 2 with 10 min at race watts'),
+        R2('20–30 min', 'Easy, then 15 min at race-pace HR')]},
+      {id:'thu', name:'Thursday', tags:['swim'], sessions:[swimEasy('30 min')]},
       {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
         B3('3 h', 'Zone 2 with 60 min at 137–151 W', 'Exact race plan', 'Last longer ride. Check every bit of race kit works.'),
-        brick('20 min', 'Easy, with the last 5 min at race-pace heart rate')]},
+        R4('20 min')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
         {type:'run', title:'Long run (short)', sets:[
           {label:'Run', target:'60–75 min', desc:'Zone 2 · last 20 min at race-pace heart rate'},
