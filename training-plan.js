@@ -22,30 +22,35 @@
     rest:     { label: 'Rest',     c: '#4ADE80', bg: '#071A0F', bd: '#134D22' },
   };
 
-  // Default plan — matches the current 70.3 build. Fully editable.
+  // Default plan — Ironman Cairns 2027 (29-week build). Fully editable.
+  // Week 1 starts Mon 23 Nov 2026. Session detail lives in workout-dashboard.
   const DEFAULT_PLAN = {
-    raceTitle: 'Ironman 70.3 Melbourne',
-    subtitle:  'St Kilda Beach',
-    raceDate:  '2026-11-08',
+    raceTitle: 'Ironman Cairns',
+    subtitle:  'Palm Cove to Cairns',
+    raceDate:  '2027-06-13',
     phases: [
-      { id: 'p1', name: 'Base Building', start: '2026-05-11', end: '2026-07-06' },
-      { id: 'p2', name: 'Volume Build',  start: '2026-07-07', end: '2026-08-30' },
-      { id: 'p3', name: 'Race Specific', start: '2026-08-31', end: '2026-10-18' },
-      { id: 'p4', name: 'Taper',         start: '2026-10-19', end: '2026-11-08' },
+      { id: 'p1', name: 'Reset',     start: '2026-11-09', end: '2026-11-22' },
+      { id: 'p2', name: 'Base 1',    start: '2026-11-23', end: '2027-01-17' },
+      { id: 'p3', name: 'Base 2',    start: '2027-01-18', end: '2027-03-14' },
+      { id: 'p4', name: 'Build',     start: '2027-03-15', end: '2027-05-09' },
+      { id: 'p5', name: 'Peak',      start: '2027-05-10', end: '2027-05-30' },
+      { id: 'p6', name: 'Taper',     start: '2027-05-31', end: '2027-06-06' },
+      { id: 'p7', name: 'Race week', start: '2027-06-07', end: '2027-06-13' },
     ],
-    // Weekly sport split — ordered list of sport keys per day.
+    // Weekly sport split (Base 1 pattern). The workout dashboard follows each
+    // phase's own detailed days unless this split is edited in the plan editor.
     weekSplit: {
-      Mon: ['strength', 'bike'],
-      Tue: ['swim', 'run'],
-      Wed: ['bike', 'run'],
-      Thu: ['swim', 'strength'],
-      Fri: ['strength', 'bike'],
-      Sat: ['swim', 'run'],
-      Sun: ['rest'],
+      Mon: ['strength', 'swim'],
+      Tue: ['bike', 'run'],
+      Wed: ['swim', 'run'],
+      Thu: ['bike', 'strength'],
+      Fri: ['swim'],
+      Sat: ['bike'],
+      Sun: ['run'],
     },
     // Bump when the default split/phases change in a way that should
     // supersede older saved plans (see migration in load()).
-    planVersion: 2,
+    planVersion: 3,
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
