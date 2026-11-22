@@ -559,7 +559,7 @@ let PLAN_CFG = (window.TrainingPlan ? TrainingPlan.load() : {
           {id:'p5',name:'Peak',start:'2027-05-10',end:'2027-05-30'},
           {id:'p6',name:'Taper',start:'2027-05-31',end:'2027-06-06'},
           {id:'p7',name:'Race week',start:'2027-06-07',end:'2027-06-13'}],
-  weekSplit:{Mon:['strength','swim'],Tue:['bike','run'],Wed:['swim','run'],Thu:['bike','strength'],Fri:['swim'],Sat:['bike'],Sun:['run']}
+  weekSplit:{Mon:['bike','run','strength'],Tue:['swim','run'],Wed:['bike','run','strength'],Thu:['strength','swim'],Fri:['bike','run'],Sat:['run','swim'],Sun:['rest']}
 });
 
 function esc0(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -704,49 +704,62 @@ const rest = (extra) => ({ type:'rest', title:'Rest + mobility',
   ],
   note: extra || 'Rest days are when the adaptation happens. Keep them truly easy.'
 });
-const strA = (load, note) => ({ type:'str', title:'Strength A',
+const upperA = (load, note) => ({ type:'str', title:'Upper A · Pull and press',
   sets:[
-    {label:'Squat or trap bar deadlift', target:load, desc:'Slow down, fast up · stop 1–2 reps before form breaks'},
-    {label:'Bulgarian split squat',      target:load, desc:'Each leg · rear foot on a bench'},
-    {label:'Single-leg Romanian deadlift', target:load, desc:'Each leg · hips square'},
-    {label:'Lat pulldown or pull-ups',   target:load, desc:'Swim pulling strength'},
-    {label:'Calf raises',                target:'3 × 10–12', desc:'Straight knee and bent knee · Achilles health'},
-    {label:'Dead bug',                   target:'3 × 10 each', desc:'Slow · lower back stays flat'},
+    {label:'Pull-ups or lat pulldown', target:load,          desc:'Full range · swim pulling strength'},
+    {label:'Dumbbell bench press',     target:load,          desc:'Controlled down, strong up'},
+    {label:'Single-arm dumbbell row',  target:'3 × 8–10',    desc:'Each arm · no twisting'},
+    {label:'Overhead press',           target:'3 × 6–8',     desc:'Ribs down · no lower-back arch'},
+    {label:'Face pulls',               target:'3 × 12–15',   desc:'Shoulder health for swimming'},
+    {label:'Dead bug',                 target:'3 × 10 each', desc:'Slow · lower back stays flat'},
   ],
   totals:'~45 min',
-  note: note || 'Heavy lifting improves cycling efficiency (Llanos-Lagos et al. 2025). Lift after an easy swim or 6+ h away from key sessions.'
+  note: note || 'No swim on upper days, so your shoulders get a full day before the next swim.'
 });
-const strB = (load, note) => ({ type:'str', title:'Strength B',
+const upperB = (load, note) => ({ type:'str', title:'Upper B · Pull and push',
   sets:[
-    {label:'Trap bar deadlift or hip thrust', target:load, desc:'Heavy · clean reps only'},
-    {label:'Step-ups',                 target:load, desc:'Each leg · knee-high box · drive through the heel'},
-    {label:'Single-arm dumbbell row',  target:load, desc:'Each arm · no twisting'},
-    {label:'Copenhagen or side plank', target:'3 × 20–30 s', desc:'Each side · hip and groin control'},
-    {label:'Pallof press',             target:'3 × 10 each', desc:'Anti-rotation · core for the aero position'},
+    {label:'Chin-ups or neutral-grip pulldown', target:load,          desc:'Full range'},
+    {label:'Barbell or dumbbell row',           target:load,          desc:'Chest-supported if your back is tired'},
+    {label:'Incline dumbbell press or push-ups', target:'3 × 8–12',   desc:'Smooth reps'},
+    {label:'Half-kneeling single-arm press',    target:'3 × 8 each',  desc:'Core braced'},
+    {label:'Band external rotation',            target:'3 × 15',      desc:'Rotator cuff · light band'},
+    {label:'Pallof press',                      target:'3 × 10 each', desc:'Anti-rotation core for the aero position'},
   ],
   totals:'~45 min',
-  note: note || 'Keep the load heavy and the sets short. You should leave the gym feeling better, not wrecked.'
+  note: note || 'No swim on upper days, so your shoulders get a full day before the next swim.'
 });
-const strBuild = () => ({ type:'str', title:'Strength (alternate A and B)',
+const lower = (load, note) => ({ type:'str', title:'Lower · Legs',
   sets:[
-    {label:'Main lifts', target:'3 × 4–5', desc:'Keep the heavy load, fewer sets · alternate Strength A and B each week'},
-    {label:'Accessories', target:'2 × 10–12', desc:'Calf raises, side plank, Pallof press'},
+    {label:'Back squat or trap bar deadlift', target:load,           desc:'Slow down, fast up · stop 1–2 reps before form breaks'},
+    {label:'Bulgarian split squat',           target:'3 × 6–8 each', desc:'Rear foot on a bench'},
+    {label:'Single-leg Romanian deadlift',    target:'3 × 8 each',   desc:'Hips square'},
+    {label:'Calf raises',                     target:'3 × 10–12',    desc:'Straight and bent knee · Achilles health'},
+    {label:'Copenhagen or side plank',        target:'3 × 20–30 s',  desc:'Each side · hip and groin control'},
   ],
-  totals:'~40 min',
-  note:'Once a week is enough to keep your strength now. No strength in the final 10 days before the race.'
+  totals:'~45 min',
+  note: note || 'Heavy leg work improves cycling efficiency (Llanos-Lagos et al. 2025). It sits the day before your long ride, so leave 1–2 reps in reserve and ride the first hour of Friday easy.'
 });
-
+const thuSwim = () => ({ type:'swim', title:'Short easy swim (optional)',
+  sets:[{label:'Swim', target:'20–30 min', desc:'Easy before your 1 pm shift · technique focus'}],
+  totals:'20–30 min · zone 1–2',
+  note:'Skip it if time is tight. Legs are the priority today.'
+});
+const sundayRest = () => ({ type:'rest', title:'Rest, or a short easy swim',
+  sets:[
+    {label:'Swim (optional)', target:'20–30 min', desc:'After your shift · easy, 2:05/100 m or slower · drills welcome'},
+    {label:'Mobility',        target:'10–15 min', desc:'Hips, calves, thoracic spine'},
+  ],
+  totals:'Up to 30 min · zone 1',
+  note:'Full rest is just as good. Pick whichever leaves you fresher for Monday.'
+});
+const tempoBrick = () => ({ type:'run', title:'R2 · Tempo run off the bike',
+  sets:[{label:'Run', target:'25–30 min', desc:'First 5 min easy, then 20 min at zone 3 heart rate (90–94% LTHR)'}],
+  totals:'25–30 min',
+  note:'Tempo running on tired legs builds the strength you need for the marathon off the bike.'
+});
 const swimEasy = (time) => ({ type:'swim', title:'Easy swim',
   sets:[{label:'Swim', target:time, desc:'Any strokes · 2:05/100 m or slower · focus on long, relaxed strokes'}],
   totals:time+' · zone 1–2'
-});
-const swimRecovery = () => ({ type:'swim', title:'Recovery swim + mobility',
-  sets:[
-    {label:'Swim',     target:'2–2.5 km',  desc:'Easy · 2:05/100 m or slower · mix in backstroke and drills'},
-    {label:'Mobility', target:'15 min',    desc:'Hips, calves, thoracic spine'},
-  ],
-  totals:'40–45 min · zone 1',
-  note:'Monday is your only light day at this volume. Make it full rest if you feel run down.'
 });
 const S1 = (reps, note) => ({ type:'swim', title:'S1 · Aerobic + technique swim',
   sets:[
@@ -878,134 +891,151 @@ const PLAN = {
     ]
   },
   2: {
-    note:'<strong>Base 1 · 23 Nov – 17 Jan · weeks 1–8 · 11.5–13.5 h.</strong> Picks up from your 70.3 block: more bike sessions, a bigger aerobic base and learning the lifts. Gut training starts: 40–60 g carbs/h on long rides, 30–40 g/h on long runs. <strong>Easier weeks 4 and 8:</strong> cut every session by about 40% and skip the intervals. Christmas falls in week 5: move sessions around and don\'t make up missed ones.',
+    note:'<strong>Base 1 · 23 Nov – 17 Jan · weeks 1–8 · 11.5–13.5 h.</strong> Built around your shifts: train late morning Monday to Wednesday, a short legs day before Thursday\'s 1 pm shift, long ride Friday, long run Saturday, rest Sunday. Gut training starts: 40–60 g carbs/h on long rides, 30–40 g/h on long runs. <strong>Easier weeks 4 and 8:</strong> cut every session by about 40% and skip the intervals. Christmas falls in week 5: move sessions around and don\'t make up missed ones.',
     days:[
-      {id:'mon', name:'Monday', tags:['str','swim'], sessions:[
-        strA('Weeks 1–3: 3 × 8–10 · then 4 × 4–6', 'Weeks 1–3 are for learning the lifts at a moderate load. From week 4, go heavy (about 80–85% of 1RM).'),
-        S1(6, 'Your swim is already strong, so this is the first session to drop on a busy day.')]},
-      {id:'tue', name:'Tuesday', tags:['bike','run'], sessions:[
+      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
         B1ss('3 × 15 min', '185–195 W · 5 min easy between', '75 min'),
-        brick('15 min', 'Easy · zone 2 heart rate')]},
-      {id:'wed', name:'Wednesday', tags:['swim','run'], sessions:[
+        brick('15 min', 'Easy · zone 2 heart rate'),
+        upperA('Weeks 1–3: 3 × 8–10 · then 4 × 5–8')]},
+      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
         S2('10–12 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.2–2.4 km'),
         R1('50–60 min')]},
-      {id:'thu', name:'Thursday', tags:['bike','str'], sessions:[
+      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
         B4('75–90 min'),
-        strB('Weeks 1–3: 3 × 8–10 · then 4 × 4–6')]},
-      {id:'fri', name:'Friday', tags:['swim','run'], sessions:[
-        S1(7),
-        runEasy('30–40 min')]},
-      {id:'sat', name:'Saturday', tags:['bike','run'], sessions:[
-        B3('3–3.5 h', 'Zone 2 · 118–158 W · Kickr until the P3 is ready for outdoor rides', '40–60 g carbs/h', 'Use every long ride to practise eating and drinking.'),
+        runEasy('30–40 min'),
+        upperB('Weeks 1–3: 3 × 8–10 · then 4 × 5–8')]},
+      {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
+        lower('Weeks 1–3: 3 × 8–10 · then 4 × 4–6', 'Weeks 1–3 are for learning the lifts at a moderate load. From week 4, go heavy (about 80–85% of 1RM), but leave 1–2 reps in reserve because the long ride is tomorrow.'),
+        thuSwim()]},
+      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+        B3('3–3.5 h', 'Zone 2 · 118–158 W · first hour extra easy after legs · Kickr until the P3 is ready for outdoor rides', '40–60 g carbs/h', 'Use every long ride to practise eating and drinking.'),
         brick('15 min', 'Easy · zone 2 heart rate')]},
-      {id:'sun', name:'Sunday', tags:['run'], sessions:[
-        R3('90–110 min', '30–40 g carbs/h')]},
+      {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
+        R3('90–110 min', '30–40 g carbs/h'),
+        S1(6, 'Later in the day after the long run. Your swim is already strong, so cut this first on a busy day.')]},
+      {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
   },
   3: {
-    note:'<strong>Base 2 · 18 Jan – 14 Mar · weeks 9–16 · 13–15 h.</strong> Lift your FTP with VO2 and sweet spot work, keep lifting heavy and get the long rides outdoors. <strong>Retest week 9</strong> (FTP, CSS, run LTHR) after the easier week 8. <strong>Easier weeks 12 and 16.</strong> Fuel: 60–75 g carbs/h on long rides, 40–50 g/h on long runs.',
+    note:'<strong>Base 2 · 18 Jan – 14 Mar · weeks 9–16 · 13–15 h.</strong> Lift your FTP with VO2 and sweet spot work, keep lifting heavy and get the long rides outdoors. The tempo run now comes straight off Wednesday\'s bike so hard days never sit back to back. <strong>Retest week 9</strong> (FTP, CSS, run LTHR) after the easier week 8. <strong>Easier weeks 12 and 16.</strong> Fuel: 60–75 g carbs/h on long rides, 40–50 g/h on long runs.',
     days:[
-      {id:'mon', name:'Monday', tags:['str','swim'], sessions:[strA('4 × 4–6'), S1(6)]},
-      {id:'tue', name:'Tuesday', tags:['bike','run'], sessions:[
+      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
         B2(),
-        brick('20 min', 'Easy · zone 2 heart rate')]},
-      {id:'wed', name:'Wednesday', tags:['swim','run'], sessions:[
+        brick('20 min', 'Easy · zone 2 heart rate'),
+        upperA('4 × 5–8')]},
+      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
         S2('12–15 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.4–2.7 km'),
-        R2tempo()]},
-      {id:'thu', name:'Thursday', tags:['bike','str'], sessions:[
+        R1('50–60 min')]},
+      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
         B1ss('2 × 30 min', '185–195 W · 10 min easy between', '90 min'),
-        strB('4 × 4–6')]},
-      {id:'fri', name:'Friday', tags:['swim','run'], sessions:[
+        tempoBrick(),
+        upperB('4 × 5–8')]},
+      {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
+        lower('4 × 4–6'),
+        thuSwim()]},
+      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+        B3('3.5–4.5 h', 'Zone 2 · 118–158 W · outdoors when you can, on the aero bars', '60–75 g carbs/h'),
+        brick('20 min', 'Easy · zone 2 heart rate')]},
+      {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
+        R3('1 h 45 – 2 h', '40–50 g carbs/h'),
         S3([
           {label:'Warm-up',   target:'400 m',     desc:'Easy + 4 × 50 m build'},
           {label:'Main',      target:'4 × 800 m', desc:'1:55–1:58/100 m (race pace) · 30 s rest'},
           {label:'Cool-down', target:'100–200 m', desc:'Easy'},
-        ], '~3.7 km', 'Hold the same pace on every 800. This is your Ironman swim rhythm.'),
-        runEasy('40 min')]},
-      {id:'sat', name:'Saturday', tags:['bike','run'], sessions:[
-        B3('3.5–4.5 h', 'Zone 2 · 118–158 W · outdoors when you can, on the aero bars', '60–75 g carbs/h'),
-        brick('20 min', 'Easy · zone 2 heart rate')]},
-      {id:'sun', name:'Sunday', tags:['run'], sessions:[
-        R3('1 h 45 – 2 h', '40–50 g carbs/h')]},
+        ], '~3.7 km', 'Hold the same pace on every 800. This is your Ironman swim rhythm.')]},
+      {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
   },
   4: {
-    note:'<strong>Build · 15 Mar – 9 May · weeks 17–24 · 15–16 h.</strong> Ironman-specific now: race-pace blocks, brick runs and full race nutrition (75–90 g carbs/h on the bike, 50–60 g/h running). <strong>Retest week 17</strong> and set your goal time. <strong>Easier weeks 20 and 24.</strong> Open water from April. Easter falls at the end of week 18. Monday is your only light day: make it full rest if you feel run down.',
+    note:'<strong>Build · 15 Mar – 9 May · weeks 17–24 · 15–16 h.</strong> Ironman-specific now: race-pace blocks, brick runs and full race nutrition (75–90 g carbs/h on the bike, 50–60 g/h running). Strength drops to maintenance: same weights, fewer sets. <strong>Retest week 17</strong> and set your goal time. <strong>Easier weeks 20 and 24.</strong> Open water from April. Easter falls at the end of week 18.',
     days:[
-      {id:'mon', name:'Monday', tags:['swim'], sessions:[swimRecovery()]},
-      {id:'tue', name:'Tuesday', tags:['bike','str','run'], sessions:[B1race(), strBuild(), brick('20 min', 'Easy · zone 2 heart rate')]},
-      {id:'wed', name:'Wednesday', tags:['swim','run'], sessions:[
+      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
+        B1race(),
+        brick('20 min', 'Easy · zone 2 heart rate'),
+        upperA('3 × 6–8', 'Maintenance now: same weights, fewer sets. No swim on upper days.')]},
+      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
         S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km'),
         R1('60 min')]},
-      {id:'thu', name:'Thursday', tags:['bike','run'], sessions:[
+      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
         B4('60–75 min'),
-        R2race('40–50 min')]},
-      {id:'fri', name:'Friday', tags:['swim'], sessions:[
+        R2race('40–50 min'),
+        upperB('3 × 6–8', 'Maintenance now: same weights, fewer sets. No swim on upper days.')]},
+      {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
+        lower('3 × 4–5', 'Keep the heavy load but fewer sets. Leave 2 reps in reserve before Friday\'s long ride.'),
+        thuSwim()]},
+      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+        B3('4.5–5.5 h', 'Zone 2 with 2–3 × 30–45 min at 137–151 W (race watts) on the aero bars', '75–90 g carbs/h', 'Ride the race-watt blocks in the middle of the ride, not at the end.'),
+        brick('30–45 min', 'First 10 min easy · then race-pace heart rate')]},
+      {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
+        R3('2 h – 2 h 20', '50–60 g carbs/h'),
         S3([
           {label:'Warm-up', target:'300 m',   desc:'Easy'},
           {label:'Main',    target:'3.5 km',  desc:'4 × 800 m at race pace (30 s rest), or continuous in open water from April'},
           {label:'Sighting', target:'Every 6–8 strokes', desc:'Lift eyes only · keep stroke rhythm'},
-        ], '3.8 km', 'Wetsuit on for open water. Every open-water swim before race day makes race morning calmer.')]},
-      {id:'sat', name:'Saturday', tags:['bike','run'], sessions:[
-        B3('4.5–5.5 h', 'Zone 2 with 2–3 × 30–45 min at 137–151 W (race watts) on the aero bars', '75–90 g carbs/h', 'Ride the race-watt blocks in the middle of the ride, not at the end.'),
-        brick('30–45 min', 'First 10 min easy · then race-pace heart rate')]},
-      {id:'sun', name:'Sunday', tags:['run'], sessions:[
-        R3('2 h – 2 h 20', '50–60 g carbs/h')]},
+        ], '3.8 km', 'Swim later in the day after the long run. Wetsuit on for open water.')]},
+      {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
   },
   5: {
-    note:'<strong>Peak · 10–30 May · weeks 25–27 · 14–16.5 h.</strong> Your biggest weeks. <strong>Retest week 25.</strong> <strong>Race rehearsal Sat 15 May:</strong> 3 km open-water swim, 4.5 h at race watts, 45 min run at race effort, using exact race food, drinks and kit. Week 26 is the peak (16.5 h). <strong>Heat block starts week 27:</strong> 20–30 min sauna or 40 °C bath after easy sessions.',
+    note:'<strong>Peak · 10–30 May · weeks 25–27 · 14–16.5 h.</strong> Your biggest weeks. <strong>Retest week 25.</strong> <strong>Race rehearsal Fri 14 May:</strong> 3 km open-water swim, 4.5 h at race watts, 45 min run at race effort, using exact race food, drinks and kit. On Sat 15 May just do an easy 30–40 min run and an easy swim. Week 26 is the peak (16.5 h). <strong>Heat block starts week 27:</strong> 20–30 min sauna or 40 °C bath after easy sessions. Last strength sessions are in week 27.',
     days:[
-      {id:'mon', name:'Monday', tags:['swim'], sessions:[swimRecovery()]},
-      {id:'tue', name:'Tuesday', tags:['bike','str','run'], sessions:[B1race(), strBuild(), brick('20 min', 'Easy · zone 2 heart rate')]},
-      {id:'wed', name:'Wednesday', tags:['swim','run'], sessions:[
+      {id:'mon', name:'Monday', tags:['bike','run','str'], sessions:[
+        B1race(),
+        brick('20 min', 'Easy · zone 2 heart rate'),
+        upperA('3 × 6–8', 'Maintenance: same weights, fewer sets.')]},
+      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
         S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km'),
         R1('60 min')]},
-      {id:'thu', name:'Thursday', tags:['bike','run'], sessions:[
+      {id:'wed', name:'Wednesday', tags:['bike','run','str'], sessions:[
         B4('60 min'),
-        R2race('50–60 min')]},
-      {id:'fri', name:'Friday', tags:['swim'], sessions:[
+        R2race('50–60 min'),
+        upperB('3 × 6–8', 'Maintenance: same weights, fewer sets.')]},
+      {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
+        lower('3 × 4–5', 'Keep it crisp, not exhausting. Leave 2 reps in reserve before Friday.'),
+        thuSwim()]},
+      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+        B3('5–5.5 h', 'Zone 2 with 3 h at 137–151 W (race watts) · week 25: race rehearsal instead (see note above)', 'Exact race plan · 80–90 g carbs/h', 'Longest brick is week 26: 5.5 h ride + 60 min run.'),
+        brick('45–60 min', 'First 10 min easy · then race-pace heart rate')]},
+      {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
+        R3('2 h – 2 h 30', '50–60 g carbs/h', 'Make it 90 min after a big Friday brick, and only 30–40 min easy after the week 25 rehearsal. Cap at 2 h 30.'),
         S3([
           {label:'Warm-up', target:'200 m',  desc:'Easy'},
           {label:'Main',    target:'3.8 km', desc:'Continuous in wetsuit at race pace · practise a firm first 200 m, then settle'},
         ], '4 km', 'Race-day rehearsal for the swim. Note how long it takes so you know your swim split.')]},
-      {id:'sat', name:'Saturday', tags:['bike','run'], sessions:[
-        B3('5–5.5 h', 'Zone 2 with 3 h at 137–151 W (race watts) · week 25: race rehearsal instead (see note above)', 'Exact race plan · 80–90 g carbs/h', 'Longest brick is week 26: 5.5 h ride + 60 min run.'),
-        brick('45–60 min', 'First 10 min easy · then race-pace heart rate')]},
-      {id:'sun', name:'Sunday', tags:['run'], sessions:[
-        R3('2 h – 2 h 30', '50–60 g carbs/h', 'Make it 90 min if Saturday\'s brick was long. Cap at 2 h 30.')]},
+      {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
   },
   6: {
-    note:'<strong>Taper · 31 May – 6 Jun · week 28 · about 9.5 h.</strong> Volume drops about 40% but the short race-pace efforts stay (Bosquet et al. 2007). Keep the heat block going: 20–30 min sauna or 40 °C bath after easy sessions. <strong>No strength from here to race day.</strong>',
+    note:'<strong>Taper · 31 May – 6 Jun · week 28 · about 9.5 h.</strong> Volume drops about 40% but the short race-pace efforts stay (Bosquet et al. 2007). Keep the heat block going: 20–30 min sauna or 40 °C bath after easy sessions. <strong>No strength (upper or legs) from here to race day.</strong>',
     days:[
-      {id:'mon', name:'Monday', tags:['rest'], sessions:[rest('Feeling flat or restless in taper is normal. Trust the training.')]},
-      {id:'tue', name:'Tuesday', tags:['bike'], sessions:[{type:'bike', title:'B1 · Race watts (half volume)',
+      {id:'mon', name:'Monday', tags:['bike'], sessions:[{type:'bike', title:'B1 · Race watts (half volume)',
         sets:[
           {label:'Warm-up', target:'10 min', desc:'Easy'},
           {label:'Main', target:'2 × 15 min', desc:'137–151 W on the aero bars · 5 min easy between'},
           {label:'Cool-down', target:'10 min', desc:'Easy'},
-        ], totals:'60 min'}]},
-      {id:'wed', name:'Wednesday', tags:['swim','run'], sessions:[
+        ], totals:'60 min', note:'Feeling flat or restless in taper is normal. Trust the training.'}]},
+      {id:'tue', name:'Tuesday', tags:['swim','run'], sessions:[
         S2('6–8 × 100 m', '1:50/100 m (CSS)', '20 s rest', '~2 km', 'Half the usual reps, same pace.'),
         runEasy('40 min')]},
-      {id:'thu', name:'Thursday', tags:['bike','run'], sessions:[
+      {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
         B4('45 min'),
         {type:'run', title:'Short race-pace run', sets:[
           {label:'Warm-up', target:'10 min', desc:'Easy'},
           {label:'Main', target:'15 min', desc:'Race-pace heart rate'},
           {label:'Cool-down', target:'5 min', desc:'Easy'},
         ], totals:'30 min'}]},
-      {id:'fri', name:'Friday', tags:['swim'], sessions:[
+      {id:'thu', name:'Thursday', tags:['swim'], sessions:[thuSwim()]},
+      {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
+        B3('3 h', 'Zone 2 with 60 min at 137–151 W', 'Exact race plan', 'Last longer ride. Check every bit of race kit works.'),
+        brick('20 min', 'Easy, with the last 5 min at race-pace heart rate')]},
+      {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
+        {type:'run', title:'Long run (short)', sets:[
+          {label:'Run', target:'60–75 min', desc:'Zone 2 · last 20 min at race-pace heart rate'},
+        ], totals:'60–75 min'},
         S3([
           {label:'Swim', target:'2.5 km', desc:'Easy with 4 × 200 m at race pace'},
         ], '2.5 km', 'Open water in your wetsuit if you can.')]},
-      {id:'sat', name:'Saturday', tags:['bike','run'], sessions:[
-        B3('3 h', 'Zone 2 with 60 min at 137–151 W', 'Exact race plan', 'Last longer ride. Check every bit of race kit works.'),
-        brick('20 min', 'Easy, with the last 5 min at race-pace heart rate')]},
-      {id:'sun', name:'Sunday', tags:['run'], sessions:[{type:'run', title:'Long run (short)', sets:[
-          {label:'Run', target:'60–75 min', desc:'Zone 2 · last 20 min at race-pace heart rate'},
-        ], totals:'60–75 min'}]},
+      {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
   },
   7: {

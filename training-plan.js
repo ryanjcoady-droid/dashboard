@@ -40,17 +40,17 @@
     // Weekly sport split (Base 1 pattern). The workout dashboard follows each
     // phase's own detailed days unless this split is edited in the plan editor.
     weekSplit: {
-      Mon: ['strength', 'swim'],
-      Tue: ['bike', 'run'],
-      Wed: ['swim', 'run'],
-      Thu: ['bike', 'strength'],
-      Fri: ['swim'],
-      Sat: ['bike'],
-      Sun: ['run'],
+      Mon: ['bike', 'run', 'strength'],
+      Tue: ['swim', 'run'],
+      Wed: ['bike', 'run', 'strength'],
+      Thu: ['strength', 'swim'],
+      Fri: ['bike', 'run'],
+      Sat: ['run', 'swim'],
+      Sun: ['rest'],
     },
     // Bump when the default split/phases change in a way that should
     // supersede older saved plans (see migration in load()).
-    planVersion: 3,
+    planVersion: 4,
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
