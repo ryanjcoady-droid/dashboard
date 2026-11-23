@@ -688,8 +688,8 @@ renderHeader();
    Bike FTP 210 W · Z1 <116 W · Z2 118–158 W · race 137–151 W · tempo 160–183 W
      · sweet spot 185–195 W · threshold 197–221 W · VO2 223–252 W
    Swim CSS 1:50/100 m · easy 2:05+ · Z2 1:58–2:05 · race 1:55–1:58 · VO2 ≤1:47
-   Run by heart rate as % of LTHR (30 min test) · Z2 81–89% · race 85–89%
-     · Z3 90–94% · threshold 95–100%                                          */
+   Run LTHR 183 bpm at 4:08/km (Garmin estimate, Nov 2026) · Z1 <148 · Z2 148–163
+     · race 156–163 · Z3 165–172 · threshold 174–183 · VO2 184+                                          */
 const IM_WEEK1 = '2026-11-23', IM_WEEKS = 29;
 const IM_WEEK_HOURS = [5.5,11.5,12,12.5,9,12,13,13.5,9.5,13,13.5,14,10,14,14.5,15,10.5,15,15.5,16,11,15.5,16,16,11.5,16,16.5,14,9.5,5.5];
 const IM_EASY_WEEKS = [4,8,12,16,20,24];
@@ -842,19 +842,19 @@ const R3 = (time, main, fuel, note) => ({ type:'run', title:'R3 · Long run',
   note: note || 'Add about 10 min a week and cap at 2 h 30. You don\'t need to run a marathon in training.'
 });
 const R4 = (time) => ({ type:'run', title:'R4 · Run off the long ride',
-  sets:[{label:'Run', target:time, desc:'First 10 min easy · then race-pace heart rate (85–89% LTHR)'}],
+  sets:[{label:'Run', target:time, desc:'First 10 min easy · then race-pace heart rate (156–163 bpm)'}],
   totals:time,
   note:'The closest thing to Ironman run legs. First thing to cut on a bad day.'
 });
 const runEasy = (time) => ({ type:'run', title:'Easy run',
-  sets:[{label:'Run', target:time, desc:'Zone 2 heart rate · walk breaks are fine'}],
+  sets:[{label:'Run', target:time, desc:'Zone 2 heart rate (148–163 bpm) · walk breaks are fine'}],
   totals:time+' · easy'
 });
 const thuSwim = () => S1(4, '2–2.5 km', 'Keep it short before your 1 pm shift. Legs are the priority today.');
 
 const PLAN = {
   1: {
-    note:'<strong>Reset · 9–22 Nov · week 0 · about 5.5 h.</strong> Easy movement while the 70.3 clears from your legs. Everything in zone 1–2. Tests done: FTP 210 W and CSS 1:50/100 m. Do the 30 min run test (LTHR) before week 1 and set your run zones from it.',
+    note:'<strong>Reset · 9–22 Nov · week 0 · about 5.5 h.</strong> Easy movement while the 70.3 clears from your legs. Everything in zone 1–2. Tests done: FTP 210 W and CSS 1:50/100 m. Run zones set from your Garmin threshold estimate: 183 bpm at 4:08/km.',
     days:[
       {id:'mon', name:'Monday',    tags:['swim'], sessions:[swimEasy('30–40 min')]},
       {id:'tue', name:'Tuesday',   tags:['bike'], sessions:[bikeEasy('45 min')]},
@@ -873,11 +873,11 @@ const PLAN = {
         B1('Sweet spot', '3 × 12–15 min', '185–195 W · 5 min easy between', '75 min'),
         upperA('3 × 8–10', 'Weeks 1–3 are for learning the lifts at a moderate load. No swim on upper days.')]},
       {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
-        R1('50–60 min', 'Zone 2 heart rate · full sentences possible', {t:'6 × 20 s', d:'Hill strides · walk back down'}),
+        R1('50–60 min', 'Zone 2 heart rate (148–163 bpm) · full sentences possible', {t:'6 × 20 s', d:'Hill strides · walk back down'}),
         S2('10–12 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.2–2.4 km')]},
       {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
         B2('75–90 min', 'Zone 2 with 2 × 15 min tempo at 160–183 W'),
-        R2('15–20 min', 'Easy · zone 2 heart rate')]},
+        R2('15–20 min', 'Easy · zone 2 heart rate (148–163 bpm)')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
         lower('3 × 8–10', 'Learn the lifts at a moderate load in weeks 1–3. Leave 2 reps in reserve because the long ride is tomorrow.'),
         thuSwim()]},
@@ -885,7 +885,7 @@ const PLAN = {
         B3('3–3.5 h', 'Zone 2 · 118–158 W · Kickr until the P3 is ready for outdoor rides', '40–60 g carbs/h'),
         upperB('3 × 8–10', 'After the long ride: eat first and keep it to about 40 min.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('90–110 min', 'Zone 2 heart rate · flat route', '30–40 g carbs/h'),
+        R3('90–110 min', 'Zone 2 heart rate (148–163 bpm) · flat route', '30–40 g carbs/h'),
         S1(6, '~3 km', 'Later in the day after the long run.')]},
       {id:'sun', name:'Sunday', tags:['rest'], sessions:[sundayRest()]},
     ]
@@ -897,11 +897,11 @@ const PLAN = {
         B1base2(),
         upperA('4 × 5–8')]},
       {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
-        R1('60 min', 'Progression · first 45 min zone 2, last 15 min zone 3 (90–94% LTHR)', {t:'4 × 20 s', d:'Strides after the run'}, 'Moderate, not hard: the last 15 min should feel comfortably hard, never a race.'),
+        R1('60 min', 'Progression · first 45 min zone 2, last 15 min zone 3 (165–172 bpm)', {t:'4 × 20 s', d:'Strides after the run'}, 'Moderate, not hard: the last 15 min should feel comfortably hard, never a race.'),
         S2('12–15 × 100 m', '1:50/100 m (CSS)', '15 s rest', '~2.4–2.7 km')]},
       {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
         B2('75 min', 'Zone 2 · 118–158 W'),
-        R2('35 min', '5 min easy · 3 × 8 min at threshold HR (95–100% LTHR), 2 min jog between · easy to finish', 'Threshold running on bike legs builds the strength you need for the marathon.')]},
+        R2('35 min', '5 min easy · 3 × 8 min at threshold HR (174–183 bpm), 2 min jog between · easy to finish', 'Threshold running on bike legs builds the strength you need for the marathon.')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
         lower('4 × 4–6', 'Heavy now (about 80–85% of 1RM), but leave 1–2 reps in reserve because the long ride is tomorrow.'),
         thuSwim()]},
@@ -909,7 +909,7 @@ const PLAN = {
         B3('3.5–4.5 h', 'Zone 2 · 118–158 W · outdoors when you can, on the aero bars', '60–75 g carbs/h'),
         upperB('4 × 5–8', 'After the long ride: eat first and keep it to about 40 min.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('1 h 45 – 2 h', 'Zone 2 heart rate · flat route', '40–50 g carbs/h'),
+        R3('1 h 45 – 2 h', 'Zone 2 heart rate (148–163 bpm) · flat route', '40–50 g carbs/h'),
         S3([
           {label:'Warm-up',   target:'400 m',     desc:'Easy + 4 × 50 m build'},
           {label:'Main',      target:'4 × 800 m', desc:'1:55–1:58/100 m (race pace) · 30 s rest'},
@@ -925,11 +925,11 @@ const PLAN = {
         B1('Threshold', '2 × 20 min', '197–210 W · 5 min easy between', '90 min'),
         upperA('3 × 6–8', 'Maintenance now: same weights, fewer sets. No swim on upper days.')]},
       {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
-        R1('60 min', 'Zone 2 heart rate', {t:'6 × 20 s', d:'Strides · quick and relaxed'}),
+        R1('60 min', 'Zone 2 heart rate (148–163 bpm)', {t:'6 × 20 s', d:'Strides · quick and relaxed'}),
         S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km')]},
       {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
         B2('90 min', 'Zone 2 with 2 × 20 min at 137–151 W (race watts) on the aero bars'),
-        R2('40–50 min', 'First 10 min easy · then race-pace HR (85–89% LTHR)')]},
+        R2('40–50 min', 'First 10 min easy · then race-pace HR (156–163 bpm)')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
         lower('3 × 4–5', 'Keep the heavy load but fewer sets. Leave 2 reps in reserve before Friday\'s long ride.'),
         S1(5, '~2.5 km', 'Easy and short before your shift. Open water is fine from April.')]},
@@ -938,7 +938,7 @@ const PLAN = {
         R4('20–30 min'),
         upperB('3 × 6–8', 'After the long ride: eat first and keep it to about 40 min.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('2 h – 2 h 20', 'Zone 2 · last 20 min at race-pace HR', '50–60 g carbs/h'),
+        R3('2 h – 2 h 20', 'Zone 2 · last 20 min at race-pace HR (156–163 bpm)', '50–60 g carbs/h'),
         S3([
           {label:'Warm-up', target:'300 m',   desc:'Easy'},
           {label:'Main',    target:'3.5 km',  desc:'4 × 800 m at race pace (30 s rest), or continuous in open water from April'},
@@ -954,11 +954,11 @@ const PLAN = {
         B1('Sharpening', '4 × 8 min', '200–215 W · 4 min easy between', '75–90 min'),
         upperA('3 × 6–8', 'Maintenance: same weights, fewer sets.')]},
       {id:'tue', name:'Tuesday', tags:['run','swim'], sessions:[
-        R1('60 min', 'Zone 2 heart rate', {t:'6 × 20 s', d:'Strides · quick and relaxed'}),
+        R1('60 min', 'Zone 2 heart rate (148–163 bpm)', {t:'6 × 20 s', d:'Strides · quick and relaxed'}),
         S2('5 × 300 m + 4 × 100 m', '1:52/100 m (300s) and 1:50 (100s)', '20 s rest', '~3.5 km')]},
       {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
         B2('90 min', 'Zone 2 with 2 × 25 min at 137–151 W (race watts) on the aero bars'),
-        R2('45–60 min', 'First 10 min easy · then race-pace HR (85–89% LTHR)')]},
+        R2('45–60 min', 'First 10 min easy · then race-pace HR (156–163 bpm)')]},
       {id:'thu', name:'Thursday', tags:['str','swim'], sessions:[
         lower('3 × 4–5', 'Keep it crisp, not exhausting. Leave 2 reps in reserve before Friday.'),
         S1(5, '~2.5 km', 'Easy and short before your shift.')]},
@@ -967,7 +967,7 @@ const PLAN = {
         R4('30 min'),
         upperB('3 × 6–8', 'After the long ride: eat first and keep it to about 40 min. Moving it to Sunday is fine in peak weeks.')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
-        R3('2 h – 2 h 30', 'Zone 2 · last 30 min at race-pace HR', '50–60 g carbs/h', 'Cap at 2 h 30, and only 30–40 min easy after the week 25 rehearsal.'),
+        R3('2 h – 2 h 30', 'Zone 2 · last 30 min at race-pace HR (156–163 bpm)', '50–60 g carbs/h', 'Cap at 2 h 30, and only 30–40 min easy after the week 25 rehearsal.'),
         S3([
           {label:'Warm-up', target:'200 m',  desc:'Easy'},
           {label:'Main',    target:'3.8 km', desc:'Continuous in wetsuit at race pace · practise a firm first 200 m, then settle'},
@@ -989,14 +989,14 @@ const PLAN = {
         S2('6–8 × 100 m', '1:50/100 m (CSS)', '20 s rest', '~2 km', 'Half the usual reps, same pace.')]},
       {id:'wed', name:'Wednesday', tags:['bike','run'], sessions:[
         B2('45 min', 'Zone 2 with 10 min at race watts'),
-        R2('20–30 min', 'Easy, then 15 min at race-pace HR')]},
+        R2('20–30 min', 'Easy, then 15 min at race-pace HR (156–163 bpm)')]},
       {id:'thu', name:'Thursday', tags:['swim'], sessions:[swimEasy('30 min')]},
       {id:'fri', name:'Friday', tags:['bike','run'], sessions:[
         B3('3 h', 'Zone 2 with 60 min at 137–151 W', 'Exact race plan', 'Last longer ride. Check every bit of race kit works.'),
         R4('20 min')]},
       {id:'sat', name:'Saturday', tags:['run','swim'], sessions:[
         {type:'run', title:'Long run (short)', sets:[
-          {label:'Run', target:'60–75 min', desc:'Zone 2 · last 20 min at race-pace heart rate'},
+          {label:'Run', target:'60–75 min', desc:'Zone 2 · last 20 min at race-pace heart rate (156–163 bpm)'},
         ], totals:'60–75 min'},
         S3([
           {label:'Swim', target:'2.5 km', desc:'Easy with 4 × 200 m at race pace'},
@@ -1013,7 +1013,7 @@ const PLAN = {
         {type:'bike', title:'Ride with race-watt efforts', sets:[{label:'Ride', target:'60 min', desc:'Easy with 3 × 5 min at 137–151 W'}], totals:'60 min'},
         runEasy('15 min')]},
       {id:'wed', name:'Wednesday · 9 Jun', tags:['run'], sessions:[
-        {type:'run', title:'Run with race-pace touches', sets:[{label:'Run', target:'30 min', desc:'Easy with 4 × 2 min at race-pace heart rate'}], totals:'30 min',
+        {type:'run', title:'Run with race-pace touches', sets:[{label:'Run', target:'30 min', desc:'Easy with 4 × 2 min at race-pace heart rate (156–163 bpm)'}], totals:'30 min',
          note:'Travel day. Pack the bike carefully and keep drinking on the flight.'}]},
       {id:'thu', name:'Thursday · 10 Jun', tags:['bike','swim'], sessions:[
         {type:'bike', title:'Bike check ride', sets:[{label:'Ride', target:'20–30 min', desc:'Easy · check gears, brakes and tyres after the flight'}], totals:'20–30 min'},
@@ -1030,8 +1030,8 @@ const PLAN = {
           {label:'Main', target:'137–151 W', desc:'72% of FTP or less · cap climbs at about 179 W'},
           {label:'Fuel', target:'80–90 g carbs/h', desc:'Plus fluid and sodium from your sweat test'}], totals:'180 km'},
         {type:'run', title:'Run · 42.2 km · 4 laps of the Esplanade', sets:[
-          {label:'First 10 km', target:'Easy heart rate', desc:'It will feel too slow. Hold back anyway.'},
-          {label:'10–30 km', target:'Race-pace heart rate', desc:'Walk aid stations to drink and eat · 50–60 g carbs/h'},
+          {label:'First 10 km', target:'Under 156 bpm', desc:'It will feel too slow. Hold back anyway.'},
+          {label:'10–30 km', target:'156–163 bpm', desc:'Walk aid stations to drink and eat · 50–60 g carbs/h'},
           {label:'30 km to finish', target:'Whatever is left', desc:'If you feel good, now is the time to go'}], totals:'42.2 km',
          note:'You\'ve done the work. Enjoy it.'}]},
     ]
